@@ -1,0 +1,19 @@
+flowchart TD
+%% Major idea: initial mechanics, proof-of-concept
+%% Starting door capacity: 1
+    start["start"]
+    %% Contents: player spawn
+    Room_A["A"]
+    %% When connected: Double move speed
+    Room_B["B"]
+    %% When connected: spacebar ability
+    Room_C["C"]
+    %% When connected: +1 max open door
+    Room_D["D"]
+    %% When connected: +2 max open door
+
+    start --- Room_A
+    start --- Room_B
+    start --- Room_C
+    Room_C --- Room_D
+    Room_B --- Room_D

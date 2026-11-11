@@ -10,8 +10,9 @@ var active_actions: Array = []
 var health_bonus: int
 var grants_water_walking: bool
 var water_hazards: Array = []
+var wall_hazards: Array = []
 
-func _init(p_id: String, p_bounds: Rect2, p_color: Color, p_movement_multiplier: float = 1.0, p_max_open_doors_bonus: int = 0, p_active_actions: Array = [], p_health_bonus: int = 1, p_grants_water_walking: bool = false, p_water_hazards: Array = []) -> void:
+func _init(p_id: String, p_bounds: Rect2, p_color: Color, p_movement_multiplier: float = 1.0, p_max_open_doors_bonus: int = 0, p_active_actions: Array = [], p_health_bonus: int = 1, p_grants_water_walking: bool = false, p_water_hazards: Array = [], p_wall_hazards: Array = []) -> void:
 	id = p_id
 	bounds = p_bounds
 	color = p_color
@@ -21,3 +22,4 @@ func _init(p_id: String, p_bounds: Rect2, p_color: Color, p_movement_multiplier:
 	health_bonus = p_health_bonus
 	grants_water_walking = p_grants_water_walking
 	water_hazards = p_water_hazards
+	wall_hazards = p_wall_hazards

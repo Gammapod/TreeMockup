@@ -3,6 +3,7 @@ extends SceneTree
 const BASELINE_SCENARIO_SCRIPT: Script = preload("res://scenarios/baseline_scenario.gd")
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
+const SWITCH_SCENARIO_SCRIPT: Script = preload("res://scenarios/switch_scenario.gd")
 
 var failures: Array[String] = []
 
@@ -12,6 +13,7 @@ func _init() -> void:
 	_test_capacity_from_room_c()
 	_test_propped_path_and_branch_collapse()
 	_test_health_flippers_and_gold()
+	_test_switch_wall_and_key_progression()
 	if failures.is_empty():
 		print("All dungeon model tests passed.")
 		quit(0)
@@ -26,6 +28,10 @@ func _model():
 
 func _water_model():
 	var scenario_factory = WATER_FLIPPERS_SCENARIO_SCRIPT.new()
+	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
+
+func _switch_model():
+	var scenario_factory = SWITCH_SCENARIO_SCRIPT.new()
 	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
 
 func _test_initial_root_and_capabilities() -> void:
@@ -82,6 +88,27 @@ func _test_health_flippers_and_gold() -> void:
 	_expect_equal(model.try_collect("prize_gold"), true, "Gold is collected in Prize Room")
 	_expect_equal(model.gold_collected, 1, "Collected gold is counted once")
 	_expect_equal(model.try_collect("prize_gold"), false, "Gold cannot be collected twice")
+
+func _test_switch_wall_and_key_progression() -> void:
+	var model = _switch_model()
+	_expect_equal(model.try_toggle_door("Start—Fork"), "opened", "Fork path opens")
+	_expect_equal(model.try_traverse_door("Start—Fork"), true, "Player enters Fork")
+	_expect_equal(model.try_collect("fork_key"), true, "Fork key is collected")
+	_expect_equal(model.capabilities.max_open_doors, 2, "First key permanently adds one door capacity")
+	_expect_equal(model.try_toggle_door("Fork—Wall"), "opened", "Wall branch opens")
+	_expect_equal(model.try_traverse_door("Fork—Wall"), true, "Player enters Wall Room")
+	_expect_equal(model.try_collect("wall_key"), true, "Wall-side key is collected")
+	_expect_equal(model.capabilities.max_open_doors, 3, "Second key permanently adds one door capacity")
+	_expect_equal(model.try_traverse_door("Fork—Wall"), true, "Player returns to Fork")
+	_expect_equal(model.try_toggle_door("Fork—Wall"), "closed", "Wall branch can close after returning")
+	_expect_equal(model.try_toggle_door("Fork—Sword"), "opened", "Sword branch opens")
+	_expect_equal(model.try_traverse_door("Fork—Sword"), true, "Player enters Sword Room")
+	_expect(model.capabilities.has_action("sword"), "Sword Room activates sword")
+	_expect_equal(model.try_toggle_door("Sword—Switch"), "opened", "Switch branch opens")
+	_expect_equal(model.try_traverse_door("Sword—Switch"), true, "Player enters Switch Room")
+	_expect_equal(model.try_toggle_switch("switch_1"), "toggled", "Sword toggles switch")
+	_expect(model.is_switch_active("switch_1"), "Switch stays active")
+	_expect(model.is_wall_passable("wall_1"), "Associated wall becomes passable")
 
 func _expect(condition: bool, description: String) -> void:
 	if not condition:

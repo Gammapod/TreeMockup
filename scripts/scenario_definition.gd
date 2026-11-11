@@ -6,10 +6,12 @@ var rooms: Dictionary
 var doors: Dictionary
 var rules
 var collectables: Dictionary
+var switches: Dictionary
 
-func _init(p_name: String, p_rooms: Dictionary, p_doors: Dictionary, p_rules, p_collectables: Dictionary = {}) -> void:
+func _init(p_name: String, p_rooms: Dictionary, p_doors: Dictionary, p_rules, p_collectables: Dictionary = {}, p_switches: Dictionary = {}) -> void:
 	name = p_name
 	rooms = p_rooms
 	doors = p_doors
 	rules = p_rules
 	collectables = p_collectables
+	switches = p_switches

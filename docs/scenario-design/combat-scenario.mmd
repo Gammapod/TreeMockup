@@ -1,0 +1,28 @@
+flowchart TD
+%% Major idea: basic combat scenario, and a risk/reward decision
+%% Golden path: player must leave the sword room open in order to combat the enemies in the other branch. After collecting all keys, the player can reach the double prize, but must do so without the sword ability.
+%% Starting door capacity: 1
+    start["start"]
+    %% When connected: +1 current/max HP
+    %% Contents: player spawn
+    west_room["West Room"]
+    %% When connected: +1 current/max HP
+    %% Contents: key
+    east_room["Sword Room"]
+    %% When connected: sword ability
+    %% Contents: collectable coin
+    north_1["Danger"]
+    %% When connected: +1 current/max HP
+    %% Contents: 3 bat enemies, 1 collectable key
+    north_2["Danger+Prize"]
+    %% When connected: +1 current/max HP
+    %% Contents: 3 bat enemies, 1 collectable coin
+    north_3["Double Prize"]
+    %% When connected: +1 current/max HP
+    %% Contents: 2 collectable coins
+
+    start --- west_room
+    start --- east_room
+    start --- north_1
+    north_1 --- north_2
+    north_2 --- north_3

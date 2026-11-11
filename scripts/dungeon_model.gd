@@ -12,6 +12,8 @@ var capabilities
 var current_hp: int = 0
 var gold_collected: int = 0
 var collected_ids: Dictionary = {}
+var permanent_door_capacity_bonus: int = 0
+var switch_states: Dictionary = {}
 
 func _init(p_scenario) -> void:
 	scenario = p_scenario
@@ -19,6 +21,8 @@ func _init(p_scenario) -> void:
 	capabilities = CAPABILITIES_SCRIPT.new()
 	for door in scenario.doors.values():
 		door_states[door.id] = DOOR_STATE_SCRIPT.new()
+	for switch_definition in scenario.switches.values():
+		switch_states[switch_definition.id] = switch_definition.initial_state
 	_recalculate()
 
 func is_room_reachable(room_id: String) -> bool:
@@ -61,8 +65,33 @@ func try_collect(collectable_id: String) -> bool:
 	if collectable.room_id != player_room:
 		return false
 	collected_ids[collectable_id] = true
-	gold_collected += collectable.gold_value
+	if collectable.kind == "key":
+		permanent_door_capacity_bonus += collectable.gold_value
+		_recalculate()
+	else:
+		gold_collected += collectable.gold_value
 	return true
+
+func try_toggle_switch(switch_id: String) -> String:
+	if not scenario.switches.has(switch_id):
+		return "missing"
+	var switch_definition = scenario.switches[switch_id]
+	if switch_definition.room_id != player_room:
+		return "remote"
+	if not capabilities.has_action("sword"):
+		return "ability"
+	switch_states[switch_id] = not switch_states[switch_id]
+	return "toggled"
+
+func is_switch_active(switch_id: String) -> bool:
+	return switch_states.get(switch_id, false)
+
+func is_wall_passable(wall_id: String) -> bool:
+	for room in scenario.rooms.values():
+		for wall in room.wall_hazards:
+			if wall.id == wall_id:
+				return is_switch_active(wall.switch_id)
+	return false
 
 func _recalculate() -> void:
 	reachable_rooms = _calculate_reachable_rooms()
@@ -86,7 +115,7 @@ func _recalculate() -> void:
 
 func _derive_capabilities():
 	var result = CAPABILITIES_SCRIPT.new()
-	result.max_open_doors = scenario.rules.base_max_open_doors
+	result.max_open_doors = scenario.rules.base_max_open_doors + permanent_door_capacity_bonus
 	for room_id: String in reachable_rooms:
 		var room = scenario.rooms[room_id]
 		result.movement_multiplier *= room.movement_multiplier
