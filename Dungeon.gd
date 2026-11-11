@@ -3,19 +3,19 @@ extends Node2D
 const PLAYER_RADIUS: float = 13.0
 const PLAYER_SPEED: float = 230.0
 const DOOR_HALF_WIDTH: float = 42.0
-const BASELINE_SCENARIO_SCRIPT: Script = preload("res://scenarios/baseline_scenario.gd")
+const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 
 var scenario
 var model
-var player_position: Vector2 = Vector2(595, 585)
+var player_position: Vector2 = Vector2(790, 555)
 var font: Font
 var status_message: String = "Open doors to build a loop-free network."
 var flash_time: float = 0.0
 
 func _ready() -> void:
 	font = ThemeDB.fallback_font
-	scenario = BASELINE_SCENARIO_SCRIPT.new().create()
+	scenario = WATER_FLIPPERS_SCENARIO_SCRIPT.new().create()
 	model = DUNGEON_MODEL_SCRIPT.new(scenario)
 	queue_redraw()
 
@@ -60,12 +60,32 @@ func _move_player(amount: Vector2) -> void:
 		if aligned and player_position.distance_to(door.position) < 48.0 and amount.dot(travel_direction) > 0.0:
 			if model.try_traverse_door(door.id):
 				player_position = _entry_position(destination_room.bounds, travel_direction)
+				_try_collect_at_player()
 			return
 	var room = scenario.rooms[model.player_room]
 	var next: Vector2 = player_position + amount
 	next.x = clampf(next.x, room.bounds.position.x + PLAYER_RADIUS, room.bounds.end.x - PLAYER_RADIUS)
 	next.y = clampf(next.y, room.bounds.position.y + PLAYER_RADIUS, room.bounds.end.y - PLAYER_RADIUS)
-	player_position = next
+	player_position = _apply_water_collisions(room, player_position, next)
+	_try_collect_at_player()
+
+func _apply_water_collisions(room, current: Vector2, next: Vector2) -> Vector2:
+	if model.capabilities.can_cross_water:
+		return next
+	for hazard in room.water_hazards:
+		var blocked: Rect2 = hazard.bounds.grow(PLAYER_RADIUS)
+		if blocked.has_point(next) and not blocked.has_point(current):
+			if abs(next.x - current.x) >= abs(next.y - current.y):
+				next.x = blocked.end.x if next.x < current.x else blocked.position.x
+			else:
+				next.y = blocked.end.y if next.y < current.y else blocked.position.y
+	return next
+
+func _try_collect_at_player() -> void:
+	for collectable in scenario.collectables.values():
+		if not model.collected_ids.has(collectable.id) and collectable.room_id == model.player_room and player_position.distance_to(collectable.position) < 25.0:
+			if model.try_collect(collectable.id):
+				status_message = "Collected 1 gold!"
 
 func _entry_position(destination: Rect2, direction: Vector2) -> Vector2:
 	var position: Vector2 = destination.get_center()
@@ -93,14 +113,17 @@ func _draw() -> void:
 		_draw_room(room)
 	for door in scenario.doors.values():
 		_draw_door(door)
+	for collectable in scenario.collectables.values():
+		_draw_collectable(collectable)
 	_draw_player()
 	_draw_help()
 
 func _draw_header() -> void:
 	draw_string(font, Vector2(48, 55), "DOOR NETWORK — %s" % scenario.name.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("eef4ff"))
 	draw_string(font, Vector2(48, 82), "Open doors form a loop-free tree rooted at Starting Room. Operate doors from an adjacent room.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("9ba8ba"))
-	draw_string(font, Vector2(48, 108), "Open doors: %d / %d    •    %s" % [model.open_door_count(), model.capabilities.max_open_doors, status_message], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("f6d365"))
-	draw_string(font, Vector2(48, 134), _ability_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("c8fff2"))
+	draw_string(font, Vector2(48, 108), "HP: %d / %d    •    Gold: %d    •    Open doors: %d / %d" % [model.current_hp, model.capabilities.max_hp, model.gold_collected, model.open_door_count(), model.capabilities.max_open_doors], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("f6d365"))
+	draw_string(font, Vector2(48, 130), status_message, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("c8fff2"))
+	draw_string(font, Vector2(48, 152), _ability_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("c8fff2"))
 
 func _draw_open_door_graph() -> void:
 	for door in scenario.doors.values():
@@ -117,13 +140,18 @@ func _draw_open_door_graph() -> void:
 		var point: Vector2 = room.bounds.get_center()
 		draw_circle(point, 12, Color("55e6cd") if model.is_room_reachable(room.id) else Color("596273"))
 		draw_circle(point, 6, Color("10141d"))
-	draw_string(font, Vector2(48, 170), "OPEN-DOOR GRAPH", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("55e6cd"))
+	draw_string(font, Vector2(48, 180), "OPEN-DOOR GRAPH", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("55e6cd"))
 
 func _draw_room(room) -> void:
 	var connected: bool = model.is_room_reachable(room.id)
 	var fill: Color = room.color.lightened(0.16) if connected else room.color.darkened(0.55)
 	fill.a = 0.82
 	draw_rect(room.bounds, fill, true)
+	for hazard in room.water_hazards:
+		var water_color: Color = Color("2baff4")
+		water_color.a = 0.78
+		draw_rect(hazard.bounds, water_color, true)
+		draw_rect(hazard.bounds, Color("9ce8ff"), false, 2)
 	draw_rect(room.bounds, Color("a9c6d9") if connected else Color("586576"), false, 3)
 	draw_string(font, room.bounds.position + Vector2(18, 34), room.id, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
 	draw_string(font, room.bounds.position + Vector2(18, 59), "CONNECTED TO ROOT" if connected else "NOT CONNECTED", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("c8fff2") if connected else Color("aab0bb"))
@@ -163,9 +191,16 @@ func _draw_player() -> void:
 	draw_circle(player_position, 5, Color("513b12"))
 	draw_string(font, player_position + Vector2(-28, -23), "PLAYER", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("fff1c5"))
 
+func _draw_collectable(collectable) -> void:
+	if model.collected_ids.has(collectable.id):
+		return
+	draw_circle(collectable.position, 12, Color("ffd166"))
+	draw_circle(collectable.position, 6, Color("fff4c7"))
+	draw_string(font, collectable.position + Vector2(-24, -18), "GOLD", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("ffe7a1"))
+
 func _draw_help() -> void:
 	draw_rect(Rect2(48, 744, 1104, 34), Color("1c2635"), true)
-	draw_string(font, Vector2(64, 767), "WASD  Move    •    SPACE  Room B flash    •    Click adjacent doors    •    Cyan lines are open connections", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("d9e5f4"))
+	draw_string(font, Vector2(64, 767), "WASD  Move    •    Click adjacent doors    •    Blue water requires connected Flippers Room", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("d9e5f4"))
 
 func _ability_summary() -> String:
 	var abilities: Array[String] = ["Starting: movement", "Doors: %d" % model.capabilities.max_open_doors]

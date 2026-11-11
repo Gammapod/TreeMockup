@@ -2,6 +2,7 @@ extends SceneTree
 
 const BASELINE_SCENARIO_SCRIPT: Script = preload("res://scenarios/baseline_scenario.gd")
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
+const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
 
 var failures: Array[String] = []
 
@@ -10,6 +11,7 @@ func _init() -> void:
 	_test_root_only_opening_rule()
 	_test_capacity_from_room_c()
 	_test_propped_path_and_branch_collapse()
+	_test_health_flippers_and_gold()
 	if failures.is_empty():
 		print("All dungeon model tests passed.")
 		quit(0)
@@ -20,6 +22,10 @@ func _init() -> void:
 
 func _model():
 	var scenario_factory = BASELINE_SCENARIO_SCRIPT.new()
+	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
+
+func _water_model():
+	var scenario_factory = WATER_FLIPPERS_SCENARIO_SCRIPT.new()
 	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
 
 func _test_initial_root_and_capabilities() -> void:
@@ -58,6 +64,24 @@ func _test_propped_path_and_branch_collapse() -> void:
 	_expect_equal(model.try_toggle_door("Start—C"), "closed", "Root-side door closes with player at root")
 	_expect(not model.door_state("D—C").open, "Detached C-D branch closes automatically")
 	_expect_equal(model.door_state("D—C").sealed_reason, "root", "Detached C-D is sealed")
+
+func _test_health_flippers_and_gold() -> void:
+	var model = _water_model()
+	_expect_equal(model.current_hp, 1, "Starting Room grants one current HP")
+	_expect_equal(model.capabilities.max_hp, 1, "Starting Room grants one max HP")
+	_expect(not model.capabilities.can_cross_water, "Water cannot be crossed before Flippers Room connects")
+	_expect_equal(model.try_toggle_door("Start—Water"), "opened", "Water Room connects")
+	_expect_equal(model.current_hp, 2, "Water Room grants one current HP")
+	_expect_equal(model.try_toggle_door("Start—Flippers"), "opened", "Flippers Room connects")
+	_expect(model.capabilities.can_cross_water, "Flippers Room enables water crossing")
+	_expect_equal(model.current_hp, 3, "Flippers Room grants one current HP")
+	_expect_equal(model.try_traverse_door("Start—Water"), true, "Player enters Water Room")
+	_expect_equal(model.try_toggle_door("Water—Prize"), "opened", "Player opens Prize Room door")
+	_expect_equal(model.try_traverse_door("Water—Prize"), true, "Player enters Prize Room")
+	_expect_equal(model.current_hp, 4, "Prize Room grants one current HP")
+	_expect_equal(model.try_collect("prize_gold"), true, "Gold is collected in Prize Room")
+	_expect_equal(model.gold_collected, 1, "Collected gold is counted once")
+	_expect_equal(model.try_collect("prize_gold"), false, "Gold cannot be collected twice")
 
 func _expect(condition: bool, description: String) -> void:
 	if not condition:

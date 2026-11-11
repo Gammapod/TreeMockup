@@ -9,6 +9,9 @@ var player_room: String
 var reachable_rooms: Dictionary = {}
 var door_states: Dictionary = {}
 var capabilities
+var current_hp: int = 0
+var gold_collected: int = 0
+var collected_ids: Dictionary = {}
 
 func _init(p_scenario) -> void:
 	scenario = p_scenario
@@ -51,6 +54,16 @@ func try_traverse_door(door_id: String) -> bool:
 	_recalculate()
 	return true
 
+func try_collect(collectable_id: String) -> bool:
+	if not scenario.collectables.has(collectable_id) or collected_ids.has(collectable_id):
+		return false
+	var collectable = scenario.collectables[collectable_id]
+	if collectable.room_id != player_room:
+		return false
+	collected_ids[collectable_id] = true
+	gold_collected += collectable.gold_value
+	return true
+
 func _recalculate() -> void:
 	reachable_rooms = _calculate_reachable_rooms()
 	if scenario.rules.collapse_disconnected_branches:
@@ -59,7 +72,12 @@ func _recalculate() -> void:
 			if state.open and (not reachable_rooms.has(door.room_a) or not reachable_rooms.has(door.room_b)):
 				state.open = false
 	reachable_rooms = _calculate_reachable_rooms()
+	var previous_max_hp: int = capabilities.max_hp
 	capabilities = _derive_capabilities()
+	if capabilities.max_hp > previous_max_hp:
+		current_hp += capabilities.max_hp - previous_max_hp
+	else:
+		current_hp = mini(current_hp, capabilities.max_hp)
 	var open_count: int = open_door_count()
 	for door in scenario.doors.values():
 		var state = door_state(door.id)
@@ -73,6 +91,8 @@ func _derive_capabilities():
 		var room = scenario.rooms[room_id]
 		result.movement_multiplier *= room.movement_multiplier
 		result.max_open_doors += room.max_open_doors_bonus
+		result.max_hp += room.health_bonus
+		result.can_cross_water = result.can_cross_water or room.grants_water_walking
 		for action_id: String in room.active_actions:
 			if not result.active_actions.has(action_id):
 				result.active_actions.append(action_id)

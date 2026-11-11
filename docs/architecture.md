@@ -27,6 +27,8 @@ This project is a reusable testbed, not a production game. New experiments shoul
 3. Add focused model tests for any behavior that is accepted as stable.
 4. Point the view at the scenario while exploring it; do not add scenario-specific rules to `Dungeon.gd`.
 
+Reusable room content belongs in definitions, not graph rules: `RoomDefinition` provides passive capability modifiers and water hazards, while `CollectableDefinition` provides persistent per-scenario rewards.
+
 ## Test command
 
 ```powershell
