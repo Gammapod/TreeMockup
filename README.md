@@ -1,12 +1,12 @@
 # Door Network Prototype
 
-Open `project.godot` in Godot 4, then run the project (F6/F5). The active experiment is **Switch & Wall**.
+Open `project.godot` in Godot 4, then run the project (F6/F5). The active experiment is **Combat**.
 
 - Move the yellow player with **WASD**.
 - Click an adjacent door to open or close it.
-- Collect the Fork and Wall keys to permanently gain enough door capacity for the branch puzzle.
-- Keep Sword Room connected to activate **Spacebar** sword swings, then toggle the switch in Switch Room.
-- The switch makes Wall Room's barrier passable, allowing access to Prize.
+- Collect the West Room key, then keep Sword Room connected while opening the Danger branch.
+- **Spacebar** defeats nearby bats in one hit while Sword Room is connected.
+- Bats pursue only in their own room, reset when the player leaves, and defeated bats respawn if their room disconnects.
 - Each root-connected room grants +1 current and maximum HP. The HUD shows HP and collected gold.
 
 ## Testbed

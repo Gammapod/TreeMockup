@@ -3,6 +3,7 @@ extends RefCounted
 
 const CAPABILITIES_SCRIPT: Script = preload("res://scripts/player_capabilities.gd")
 const DOOR_STATE_SCRIPT: Script = preload("res://scripts/door_runtime_state.gd")
+const ENEMY_STATE_SCRIPT: Script = preload("res://scripts/enemy_runtime_state.gd")
 
 var scenario
 var player_room: String
@@ -14,6 +15,8 @@ var gold_collected: int = 0
 var collected_ids: Dictionary = {}
 var permanent_door_capacity_bonus: int = 0
 var switch_states: Dictionary = {}
+var enemy_states: Dictionary = {}
+var damage_cooldown: float = 0.0
 
 func _init(p_scenario) -> void:
 	scenario = p_scenario
@@ -23,6 +26,8 @@ func _init(p_scenario) -> void:
 		door_states[door.id] = DOOR_STATE_SCRIPT.new()
 	for switch_definition in scenario.switches.values():
 		switch_states[switch_definition.id] = switch_definition.initial_state
+	for enemy_definition in scenario.enemies.values():
+		enemy_states[enemy_definition.id] = ENEMY_STATE_SCRIPT.new(enemy_definition.home_position)
 	_recalculate()
 
 func is_room_reachable(room_id: String) -> bool:
@@ -54,7 +59,9 @@ func try_traverse_door(door_id: String) -> bool:
 	var destination: String = door.other_room(player_room)
 	if not state.open or destination == "":
 		return false
+	var departed_room: String = player_room
 	player_room = destination
+	_reset_surviving_enemies_in_room(departed_room)
 	_recalculate()
 	return true
 
@@ -93,6 +100,37 @@ func is_wall_passable(wall_id: String) -> bool:
 				return is_switch_active(wall.switch_id)
 	return false
 
+func is_enemy_alive(enemy_id: String) -> bool:
+	return enemy_states[enemy_id].alive
+
+func enemy_state(enemy_id: String):
+	return enemy_states[enemy_id]
+
+func try_attack_near(player_position: Vector2, range: float) -> int:
+	if not capabilities.has_action("sword"):
+		return 0
+	var defeated: int = 0
+	for enemy_definition in scenario.enemies.values():
+		var state = enemy_state(enemy_definition.id)
+		if state.alive and enemy_definition.room_id == player_room and state.position.distance_to(player_position) <= range:
+			state.alive = false
+			defeated += 1
+	return defeated
+
+func update_enemies(delta: float, player_position: Vector2) -> bool:
+	damage_cooldown = maxf(0.0, damage_cooldown - delta)
+	var damaged_player: bool = false
+	for enemy_definition in scenario.enemies.values():
+		var state = enemy_state(enemy_definition.id)
+		if not state.alive or enemy_definition.room_id != player_room:
+			continue
+		state.position = state.position.move_toward(player_position, enemy_definition.speed * delta)
+		if damage_cooldown <= 0.0 and state.position.distance_to(player_position) < 24.0:
+			current_hp = maxi(0, current_hp - 1)
+			damage_cooldown = 0.6
+			damaged_player = true
+	return damaged_player
+
 func _recalculate() -> void:
 	reachable_rooms = _calculate_reachable_rooms()
 	if scenario.rules.collapse_disconnected_branches:
@@ -112,6 +150,7 @@ func _recalculate() -> void:
 		var state = door_state(door.id)
 		state.propped = state.open and scenario.rules.prop_player_path and _would_disconnect_player(door)
 		state.sealed_reason = "" if state.open else _seal_reason(door, open_count)
+	_respawn_defeated_enemies_in_disconnected_rooms()
 
 func _derive_capabilities():
 	var result = CAPABILITIES_SCRIPT.new()
@@ -188,3 +227,16 @@ func _would_disconnect_player(candidate) -> bool:
 				visited[neighbor] = true
 				frontier.append(neighbor)
 	return not visited.has(player_room)
+
+func _reset_surviving_enemies_in_room(room_id: String) -> void:
+	for enemy_definition in scenario.enemies.values():
+		var state = enemy_state(enemy_definition.id)
+		if enemy_definition.room_id == room_id and state.alive:
+			state.position = enemy_definition.home_position
+
+func _respawn_defeated_enemies_in_disconnected_rooms() -> void:
+	for enemy_definition in scenario.enemies.values():
+		var state = enemy_state(enemy_definition.id)
+		if not state.alive and not reachable_rooms.has(enemy_definition.room_id):
+			state.alive = true
+			state.position = enemy_definition.home_position

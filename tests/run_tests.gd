@@ -4,6 +4,7 @@ const BASELINE_SCENARIO_SCRIPT: Script = preload("res://scenarios/baseline_scena
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
 const SWITCH_SCENARIO_SCRIPT: Script = preload("res://scenarios/switch_scenario.gd")
+const COMBAT_SCENARIO_SCRIPT: Script = preload("res://scenarios/combat_scenario.gd")
 
 var failures: Array[String] = []
 
@@ -14,6 +15,7 @@ func _init() -> void:
 	_test_propped_path_and_branch_collapse()
 	_test_health_flippers_and_gold()
 	_test_switch_wall_and_key_progression()
+	_test_combat_enemy_rules()
 	if failures.is_empty():
 		print("All dungeon model tests passed.")
 		quit(0)
@@ -32,6 +34,10 @@ func _water_model():
 
 func _switch_model():
 	var scenario_factory = SWITCH_SCENARIO_SCRIPT.new()
+	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
+
+func _combat_model():
+	var scenario_factory = COMBAT_SCENARIO_SCRIPT.new()
 	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
 
 func _test_initial_root_and_capabilities() -> void:
@@ -109,6 +115,24 @@ func _test_switch_wall_and_key_progression() -> void:
 	_expect_equal(model.try_toggle_switch("switch_1"), "toggled", "Sword toggles switch")
 	_expect(model.is_switch_active("switch_1"), "Switch stays active")
 	_expect(model.is_wall_passable("wall_1"), "Associated wall becomes passable")
+
+func _test_combat_enemy_rules() -> void:
+	var model = _combat_model()
+	_expect_equal(model.try_toggle_door("Start—West"), "opened", "West key branch opens")
+	_expect_equal(model.try_traverse_door("Start—West"), true, "Player enters West Room")
+	_expect_equal(model.try_collect("west_key"), true, "West key is collected")
+	_expect_equal(model.capabilities.max_open_doors, 2, "West key raises permanent capacity")
+	_expect_equal(model.try_traverse_door("Start—West"), true, "Player returns to Starting Room")
+	_expect_equal(model.try_toggle_door("Start—West"), "closed", "West branch closes")
+	_expect_equal(model.try_toggle_door("Start—Sword"), "opened", "Sword branch opens")
+	_expect_equal(model.try_toggle_door("Start—Danger"), "opened", "Danger branch opens alongside Sword")
+	_expect_equal(model.try_traverse_door("Start—Danger"), true, "Player enters Danger")
+	_expect(model.capabilities.has_action("sword"), "Sword remains active from the connected branch")
+	_expect_equal(model.try_attack_near(Vector2(820, 405), 100.0), 3, "Sword defeats all nearby bats in one hit")
+	_expect(not model.is_enemy_alive("danger_bat_1"), "Defeated bat remains defeated while connected")
+	_expect_equal(model.try_traverse_door("Start—Danger"), true, "Player returns to Starting Room")
+	_expect_equal(model.try_toggle_door("Start—Danger"), "closed", "Danger branch closes")
+	_expect(model.is_enemy_alive("danger_bat_1"), "Defeated bat respawns when its room disconnects")
 
 func _expect(condition: bool, description: String) -> void:
 	if not condition:

@@ -3,25 +3,33 @@ extends Node2D
 const PLAYER_RADIUS: float = 13.0
 const PLAYER_SPEED: float = 230.0
 const DOOR_HALF_WIDTH: float = 42.0
-const SWITCH_SCENARIO_SCRIPT: Script = preload("res://scenarios/switch_scenario.gd")
+const SWORD_RANGE: float = 80.0
+const COMBAT_SCENARIO_SCRIPT: Script = preload("res://scenarios/combat_scenario.gd")
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 
 var scenario
 var model
-var player_position: Vector2 = Vector2(940, 555)
+var player_position: Vector2 = Vector2(800, 635)
 var font: Font
 var status_message: String = "Open doors to build a loop-free network."
 var flash_time: float = 0.0
+var sword_swing_time: float = 0.0
 
 func _ready() -> void:
 	font = ThemeDB.fallback_font
-	scenario = SWITCH_SCENARIO_SCRIPT.new().create()
+	scenario = COMBAT_SCENARIO_SCRIPT.new().create()
 	model = DUNGEON_MODEL_SCRIPT.new(scenario)
 	queue_redraw()
 
 func _process(delta: float) -> void:
+	if model.update_enemies(delta, player_position):
+		status_message = "A bat hit you!"
+		queue_redraw()
 	if flash_time > 0.0:
 		flash_time = maxf(0.0, flash_time - delta)
+		queue_redraw()
+	if sword_swing_time > 0.0:
+		sword_swing_time = maxf(0.0, sword_swing_time - delta)
 		queue_redraw()
 	var direction: Vector2 = Vector2(
 		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
@@ -34,6 +42,7 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.keycode == KEY_SPACE and event.pressed and not event.echo:
 		if model.capabilities.has_action("sword"):
+			sword_swing_time = 0.18
 			status_message = _use_sword()
 		elif model.capabilities.has_action("blue_flash"):
 			flash_time = 0.22
@@ -85,6 +94,9 @@ func _apply_wall_collisions(room, current: Vector2, next: Vector2) -> Vector2:
 	return next
 
 func _use_sword() -> String:
+	var defeated: int = model.try_attack_near(player_position, SWORD_RANGE)
+	if defeated > 0:
+		return "Defeated %d bat%s!" % [defeated, "s" if defeated != 1 else ""]
 	for switch_definition in scenario.switches.values():
 		if switch_definition.room_id == model.player_room and player_position.distance_to(switch_definition.position) < 80.0:
 			var result: String = model.try_toggle_switch(switch_definition.id)
@@ -139,6 +151,8 @@ func _draw() -> void:
 		_draw_collectable(collectable)
 	for switch_definition in scenario.switches.values():
 		_draw_switch(switch_definition)
+	for enemy_definition in scenario.enemies.values():
+		_draw_enemy(enemy_definition)
 	_draw_player()
 	_draw_help()
 
@@ -212,6 +226,10 @@ func _draw_door(door) -> void:
 	draw_string(font, door.position + Vector2(-31, -DOOR_HALF_WIDTH - 12), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, door_color)
 
 func _draw_player() -> void:
+	if sword_swing_time > 0.0:
+		var pulse_alpha: float = sword_swing_time / 0.18
+		draw_circle(player_position, SWORD_RANGE, Color(1.0, 0.84, 0.36, 0.14 * pulse_alpha))
+		draw_arc(player_position, SWORD_RANGE, 0.0, TAU, 32, Color(1.0, 0.9, 0.52, 0.9 * pulse_alpha), 2.5, true)
 	draw_circle(player_position + Vector2(2, 3), PLAYER_RADIUS + 2, Color(0, 0, 0, 0.28))
 	var player_color: Color = Color("43b9ff") if flash_time > 0.0 else Color("ffd166")
 	if flash_time > 0.0:
@@ -235,9 +253,18 @@ func _draw_switch(switch_definition) -> void:
 	draw_circle(switch_definition.position, 8, Color("1a2431"))
 	draw_string(font, switch_definition.position + Vector2(-29, -25), "ON" if active else "OFF", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, switch_color)
 
+func _draw_enemy(enemy_definition) -> void:
+	var state = model.enemy_state(enemy_definition.id)
+	if not state.alive:
+		return
+	var bat_color: Color = Color("d181c3")
+	draw_circle(state.position, 8, bat_color)
+	draw_line(state.position + Vector2(-17, -6), state.position + Vector2(-5, 3), bat_color, 5, true)
+	draw_line(state.position + Vector2(5, 3), state.position + Vector2(17, -6), bat_color, 5, true)
+
 func _draw_help() -> void:
 	draw_rect(Rect2(48, 744, 1104, 34), Color("1c2635"), true)
-	draw_string(font, Vector2(64, 767), "WASD  Move    •    Click adjacent doors    •    SPACE  Swing sword near a switch", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("d9e5f4"))
+	draw_string(font, Vector2(64, 767), "WASD  Move    •    Click adjacent doors    •    SPACE  Swing connected sword near bats", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("d9e5f4"))
 
 func _ability_summary() -> String:
 	var abilities: Array[String] = ["Starting: movement", "Doors: %d" % model.capabilities.max_open_doors]
