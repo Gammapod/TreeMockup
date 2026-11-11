@@ -1,0 +1,141 @@
+class_name DungeonModel
+extends RefCounted
+
+const CAPABILITIES_SCRIPT: Script = preload("res://scripts/player_capabilities.gd")
+const DOOR_STATE_SCRIPT: Script = preload("res://scripts/door_runtime_state.gd")
+
+var scenario
+var player_room: String
+var reachable_rooms: Dictionary = {}
+var door_states: Dictionary = {}
+var capabilities
+
+func _init(p_scenario) -> void:
+	scenario = p_scenario
+	player_room = scenario.rules.root_room
+	capabilities = CAPABILITIES_SCRIPT.new()
+	for door in scenario.doors.values():
+		door_states[door.id] = DOOR_STATE_SCRIPT.new()
+	_recalculate()
+
+func is_room_reachable(room_id: String) -> bool:
+	return reachable_rooms.has(room_id)
+
+func door_state(door_id: String):
+	return door_states[door_id]
+
+func try_toggle_door(door_id: String) -> String:
+	var door = scenario.doors[door_id]
+	var state = door_state(door_id)
+	if scenario.rules.require_adjacent_interaction and door.other_room(player_room) == "":
+		return "remote"
+	if state.open:
+		if state.propped:
+			return "propped"
+		state.open = false
+		_recalculate()
+		return "closed"
+	if state.is_sealed():
+		return state.sealed_reason
+	state.open = true
+	_recalculate()
+	return "opened"
+
+func try_traverse_door(door_id: String) -> bool:
+	var door = scenario.doors[door_id]
+	var state = door_state(door_id)
+	var destination: String = door.other_room(player_room)
+	if not state.open or destination == "":
+		return false
+	player_room = destination
+	_recalculate()
+	return true
+
+func _recalculate() -> void:
+	reachable_rooms = _calculate_reachable_rooms()
+	if scenario.rules.collapse_disconnected_branches:
+		for door in scenario.doors.values():
+			var state = door_state(door.id)
+			if state.open and (not reachable_rooms.has(door.room_a) or not reachable_rooms.has(door.room_b)):
+				state.open = false
+	reachable_rooms = _calculate_reachable_rooms()
+	capabilities = _derive_capabilities()
+	var open_count: int = open_door_count()
+	for door in scenario.doors.values():
+		var state = door_state(door.id)
+		state.propped = state.open and scenario.rules.prop_player_path and _would_disconnect_player(door)
+		state.sealed_reason = "" if state.open else _seal_reason(door, open_count)
+
+func _derive_capabilities():
+	var result = CAPABILITIES_SCRIPT.new()
+	result.max_open_doors = scenario.rules.base_max_open_doors
+	for room_id: String in reachable_rooms:
+		var room = scenario.rooms[room_id]
+		result.movement_multiplier *= room.movement_multiplier
+		result.max_open_doors += room.max_open_doors_bonus
+		for action_id: String in room.active_actions:
+			if not result.active_actions.has(action_id):
+				result.active_actions.append(action_id)
+	return result
+
+func _seal_reason(door, open_count: int) -> String:
+	var reaches_a: bool = reachable_rooms.has(door.room_a)
+	var reaches_b: bool = reachable_rooms.has(door.room_b)
+	if scenario.rules.require_root_connection and reaches_a == reaches_b:
+		return "root"
+	if scenario.rules.prevent_loops and _would_form_loop(door):
+		return "loop"
+	if open_count >= capabilities.max_open_doors:
+		return "capacity"
+	return ""
+
+func open_door_count() -> int:
+	var count: int = 0
+	for state in door_states.values():
+		if state.open:
+			count += 1
+	return count
+
+func _calculate_reachable_rooms() -> Dictionary:
+	var reachable: Dictionary = {scenario.rules.root_room: true}
+	var frontier: Array[String] = [scenario.rules.root_room]
+	while not frontier.is_empty():
+		var current: String = frontier.pop_front()
+		for door in scenario.doors.values():
+			if not door_state(door.id).open:
+				continue
+			var neighbor: String = door.other_room(current)
+			if neighbor != "" and not reachable.has(neighbor):
+				reachable[neighbor] = true
+				frontier.append(neighbor)
+	return reachable
+
+func _would_form_loop(candidate) -> bool:
+	var visited: Dictionary = {candidate.room_a: true}
+	var frontier: Array[String] = [candidate.room_a]
+	while not frontier.is_empty():
+		var current: String = frontier.pop_front()
+		if current == candidate.room_b:
+			return true
+		for door in scenario.doors.values():
+			if not door_state(door.id).open:
+				continue
+			var neighbor: String = door.other_room(current)
+			if neighbor != "" and not visited.has(neighbor):
+				visited[neighbor] = true
+				frontier.append(neighbor)
+	return false
+
+func _would_disconnect_player(candidate) -> bool:
+	var visited: Dictionary = {scenario.rules.root_room: true}
+	var frontier: Array[String] = [scenario.rules.root_room]
+	while not frontier.is_empty():
+		var current: String = frontier.pop_front()
+		for door in scenario.doors.values():
+			if not door_state(door.id).open or door.id == candidate.id:
+				continue
+			var neighbor: String = door.other_room(current)
+			if neighbor != "" and not visited.has(neighbor):
+				visited[neighbor] = true
+				frontier.append(neighbor)
+	return not visited.has(player_room)
