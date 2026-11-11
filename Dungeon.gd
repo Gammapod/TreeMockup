@@ -4,24 +4,34 @@ const PLAYER_RADIUS: float = 13.0
 const PLAYER_SPEED: float = 230.0
 const DOOR_HALF_WIDTH: float = 42.0
 const SWORD_RANGE: float = 80.0
+const BASELINE_SCENARIO_SCRIPT: Script = preload("res://scenarios/baseline_scenario.gd")
+const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
+const SWITCH_SCENARIO_SCRIPT: Script = preload("res://scenarios/switch_scenario.gd")
 const COMBAT_SCENARIO_SCRIPT: Script = preload("res://scenarios/combat_scenario.gd")
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 
 var scenario
 var model
-var player_position: Vector2 = Vector2(800, 635)
+var player_position: Vector2 = Vector2.ZERO
 var font: Font
 var status_message: String = "Open doors to build a loop-free network."
 var flash_time: float = 0.0
 var sword_swing_time: float = 0.0
+var in_menu: bool = true
+var scenario_entries: Array = [
+	{"title": "Alpha Dungeon", "description": "Original graph rules and room abilities.", "script": BASELINE_SCENARIO_SCRIPT},
+	{"title": "Water & Flippers", "description": "A connected ability changes traversal in another branch.", "script": WATER_FLIPPERS_SCENARIO_SCRIPT},
+	{"title": "Switch & Wall", "description": "Keys, sword activation, and a remote switch-controlled wall.", "script": SWITCH_SCENARIO_SCRIPT},
+	{"title": "Combat", "description": "Connected sword ability, bats, keys, and risk/reward branches.", "script": COMBAT_SCENARIO_SCRIPT},
+]
 
 func _ready() -> void:
 	font = ThemeDB.fallback_font
-	scenario = COMBAT_SCENARIO_SCRIPT.new().create()
-	model = DUNGEON_MODEL_SCRIPT.new(scenario)
 	queue_redraw()
 
 func _process(delta: float) -> void:
+	if in_menu:
+		return
 	if model.update_enemies(delta, player_position):
 		status_message = "A bat hit you!"
 		queue_redraw()
@@ -40,6 +50,13 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _input(event: InputEvent) -> void:
+	if in_menu:
+		_handle_menu_input(event)
+		return
+	if event is InputEventKey and event.keycode == KEY_ESCAPE and event.pressed and not event.echo:
+		in_menu = true
+		queue_redraw()
+		return
 	if event is InputEventKey and event.keycode == KEY_SPACE and event.pressed and not event.echo:
 		if model.capabilities.has_action("sword"):
 			sword_swing_time = 0.18
@@ -57,6 +74,37 @@ func _input(event: InputEvent) -> void:
 				status_message = _toggle_message(door.id, model.try_toggle_door(door.id))
 				queue_redraw()
 				return
+
+func _handle_menu_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var index: int = -1
+		match event.keycode:
+			KEY_1: index = 0
+			KEY_2: index = 1
+			KEY_3: index = 2
+			KEY_4: index = 3
+		if index >= 0:
+			_load_scenario(index)
+			return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		for index: int in range(scenario_entries.size()):
+			if _menu_entry_rect(index).has_point(event.position):
+				_load_scenario(index)
+				return
+
+func _load_scenario(index: int) -> void:
+	var scenario_factory = scenario_entries[index].script.new()
+	scenario = scenario_factory.create()
+	model = DUNGEON_MODEL_SCRIPT.new(scenario)
+	player_position = scenario.rooms[model.player_room].bounds.get_center()
+	status_message = "Scenario loaded: %s" % scenario.name
+	flash_time = 0.0
+	sword_swing_time = 0.0
+	in_menu = false
+	queue_redraw()
+
+func _menu_entry_rect(index: int) -> Rect2:
+	return Rect2(150, 190 + index * 105, 900, 82)
 
 func _move_player(amount: Vector2) -> void:
 	for door in scenario.doors.values():
@@ -141,6 +189,9 @@ func _toggle_message(door_id: String, result: String) -> String:
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1200, 800), Color("10141d"))
+	if in_menu:
+		_draw_menu()
+		return
 	_draw_header()
 	_draw_open_door_graph()
 	for room in scenario.rooms.values():
@@ -155,6 +206,18 @@ func _draw() -> void:
 		_draw_enemy(enemy_definition)
 	_draw_player()
 	_draw_help()
+
+func _draw_menu() -> void:
+	draw_string(font, Vector2(150, 90), "DUNGEON TESTBED", HORIZONTAL_ALIGNMENT_LEFT, -1, 34, Color("eef4ff"))
+	draw_string(font, Vector2(150, 124), "Choose an isolated scenario to explore.", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("9ba8ba"))
+	for index: int in range(scenario_entries.size()):
+		var entry = scenario_entries[index]
+		var rect: Rect2 = _menu_entry_rect(index)
+		draw_rect(rect, Color("1c2635"), true)
+		draw_rect(rect, Color("55e6cd"), false, 2)
+		draw_string(font, rect.position + Vector2(24, 31), "%d. %s" % [index + 1, entry.title], HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("eef4ff"))
+		draw_string(font, rect.position + Vector2(24, 59), entry.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("b7c7d8"))
+	draw_string(font, Vector2(150, 665), "Click a scenario or press 1–4. Press Esc during a scenario to return here.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("f6d365"))
 
 func _draw_header() -> void:
 	draw_string(font, Vector2(48, 55), "DOOR NETWORK — %s" % scenario.name.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("eef4ff"))

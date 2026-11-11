@@ -1,8 +1,9 @@
 # Door Network Prototype
 
-Open `project.godot` in Godot 4, then run the project (F6/F5). The active experiment is **Combat**.
+Open `project.godot` in Godot 4, then run the project (F6/F5). Choose an experiment from the scenario menu.
 
 - Move the yellow player with **WASD**.
+- Choose a scenario with the mouse or **1–4**; press **Esc** during a scenario to return to the menu.
 - Click an adjacent door to open or close it.
 - Collect the West Room key, then keep Sword Room connected while opening the Danger branch.
 - **Spacebar** defeats nearby bats in one hit while Sword Room is connected.
