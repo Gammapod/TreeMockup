@@ -85,4 +85,6 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 
 Run from the repository root (use `--path .` if already in `v2`). Tests cover allocations/refunds, permanent rewards, ongoing ALL/ANY prerequisites, exclusivity, player safety, transaction previews and room/coordinator integration.
 
-Next: author a larger fork/merge scenario in the editors, then address the specific authoring friction and missing mechanics it exposes.
+## Experiment roadmap
+
+See the [V2 experiment backlog](docs/backlog.md) for prioritized gameplay, UI, authoring, primitive and layout ideas. Its guiding goal is to learn what supports **“the dungeon is also a skill tree.”** The recommended next experiment is an interactive gameplay map/skill tree, followed by separate tests of room clearing, retained activation, remote reconfiguration and warping.
