@@ -7,6 +7,9 @@ func compile(document: Dictionary) -> Dictionary:
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
 	var data: Dictionary = document.dungeon.duplicate(true)
+	var base_hp: Variant = data.get("base_hp", 5)
+	if not _number(base_hp) or base_hp < 0 or floor(base_hp) != base_hp:
+		errors.append("base_hp must be a nonnegative integer")
 	data.templates = {}
 	data.nodes = {}
 	for room in document.rooms:
@@ -23,10 +26,11 @@ func compile(document: Dictionary) -> Dictionary:
 				"enemy":
 					var hp: Variant = object.properties.get("hp", 2)
 					var speed: Variant = object.properties.get("speed", 95.0)
-					if not _number(hp) or hp <= 0 or floor(hp) != hp or not _number(speed) or speed < 0:
+					var radius: Variant = object.properties.get("radius", 14.0)
+					if not _number(hp) or hp <= 0 or floor(hp) != hp or not _number(speed) or speed < 0 or not _number(radius) or radius <= 0:
 						errors.append("Invalid enemy hp/speed: " + object.id)
 					else:
-						template.enemies.append({"id": object.id, "position": position, "hp": int(hp), "speed": float(speed)})
+						template.enemies.append({"id": object.id, "position": position, "hp": int(hp), "speed": float(speed), "radius": float(radius)})
 				"pickup", "chest":
 					var kind: String = str(object.properties.get("kind", "gold"))
 					if kind not in ["capacity", "gold"]:
@@ -53,11 +57,19 @@ func compile(document: Dictionary) -> Dictionary:
 			if ability not in ["sword", "dash", "flippers"]:
 				errors.append("Unsupported ability: " + ability)
 		for modifier in node.get("modifiers", {}):
-			if modifier not in ["move_speed_multiplier", "sword_range_multiplier", "sword_damage_bonus", "dash_speed_multiplier"]:
+			if modifier in ["sword_style", "dash_style"]:
+				var allowed: Array = ["big", "fast"] if modifier == "sword_style" else ["phase", "run"]
+				if node.modifiers[modifier] not in allowed:
+					errors.append("Unsupported %s: %s" % [modifier, node.modifiers[modifier]])
+			elif modifier not in ["move_speed_multiplier", "sword_range_multiplier", "sword_damage_bonus", "dash_speed_multiplier", "max_hp_bonus"]:
 				errors.append("Unsupported modifier: " + modifier)
 			elif not _number(node.modifiers[modifier]) or node.modifiers[modifier] < 0:
 				errors.append("Modifier must be a nonnegative number: " + modifier)
+			elif modifier in ["max_hp_bonus", "sword_damage_bonus"] and floor(node.modifiers[modifier]) != node.modifiers[modifier]:
+				errors.append("Modifier must be an integer: " + modifier)
 		data.nodes[node.id] = result
+	if errors.is_empty() and base_hp + data.nodes[data.root].get("modifiers", {}).get("max_hp_bonus", 0) < 1:
+		errors.append("Root and base_hp must grant at least one HP")
 	for interaction in data.interactions:
 		var source := _object(document, interaction.source)
 		var target := _object(document, interaction.target)

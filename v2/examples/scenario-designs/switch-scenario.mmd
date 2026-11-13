@@ -1,0 +1,28 @@
+flowchart TD
+%% Major idea: A switch can affect things in a different room
+%% Golden path: player collects the key in the wall room, then goes to the switch room and hit the switch, then they can cross the wall room to reach the prize.
+%% Starting door capacity: 1
+    start["start"]
+    %% When connected: +1 current/max HP
+    %% Contents: player spawn
+    fork_room["Fork"]
+    %% When connected: +1 current/max HP
+    %% Contents: key
+    sword_room["Sword"]
+    %% When connected: sword ability
+    %% Contents: empty
+    switch_room["Switch"]
+    %% When connected: +1 current/max HP
+    %% Contents: switch_1. When switch_1 is active, wall_1 is passable 
+    wall_room["Wall"]
+    %% When connected: +1 current/max HP
+    %% Contents: wall_1 hazard, splitting room in half between the two doors. Also contains collectable key, on the fork_room side of the wall.
+    prize_room["Prize"]
+    %% When connected: +1 current/max HP
+    %% Contents: collectable coin
+
+    start --- fork_room
+    fork_room --- sword_room
+    fork_room --- wall_room
+    sword_room --- switch_room
+    wall_room --- prize_room

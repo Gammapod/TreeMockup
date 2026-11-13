@@ -31,8 +31,8 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 			pickups.append(pickup.duplicate())
 	player = PLAYER.new()
 	player.position = ports.get(entry, data.get("spawn", Vector2(400, 400)))
-	player.capabilities = caps
-	player.hp = hp
+	player.set_capabilities(caps, false)
+	player.hp = mini(hp, player.max_hp)
 	player.attack.connect(_attack)
 	add_child(player)
 	for rect in [Rect2(35, 55, 730, 15), Rect2(35, 570, 730, 15), Rect2(35, 55, 15, 530), Rect2(750, 55, 15, 530)]:
@@ -53,11 +53,11 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 		body.collision_mask = 1
 		var shape := CollisionShape2D.new()
 		var circle := CircleShape2D.new()
-		circle.radius = 14
+		circle.radius = enemy.get("radius", 14.0) if enemy is Dictionary else 14.0
 		shape.shape = circle
 		body.add_child(shape)
 		add_child(body)
-		enemies.append({"id": id, "body": body, "hp": enemy.get("hp", 2) if enemy is Dictionary else 2, "speed": enemy.get("speed", 95.0) if enemy is Dictionary else 95.0})
+		enemies.append({"id": id, "body": body, "hp": enemy.get("hp", 2) if enemy is Dictionary else 2, "speed": enemy.get("speed", 95.0) if enemy is Dictionary else 95.0, "radius": circle.radius})
 	apply_object_states({})
 
 func _wall(rect: Rect2) -> StaticBody2D:
@@ -85,7 +85,7 @@ func _physics_process(_delta: float) -> void:
 	for enemy in enemies:
 		enemy.body.velocity = enemy.body.position.direction_to(player.position) * enemy.speed
 		enemy.body.move_and_slide()
-		if enemy.body.position.distance_to(player.position) < 29 and player.hurt() and player.hp == 0:
+		if enemy.body.position.distance_to(player.position) < enemy.radius + 13 and player.hurt() and player.hp == 0:
 			player_defeated.emit()
 			return
 	for i in range(pickups.size() - 1, -1, -1):
@@ -115,7 +115,7 @@ func _attack(origin: Vector2, facing: Vector2, reach: float, damage: int) -> voi
 	for i in range(enemies.size() - 1, -1, -1):
 		var enemy: Dictionary = enemies[i]
 		var offset: Vector2 = enemy.body.position - origin
-		if offset.length() > reach or (offset.length() > 1 and facing.dot(offset.normalized()) < cos(0.9)):
+		if offset.length() > reach + enemy.radius or (offset.length() > 1 and facing.dot(offset.normalized()) < cos(0.9)):
 			continue
 		var ray := PhysicsRayQueryParameters2D.create(to_global(origin), enemy.body.global_position, 1)
 		if not get_world_2d().direct_space_state.intersect_ray(ray).is_empty():
@@ -154,5 +154,5 @@ func _draw() -> void:
 		else:
 			draw_circle(pickup.position, 10, Color("88cbff") if pickup.kind == "capacity" else Color("ffd569"))
 	for enemy in enemies:
-		draw_circle(enemy.body.position, 14, Color("c580df"))
+		draw_circle(enemy.body.position, enemy.radius, Color("c580df"))
 		draw_string(ThemeDB.fallback_font, enemy.body.position + Vector2(-4, 5), str(enemy.hp), HORIZONTAL_ALIGNMENT_LEFT, -1, 13)

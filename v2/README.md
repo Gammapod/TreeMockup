@@ -7,12 +7,14 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 - WASD moves; E uses a nearby green doorway.
 - The side panel activates/deactivates adjacent rooms. Hover a button to preview affected nodes.
 - Space performs a timed directional sword attack when Sword is active.
-- Shift dashes when Boots is active. Dash collides with walls and does not grant invulnerability.
+- Shift dashes when Boots is active. Hit Dash halves its distance and bypasses enemy contact damage; Run replaces it with double-speed movement while Shift is held. Walls still block movement.
 - Blue pickups permanently increase allocation capacity; yellow pickups grant gold.
 - Activate both landings to activate Prize. Removing either landing also removes Prize, even if its other entrance remains connected.
 - Defeat returns you to Sanctuary at full health, retaining your build and rewards.
 
-Try activating Sword and Boots from Sanctuary, collecting their capacity pickups, and activating their landings. Prize can then be activated from either landing. Return to Sword and deactivate Sword Landing to see the two-room refund.
+The default scenario follows [branching-dungeon.mmd](examples/scenario-designs/branching-dungeon.mmd): activate Sword or Boots with your initial point, collect both keys, choose a style, reach its landing and collect another key. Explore the other branch, then activate Prize with both landings active. There are 14 nodes and 18 connections; all six keys fund the seven active non-root rooms on the final route. Practice rooms are optional allocations. Each branch's three styles are mutually exclusive.
+
+Big Swing grants 1.5× reach with a two-second attack cooldown; Fast Swing performs three half-range strikes. The HP+ choices grant five current/max HP, and the practice rooms grant one. Starting Room and Prize each grant one; this scenario starts with one HP. Defeated enemies stay defeated while their room remains active; keys remain collected permanently. See [branching-design.md](docs/branching-design.md) for the design mapping and test trace.
 
 Press **F2** to open the content editors. The current run pauses while editing.
 
@@ -30,12 +32,12 @@ The editors intentionally use JSON inspectors for detailed rules rather than pol
 
 Open `v2/examples/*.json` from the editor:
 
-- `branching.json`: the accepted V2 Sword/Boots/Prize demo, now entirely data-authored.
+- `branching.json`: the full Mermaid branching design, including practice rooms, sword/dash/HP choices, two-key ability rooms, alternate landing prerequisites and the shared Prize.
 - `water_flippers.json`: the old water/flippers topology with an actual water barrier and a prize chest. Activate Flippers from Start to cross the barrier in Water.
 - `switch_wall.json`: the old switch/wall topology, capacity pickups, and a sword-operated switch that changes a wall in another room. Its state persists while the target room is unloaded or inactive.
 - `combat.json`: the old combat topology, capacity progression, bats and gold rewards adapted to node allocation.
 
-These are adaptations to V2's activation and fixed-health rules. The original baseline's temporary capacity bonuses/HP growth and the full branch-combat variants remain additional runtime work; the format can retain their future abilities/modifiers and the playtest adapter reports unsupported mechanics rather than ignoring them.
+These use V2's room-activation rules. Health is configurable per scenario; the other examples retain five base HP. The original baseline's temporary capacity bonuses remain additional runtime work; unknown mechanics are retained by the format and reported by the playtest adapter rather than ignored.
 
 **Format and compatibility:** [content-format.md](docs/content-format.md) and [JSON Schema](docs/content.schema.json). Files use versioned, engine-neutral JSON; stable IDs; local coordinates; and explicit references. No Godot scene paths, executable code or live-run state are saved.
 
@@ -67,7 +69,7 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 ### Explicit prototype policies
 
 - Encounters: surviving enemies reset on departure; defeated enemies stay defeated while the node remains active. Deactivation resets its encounter. Permanent pickups remain collected.
-- Health: fixed five HP, no activation healing. Health-granting modifiers are deferred until their healing/removal policy is decided.
+- Health: five base HP by default; `dungeon.base_hp` can override this. Active nodes add `max_hp_bonus`. Increases grant the same amount of current HP, decreases clamp it, and room transitions never heal. Reactivating a health node grants its increase again, matching the graph's explicit current/max-HP rule.
 - Room activation is local to the current room, not proximity to a particular door. Remote activation is not implemented; add it later as an interaction permission rather than bypassing prerequisite/resource validation.
 - The demo has sword, dash and an ALL merge. ANY merges and exclusive groups are exercised by model tests. Water, flippers, remote switches/walls, chests and numeric ability modifiers are supported. Content save/load is separate from run save/load, which is still future work.
 - Current capabilities use minimal numeric fields plus ability IDs; behavior variants should become separate implementations as they are explored.
@@ -78,6 +80,7 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/run_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/content_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/editor_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/branching_tests.gd
 ```
 
 Run from the repository root (use `--path .` if already in `v2`). Tests cover allocations/refunds, permanent rewards, ongoing ALL/ANY prerequisites, exclusivity, player safety, transaction previews and room/coordinator integration.

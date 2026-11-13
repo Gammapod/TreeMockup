@@ -122,8 +122,13 @@ func can_travel(source: String, destination: String) -> bool:
 
 func capabilities() -> Dictionary:
 	var abilities: Dictionary = {}
-	var stats := {"move_speed": 220.0, "sword_range": 92.0, "sword_damage": 1, "dash_speed": 650.0}
-	for id in active:
+	var stats := {"move_speed": 220.0, "sword_range": 92.0, "sword_damage": 1, "dash_speed": 650.0, "max_hp": int(definition.get("base_hp", 5)), "sword_strikes": 1, "sword_cooldown": 0.32, "dash_duration": 0.16, "dash_phase": false, "sprint": false}
+	var sword_style := ""
+	var dash_style := ""
+	# Authored node order makes conflicting experimental styles deterministic.
+	for id in definition.nodes:
+		if not active.has(id):
+			continue
 		for ability in definition.nodes[id].get("abilities", []):
 			abilities[ability] = true
 		var modifiers: Dictionary = definition.nodes[id].get("modifiers", {})
@@ -131,6 +136,23 @@ func capabilities() -> Dictionary:
 		stats.sword_range *= modifiers.get("sword_range_multiplier", 1.0)
 		stats.sword_damage += int(modifiers.get("sword_damage_bonus", 0))
 		stats.dash_speed *= modifiers.get("dash_speed_multiplier", 1.0)
+		stats.max_hp += int(modifiers.get("max_hp_bonus", 0))
+		sword_style = modifiers.get("sword_style", sword_style)
+		dash_style = modifiers.get("dash_style", dash_style)
+	if abilities.has("sword"):
+		if sword_style == "big":
+			stats.sword_range *= 1.5
+			stats.sword_cooldown = 2.0
+		elif sword_style == "fast":
+			stats.sword_range *= 0.5
+			stats.sword_strikes = 3
+			stats.sword_cooldown = 0.48
+	if abilities.has("dash"):
+		if dash_style == "phase":
+			stats.dash_duration *= 0.5
+			stats.dash_phase = true
+		elif dash_style == "run":
+			stats.sprint = true
 	stats.abilities = abilities
 	return stats
 

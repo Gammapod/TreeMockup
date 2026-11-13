@@ -37,11 +37,11 @@ func _ready() -> void:
 	status.size = Vector2(730, 110)
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(status)
-	_enter_room(data.root, "", 5)
+	_enter_room(data.root, "", progression.capabilities().max_hp)
 
 func _process(_delta: float) -> void:
 	if room != null:
-		hud.text = "%s   |   HP %d/5   |   Points %d/%d   |   Gold %d" % [data.nodes[current].name, room.player.hp, progression.available_points(), progression.capacity, progression.gold]
+		hud.text = "%s   |   HP %d/%d   |   Points %d/%d   |   Gold %d" % [data.nodes[current].name, room.player.hp, room.player.max_hp, progression.available_points(), progression.capacity, progression.gold]
 
 func _enter_room(destination: String, entry: String, hp: int) -> void:
 	if room != null:
@@ -88,7 +88,7 @@ func _defeat() -> void:
 		return
 	transition_pending = true
 	message = "Defeated — returned to Sanctuary. Build and collected rewards retained."
-	_enter_room.call_deferred(data.root, "", 5)
+	_enter_room.call_deferred(data.root, "", progression.capabilities().max_hp)
 
 func _switch_toggled(object_id: String) -> void:
 	if not object_records.has(current):
@@ -116,7 +116,7 @@ func _toggle(id: String) -> void:
 	_refresh()
 
 func _refresh() -> void:
-	room.player.capabilities = progression.capabilities()
+	room.player.set_capabilities(progression.capabilities())
 	room.apply_object_states(object_records.get(current, {}))
 	room.portals = _portals()
 	for child in panel.get_children():
@@ -139,7 +139,7 @@ func _refresh() -> void:
 			button.tooltip_text = "Affected: " + ", ".join(preview.affected)
 			button.pressed.connect(_toggle.bind(id))
 			panel.add_child(button)
-	_label("\nWASD: move     E: door / chest\nSpace: sword     Shift: dash\nF2: content editors", 16)
+	_label("\nWASD: move     E: door / chest\nSpace: sword     Shift: dash / hold to run\nF2: content editors", 16)
 	status.text = message + "\n\nActive abilities: " + ", ".join(progression.capabilities().abilities.keys())
 	room.queue_redraw()
 
@@ -187,5 +187,5 @@ func _play_document(compiled: Dictionary) -> void:
 	data = compiled
 	progression = PROGRESSION.new(data)
 	message = "Playtesting authored content. F2 returns to the editors."
-	_enter_room(data.root, "", 5)
+	_enter_room(data.root, "", progression.capabilities().max_hp)
 	_close_studio()

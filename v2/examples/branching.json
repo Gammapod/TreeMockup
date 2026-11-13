@@ -1,436 +1,119 @@
 {
-	"format": "room-tree",
-	"version": 1,
-	"id": "branching_demo",
-	"name": "Sword and Boots",
-	"rooms": [
-		{
-			"id": "sanctuary",
-			"name": "Sanctuary",
-			"size": [
-				800,
-				600
-			],
-			"ports": [
-				{
-					"id": "north",
-					"position": [
-						400,
-						85
-					]
-				},
-				{
-					"id": "south",
-					"position": [
-						400,
-						555
-					]
-				},
-				{
-					"id": "west",
-					"position": [
-						65,
-						320
-					]
-				},
-				{
-					"id": "east",
-					"position": [
-						735,
-						320
-					]
-				}
-			],
-			"objects": []
-		},
-		{
-			"id": "practice",
-			"name": "Practice",
-			"size": [
-				800,
-				600
-			],
-			"ports": [
-				{
-					"id": "north",
-					"position": [
-						400,
-						85
-					]
-				},
-				{
-					"id": "south",
-					"position": [
-						400,
-						555
-					]
-				},
-				{
-					"id": "west",
-					"position": [
-						65,
-						320
-					]
-				},
-				{
-					"id": "east",
-					"position": [
-						735,
-						320
-					]
-				}
-			],
-			"objects": [
-				{
-					"id": "obstacle_0",
-					"kind": "obstacle",
-					"position": [
-						330.0,
-						220.0
-					],
-					"size": [
-						110.0,
-						70.0
-					],
-					"properties": {
-
-					}
-				},
-				{
-					"id": "bat_0",
-					"kind": "enemy",
-					"position": [
-						560.0,
-						350.0
-					],
-					"properties": {
-						"hp": 2,
-						"speed": 95
-					}
-				},
-				{
-					"id": "capacity",
-					"kind": "pickup",
-					"position": [
-						590.0,
-						180.0
-					],
-					"properties": {
-						"kind": "capacity",
-						"value": 1
-					}
-				}
-			]
-		},
-		{
-			"id": "landing",
-			"name": "Landing",
-			"size": [
-				800,
-				600
-			],
-			"ports": [
-				{
-					"id": "north",
-					"position": [
-						400,
-						85
-					]
-				},
-				{
-					"id": "south",
-					"position": [
-						400,
-						555
-					]
-				},
-				{
-					"id": "west",
-					"position": [
-						65,
-						320
-					]
-				},
-				{
-					"id": "east",
-					"position": [
-						735,
-						320
-					]
-				}
-			],
-			"objects": [
-				{
-					"id": "capacity",
-					"kind": "pickup",
-					"position": [
-						400.0,
-						240.0
-					],
-					"properties": {
-						"kind": "capacity",
-						"value": 1
-					}
-				}
-			]
-		},
-		{
-			"id": "treasure",
-			"name": "Treasure",
-			"size": [
-				800,
-				600
-			],
-			"ports": [
-				{
-					"id": "north",
-					"position": [
-						400,
-						85
-					]
-				},
-				{
-					"id": "south",
-					"position": [
-						400,
-						555
-					]
-				},
-				{
-					"id": "west",
-					"position": [
-						65,
-						320
-					]
-				},
-				{
-					"id": "east",
-					"position": [
-						735,
-						320
-					]
-				}
-			],
-			"objects": [
-				{
-					"id": "obstacle_0",
-					"kind": "obstacle",
-					"position": [
-						290.0,
-						200.0
-					],
-					"size": [
-						50.0,
-						170.0
-					],
-					"properties": {
-
-					}
-				},
-				{
-					"id": "bat_0",
-					"kind": "enemy",
-					"position": [
-						530.0,
-						260.0
-					],
-					"properties": {
-						"hp": 2,
-						"speed": 95
-					}
-				},
-				{
-					"id": "bat_1",
-					"kind": "enemy",
-					"position": [
-						530.0,
-						380.0
-					],
-					"properties": {
-						"hp": 2,
-						"speed": 95
-					}
-				},
-				{
-					"id": "prize",
-					"kind": "pickup",
-					"position": [
-						620.0,
-						300.0
-					],
-					"properties": {
-						"kind": "gold",
-						"value": 1
-					}
-				}
-			]
-		}
-	],
-	"dungeon": {
-		"root": "start",
-		"initial_capacity": 4,
-		"nodes": [
-			{
-				"name": "Sanctuary",
-				"template": "sanctuary",
-				"cost": 0,
-				"requires_all": [],
-				"requires_any": [],
-				"abilities": [],
-				"map_position": [
-					400.0,
-					380.0
-				],
-				"id": "start"
-			},
-			{
-				"name": "Sword",
-				"template": "practice",
-				"cost": 1,
-				"requires_all": [
-					"start"
-				],
-				"requires_any": [],
-				"abilities": [
-					"sword"
-				],
-				"map_position": [
-					220.0,
-					380.0
-				],
-				"id": "sword"
-			},
-			{
-				"name": "Boots",
-				"template": "practice",
-				"cost": 1,
-				"requires_all": [
-					"start"
-				],
-				"requires_any": [],
-				"abilities": [
-					"dash"
-				],
-				"map_position": [
-					580.0,
-					380.0
-				],
-				"id": "boots"
-			},
-			{
-				"name": "Sword Landing",
-				"template": "landing",
-				"cost": 1,
-				"requires_all": [
-					"sword"
-				],
-				"requires_any": [],
-				"abilities": [],
-				"map_position": [
-					220.0,
-					200.0
-				],
-				"id": "sword_landing"
-			},
-			{
-				"name": "Boots Landing",
-				"template": "landing",
-				"cost": 1,
-				"requires_all": [
-					"boots"
-				],
-				"requires_any": [],
-				"abilities": [],
-				"map_position": [
-					580.0,
-					200.0
-				],
-				"id": "boots_landing"
-			},
-			{
-				"name": "Prize",
-				"template": "treasure",
-				"cost": 1,
-				"requires_all": [
-					"sword_landing",
-					"boots_landing"
-				],
-				"requires_any": [],
-				"abilities": [],
-				"map_position": [
-					400.0,
-					200.0
-				],
-				"id": "prize"
-			}
-		],
-		"links": [
-			{
-				"a": "start",
-				"b": "sword",
-				"a_port": "west",
-				"b_port": "east",
-				"activate_from": [
-					"start",
-					"sword"
-				],
-				"id": "link_0"
-			},
-			{
-				"a": "start",
-				"b": "boots",
-				"a_port": "east",
-				"b_port": "west",
-				"activate_from": [
-					"start",
-					"boots"
-				],
-				"id": "link_1"
-			},
-			{
-				"a": "sword",
-				"b": "sword_landing",
-				"a_port": "north",
-				"b_port": "south",
-				"activate_from": [
-					"sword"
-				],
-				"id": "link_2"
-			},
-			{
-				"a": "boots",
-				"b": "boots_landing",
-				"a_port": "north",
-				"b_port": "south",
-				"activate_from": [
-					"boots"
-				],
-				"id": "link_3"
-			},
-			{
-				"a": "sword_landing",
-				"b": "prize",
-				"a_port": "east",
-				"b_port": "west",
-				"activate_from": [
-					"sword_landing"
-				],
-				"id": "link_4"
-			},
-			{
-				"a": "boots_landing",
-				"b": "prize",
-				"a_port": "west",
-				"b_port": "east",
-				"activate_from": [
-					"boots_landing"
-				],
-				"id": "link_5"
-			}
-		],
-		"interactions": []
-	},
-	"extensions": {
-
-	}
+  "format": "room-tree",
+  "version": 1,
+  "id": "branching_demo",
+  "name": "Branching Dungeon — Sword and Boots",
+  "rooms": [
+    {
+      "id": "sanctuary", "name": "Starting Room", "size": [800, 600],
+      "ports": [{"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
+      "objects": []
+    },
+    {
+      "id": "ability_hub", "name": "Ability and Two Keys", "size": [800, 600],
+      "ports": [
+        {"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]},
+        {"id": "practice", "position": [400, 555]},
+        {"id": "left_choice", "position": [200, 85]}, {"id": "middle_choice", "position": [400, 85]}, {"id": "right_choice", "position": [600, 85]}
+      ],
+      "objects": [
+        {"id": "capacity", "kind": "pickup", "position": [330, 330], "properties": {"kind": "capacity", "value": 1}},
+        {"id": "capacity_2", "kind": "pickup", "position": [470, 330], "properties": {"kind": "capacity", "value": 1}}
+      ]
+    },
+    {
+      "id": "practice", "name": "One Bat Practice", "size": [800, 600],
+      "ports": [{"id": "entry", "position": [400, 85]}],
+      "objects": [{"id": "bat_0", "kind": "enemy", "position": [400, 310], "properties": {"hp": 1, "speed": 110}}]
+    },
+    {
+      "id": "swarm", "name": "Ten Bats", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}, {"id": "north", "position": [400, 85]}],
+      "objects": [
+        {"id": "bat_0", "kind": "enemy", "position": [180, 200], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_1", "kind": "enemy", "position": [290, 200], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_2", "kind": "enemy", "position": [400, 200], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_3", "kind": "enemy", "position": [510, 200], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_4", "kind": "enemy", "position": [620, 200], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_5", "kind": "enemy", "position": [180, 320], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_6", "kind": "enemy", "position": [290, 320], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_7", "kind": "enemy", "position": [400, 320], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_8", "kind": "enemy", "position": [510, 320], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_9", "kind": "enemy", "position": [620, 320], "properties": {"hp": 1, "speed": 110}}
+      ]
+    },
+    {
+      "id": "big_bat", "name": "One Big Bat", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}, {"id": "north", "position": [400, 85]}],
+      "objects": [{"id": "big_bat", "kind": "enemy", "position": [400, 290], "properties": {"hp": 3, "speed": 110, "radius": 28}}]
+    },
+    {
+      "id": "three_bats", "name": "Three Bats", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}, {"id": "north", "position": [400, 85]}],
+      "objects": [
+        {"id": "bat_0", "kind": "enemy", "position": [250, 270], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_1", "kind": "enemy", "position": [400, 220], "properties": {"hp": 1, "speed": 110}},
+        {"id": "bat_2", "kind": "enemy", "position": [550, 270], "properties": {"hp": 1, "speed": 110}}
+      ]
+    },
+    {
+      "id": "landing", "name": "Landing and Key", "size": [800, 600],
+      "ports": [
+        {"id": "left_choice", "position": [200, 555]}, {"id": "middle_choice", "position": [400, 555]}, {"id": "right_choice", "position": [600, 555]},
+        {"id": "east", "position": [735, 320]}, {"id": "west", "position": [65, 320]}
+      ],
+      "objects": [{"id": "capacity", "kind": "pickup", "position": [400, 270], "properties": {"kind": "capacity", "value": 1}}]
+    },
+    {
+      "id": "treasure", "name": "Prize", "size": [800, 600],
+      "ports": [{"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
+      "objects": [{"id": "prize", "kind": "pickup", "position": [400, 300], "properties": {"kind": "gold", "value": 1}}]
+    }
+  ],
+  "dungeon": {
+    "root": "start", "initial_capacity": 1, "base_hp": 0,
+    "nodes": [
+      {"id": "start", "name": "Starting Room", "template": "sanctuary", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [400, 530]},
+      {"id": "sword", "name": "Sword", "template": "ability_hub", "cost": 1, "requires_all": [], "requires_any": [], "abilities": ["sword"], "map_position": [210, 530]},
+      {"id": "sword_practice", "name": "Sword Practice", "template": "practice", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [65, 430]},
+      {"id": "big_swing", "name": "Big Swing", "template": "swarm", "cost": 1, "requires_all": ["sword"], "requires_any": [], "exclusive_group": "sword_style", "abilities": [], "modifiers": {"sword_style": "big"}, "map_position": [80, 300]},
+      {"id": "fast_swing", "name": "Fast Swing", "template": "big_bat", "cost": 1, "requires_all": ["sword"], "requires_any": [], "exclusive_group": "sword_style", "abilities": [], "modifiers": {"sword_style": "fast"}, "map_position": [210, 300]},
+      {"id": "neutral_swing", "name": "Sword HP+", "template": "three_bats", "cost": 1, "requires_all": ["sword"], "requires_any": [], "exclusive_group": "sword_style", "abilities": [], "modifiers": {"max_hp_bonus": 5}, "map_position": [340, 300]},
+      {"id": "sword_landing", "name": "Sword Landing", "template": "landing", "cost": 1, "requires_all": [], "requires_any": ["big_swing", "fast_swing", "neutral_swing"], "abilities": [], "map_position": [210, 130]},
+      {"id": "boots", "name": "Boots", "template": "ability_hub", "cost": 1, "requires_all": [], "requires_any": [], "abilities": ["dash"], "map_position": [590, 530]},
+      {"id": "boots_practice", "name": "Boots Practice", "template": "practice", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [735, 430]},
+      {"id": "hit_dash", "name": "Hit Dash", "template": "swarm", "cost": 1, "requires_all": ["boots"], "requires_any": [], "exclusive_group": "boots_style", "abilities": [], "modifiers": {"dash_style": "phase"}, "map_position": [460, 300]},
+      {"id": "run", "name": "Run", "template": "big_bat", "cost": 1, "requires_all": ["boots"], "requires_any": [], "exclusive_group": "boots_style", "abilities": [], "modifiers": {"dash_style": "run"}, "map_position": [590, 300]},
+      {"id": "neutral_dash", "name": "Boots HP+", "template": "three_bats", "cost": 1, "requires_all": ["boots"], "requires_any": [], "exclusive_group": "boots_style", "abilities": [], "modifiers": {"max_hp_bonus": 5}, "map_position": [720, 300]},
+      {"id": "boots_landing", "name": "Boots Landing", "template": "landing", "cost": 1, "requires_all": [], "requires_any": ["hit_dash", "run", "neutral_dash"], "abilities": [], "map_position": [590, 130]},
+      {"id": "prize", "name": "Prize", "template": "treasure", "cost": 1, "requires_all": ["sword_landing", "boots_landing"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [400, 65]}
+    ],
+    "links": [
+      {"id": "link_0", "a": "start", "b": "sword", "a_port": "west", "b_port": "east", "activate_from": ["start", "sword"]},
+      {"id": "link_1", "a": "start", "b": "boots", "a_port": "east", "b_port": "west", "activate_from": ["start", "boots"]},
+      {"id": "sword_practice", "a": "sword", "b": "sword_practice", "a_port": "practice", "b_port": "entry", "activate_from": ["sword", "sword_practice"]},
+      {"id": "sword_big", "a": "sword", "b": "big_swing", "a_port": "left_choice", "b_port": "south", "activate_from": ["sword"]},
+      {"id": "sword_fast", "a": "sword", "b": "fast_swing", "a_port": "middle_choice", "b_port": "south", "activate_from": ["sword"]},
+      {"id": "sword_hp", "a": "sword", "b": "neutral_swing", "a_port": "right_choice", "b_port": "south", "activate_from": ["sword"]},
+      {"id": "big_landing", "a": "big_swing", "b": "sword_landing", "a_port": "north", "b_port": "left_choice", "activate_from": ["big_swing"]},
+      {"id": "fast_landing", "a": "fast_swing", "b": "sword_landing", "a_port": "north", "b_port": "middle_choice", "activate_from": ["fast_swing"]},
+      {"id": "sword_hp_landing", "a": "neutral_swing", "b": "sword_landing", "a_port": "north", "b_port": "right_choice", "activate_from": ["neutral_swing"]},
+      {"id": "boots_practice", "a": "boots", "b": "boots_practice", "a_port": "practice", "b_port": "entry", "activate_from": ["boots", "boots_practice"]},
+      {"id": "boots_hit", "a": "boots", "b": "hit_dash", "a_port": "left_choice", "b_port": "south", "activate_from": ["boots"]},
+      {"id": "boots_run", "a": "boots", "b": "run", "a_port": "middle_choice", "b_port": "south", "activate_from": ["boots"]},
+      {"id": "boots_hp", "a": "boots", "b": "neutral_dash", "a_port": "right_choice", "b_port": "south", "activate_from": ["boots"]},
+      {"id": "hit_landing", "a": "hit_dash", "b": "boots_landing", "a_port": "north", "b_port": "left_choice", "activate_from": ["hit_dash"]},
+      {"id": "run_landing", "a": "run", "b": "boots_landing", "a_port": "north", "b_port": "middle_choice", "activate_from": ["run"]},
+      {"id": "boots_hp_landing", "a": "neutral_dash", "b": "boots_landing", "a_port": "north", "b_port": "right_choice", "activate_from": ["neutral_dash"]},
+      {"id": "link_4", "a": "sword_landing", "b": "prize", "a_port": "east", "b_port": "west", "activate_from": ["sword_landing"]},
+      {"id": "link_5", "a": "boots_landing", "b": "prize", "a_port": "west", "b_port": "east", "activate_from": ["boots_landing"]}
+    ],
+    "interactions": []
+  },
+  "extensions": {
+    "design_source": "scenario-designs/branching-dungeon.mmd",
+    "glossary_source": "scenario-designs/shared_elements_glossary.yaml",
+    "diagram_node_aliases": {"sword_room": "sword", "boots_room": "boots", "final_branch": "prize"},
+    "notes": "Neutral edges allow local activation either way; directed style edges require their parent continuously. Landings accept any one style; Prize requires both landings. Style choices are exclusive within each branch. Hit Dash uses the glossary's big-dash effect: half distance and immunity to enemy contact during the dash. Health nodes grant current/max HP on activation."
+  }
 }

@@ -1,6 +1,6 @@
 extends SceneTree
 
-const CONTENT = preload("res://content.gd")
+const CONTENT = preload("res://tests/fixtures/activation_fixture.gd")
 const MODEL = preload("res://progression.gd")
 var failures: Array[String] = []
 
@@ -62,6 +62,7 @@ func _run() -> void:
 	_expect(model.preview_activation("boots", "start").reason == "exclusive_choice", "Exclusive node choices are enforced")
 	# Integration smoke: load scenes, transition, propagate capabilities, persist rewards.
 	var game = load("res://main.tscn").instantiate()
+	game.data_override = CONTENT.create()
 	root.add_child(game)
 	await process_frame
 	game._toggle("sword")

@@ -66,15 +66,17 @@ The room editor and tree editor share one bundle in memory. Their JSON inspector
 | Data | Supported values |
 | --- | --- |
 | Object kinds | `obstacle`, `water`, `wall`, `switch`, `enemy`, `pickup`, `chest` |
-| Enemy properties | `hp` (positive integer, default 2), `speed` (nonnegative, default 95) |
+| Enemy properties | `hp` (positive integer, default 2), `speed` (nonnegative, default 95), `radius` (positive, default 14; affects physics, contact, drawing and sword reach) |
 | Pickup/chest properties | `kind`: `gold` or `capacity`; `value`: positive integer, default 1 |
 | Node abilities | `sword`, `dash`, `flippers` |
-| Node modifiers | `move_speed_multiplier`, `sword_range_multiplier`, `sword_damage_bonus`, `dash_speed_multiplier` |
+| Numeric node modifiers | `move_speed_multiplier`, `sword_range_multiplier`, `sword_damage_bonus`, `dash_speed_multiplier`, `max_hp_bonus` (health/damage bonuses are nonnegative integers) |
+| Behavior modifiers | `sword_style`: `big` or `fast`; `dash_style`: `phase` or `run` |
+| Scenario health | `dungeon.base_hp`: nonnegative integer, default 5; base plus root bonus must provide at least one HP |
 | Interaction | switch `toggled` → wall `set_open` |
 
-Switch state and wall state persist for the run, including through node deactivation. Multiple writers use the most recent event. Water collision is bypassed by flippers. Chests are opened using E rather than walking over them. Node modifiers are aggregated from the active set; multiplier defaults are 1 and bonus defaults are 0. Damage bonuses are currently integer-valued in gameplay.
+Switch state and wall state persist for the run, including through node deactivation. Multiple writers use the most recent event. Water collision is bypassed by flippers. Chests are opened using E rather than walking over them. Node modifiers are aggregated from the active set; multiplier defaults are 1 and bonus defaults are 0. Maximum-HP increases grant the difference in current HP; decreases clamp current HP, and applying an unchanged snapshot never heals. Room loading preserves current HP. Behavior modifiers apply only when their base ability is active. Use exclusive groups to avoid competing styles; if multiple styles are authored active, the last in authored node order wins deterministically. Attacks and dashes capture their parameters at action start.
 
-This vocabulary is the runtime adapter's contract, not a fixed enumeration in the storage schema. Future engines can interpret the same authored data through their own adapter. Health modifiers, activation-funded capacity upgrades, and new behavior variants can be represented now but explicitly block playtest until implemented; this avoids presenting a partially interpreted scenario as fully functional.
+This vocabulary is the runtime adapter's contract, not a fixed enumeration in the storage schema. Future engines can interpret the same authored data through their own adapter. Activation-funded capacity upgrades and unrecognized behavior variants can be represented but explicitly block playtest until implemented; this avoids presenting a partially interpreted scenario as fully functional. The branching additions are optional vocabulary within version 1; existing files keep their prior default behavior.
 
 ## Implementation verification record
 

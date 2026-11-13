@@ -1,0 +1,26 @@
+flowchart TD
+%% Major idea: open connections in one branch can affect traversal in a different branch.
+%% Player connects the flipper room, then can cross the water and collect the prize
+%% Starting door capacity: 3
+    start["start"]
+    %% When connected: +1 current/max HP
+    %% Contents: player spawn
+    water_room["water"]
+    %% When connected: +1 current/max HP
+    %% Contents: water hazard, splitting room in half
+    prize_room["prize"]
+    %% When connected: +1 current/max HP
+    %% Contents: collectable coin
+    flippers_room["flippers"]
+    %% When connected: flippers ability active
+
+    start --- water_room
+    start --- flippers_room
+    water_room --- prize_room
+
+    %% Elements:
+    %% water hazard: blocks movement unless flippers active
+    %% collectable coin: permanently increases coin count by 1 and disappears
+
+    %% Abilities:
+    %% flippers: when active, player can cross water hazard

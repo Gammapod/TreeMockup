@@ -71,6 +71,8 @@ func validate(document: Variant) -> Array[String]:
 	var interactions := _index(dungeon.get("interactions"), "interactions", errors)
 	if not _integer(dungeon.get("initial_capacity")):
 		errors.append("initial_capacity must be a nonnegative integer")
+	if dungeon.has("base_hp") and not _integer(dungeon.base_hp):
+		errors.append("base_hp must be a nonnegative integer")
 	if not dungeon.get("root") is String or not nodes.has(dungeon.get("root")):
 		errors.append("root must reference a node")
 	elif nodes[dungeon.root].get("cost") != 0:
