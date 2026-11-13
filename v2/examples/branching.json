@@ -1,0 +1,436 @@
+{
+	"format": "room-tree",
+	"version": 1,
+	"id": "branching_demo",
+	"name": "Sword and Boots",
+	"rooms": [
+		{
+			"id": "sanctuary",
+			"name": "Sanctuary",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": []
+		},
+		{
+			"id": "practice",
+			"name": "Practice",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "obstacle_0",
+					"kind": "obstacle",
+					"position": [
+						330.0,
+						220.0
+					],
+					"size": [
+						110.0,
+						70.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "bat_0",
+					"kind": "enemy",
+					"position": [
+						560.0,
+						350.0
+					],
+					"properties": {
+						"hp": 2,
+						"speed": 95
+					}
+				},
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						590.0,
+						180.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "landing",
+			"name": "Landing",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						240.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1
+					}
+				}
+			]
+		},
+		{
+			"id": "treasure",
+			"name": "Treasure",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "obstacle_0",
+					"kind": "obstacle",
+					"position": [
+						290.0,
+						200.0
+					],
+					"size": [
+						50.0,
+						170.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "bat_0",
+					"kind": "enemy",
+					"position": [
+						530.0,
+						260.0
+					],
+					"properties": {
+						"hp": 2,
+						"speed": 95
+					}
+				},
+				{
+					"id": "bat_1",
+					"kind": "enemy",
+					"position": [
+						530.0,
+						380.0
+					],
+					"properties": {
+						"hp": 2,
+						"speed": 95
+					}
+				},
+				{
+					"id": "prize",
+					"kind": "pickup",
+					"position": [
+						620.0,
+						300.0
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1
+					}
+				}
+			]
+		}
+	],
+	"dungeon": {
+		"root": "start",
+		"initial_capacity": 4,
+		"nodes": [
+			{
+				"name": "Sanctuary",
+				"template": "sanctuary",
+				"cost": 0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					400.0,
+					380.0
+				],
+				"id": "start"
+			},
+			{
+				"name": "Sword",
+				"template": "practice",
+				"cost": 1,
+				"requires_all": [
+					"start"
+				],
+				"requires_any": [],
+				"abilities": [
+					"sword"
+				],
+				"map_position": [
+					220.0,
+					380.0
+				],
+				"id": "sword"
+			},
+			{
+				"name": "Boots",
+				"template": "practice",
+				"cost": 1,
+				"requires_all": [
+					"start"
+				],
+				"requires_any": [],
+				"abilities": [
+					"dash"
+				],
+				"map_position": [
+					580.0,
+					380.0
+				],
+				"id": "boots"
+			},
+			{
+				"name": "Sword Landing",
+				"template": "landing",
+				"cost": 1,
+				"requires_all": [
+					"sword"
+				],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					220.0,
+					200.0
+				],
+				"id": "sword_landing"
+			},
+			{
+				"name": "Boots Landing",
+				"template": "landing",
+				"cost": 1,
+				"requires_all": [
+					"boots"
+				],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					580.0,
+					200.0
+				],
+				"id": "boots_landing"
+			},
+			{
+				"name": "Prize",
+				"template": "treasure",
+				"cost": 1,
+				"requires_all": [
+					"sword_landing",
+					"boots_landing"
+				],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					400.0,
+					200.0
+				],
+				"id": "prize"
+			}
+		],
+		"links": [
+			{
+				"a": "start",
+				"b": "sword",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"start",
+					"sword"
+				],
+				"id": "link_0"
+			},
+			{
+				"a": "start",
+				"b": "boots",
+				"a_port": "east",
+				"b_port": "west",
+				"activate_from": [
+					"start",
+					"boots"
+				],
+				"id": "link_1"
+			},
+			{
+				"a": "sword",
+				"b": "sword_landing",
+				"a_port": "north",
+				"b_port": "south",
+				"activate_from": [
+					"sword"
+				],
+				"id": "link_2"
+			},
+			{
+				"a": "boots",
+				"b": "boots_landing",
+				"a_port": "north",
+				"b_port": "south",
+				"activate_from": [
+					"boots"
+				],
+				"id": "link_3"
+			},
+			{
+				"a": "sword_landing",
+				"b": "prize",
+				"a_port": "east",
+				"b_port": "west",
+				"activate_from": [
+					"sword_landing"
+				],
+				"id": "link_4"
+			},
+			{
+				"a": "boots_landing",
+				"b": "prize",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"boots_landing"
+				],
+				"id": "link_5"
+			}
+		],
+		"interactions": []
+	},
+	"extensions": {
+
+	}
+}

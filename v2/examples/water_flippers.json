@@ -1,0 +1,253 @@
+{
+	"format": "room-tree",
+	"version": 1,
+	"id": "water_flippers",
+	"name": "Water and Flippers",
+	"rooms": [
+		{
+			"id": "empty",
+			"name": "Empty",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": []
+		},
+		{
+			"id": "water",
+			"name": "Water",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "water_strip",
+					"kind": "water",
+					"position": [
+						380,
+						70
+					],
+					"size": [
+						40,
+						500
+					],
+					"properties": {
+
+					}
+				}
+			]
+		},
+		{
+			"id": "treasure",
+			"name": "Treasure",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "coin",
+					"kind": "chest",
+					"position": [
+						400,
+						300
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1
+					}
+				}
+			]
+		}
+	],
+	"dungeon": {
+		"root": "start",
+		"initial_capacity": 3,
+		"nodes": [
+			{
+				"id": "start",
+				"name": "Start",
+				"template": "empty",
+				"cost": 0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					420,
+					300
+				]
+			},
+			{
+				"id": "water",
+				"name": "Water",
+				"template": "water",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					240,
+					300
+				]
+			},
+			{
+				"id": "flippers",
+				"name": "Flippers",
+				"template": "empty",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [
+					"flippers"
+				],
+				"map_position": [
+					600,
+					300
+				]
+			},
+			{
+				"id": "prize",
+				"name": "Prize",
+				"template": "treasure",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					60,
+					300
+				]
+			}
+		],
+		"links": [
+			{
+				"id": "start_water",
+				"a": "start",
+				"b": "water",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"start",
+					"water"
+				]
+			},
+			{
+				"id": "start_flippers",
+				"a": "start",
+				"b": "flippers",
+				"a_port": "east",
+				"b_port": "west",
+				"activate_from": [
+					"start",
+					"flippers"
+				]
+			},
+			{
+				"id": "water_prize",
+				"a": "water",
+				"b": "prize",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"water",
+					"prize"
+				]
+			}
+		],
+		"interactions": []
+	},
+	"extensions": {
+
+	}
+}

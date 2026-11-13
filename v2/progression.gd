@@ -122,10 +122,17 @@ func can_travel(source: String, destination: String) -> bool:
 
 func capabilities() -> Dictionary:
 	var abilities: Dictionary = {}
+	var stats := {"move_speed": 220.0, "sword_range": 92.0, "sword_damage": 1, "dash_speed": 650.0}
 	for id in active:
 		for ability in definition.nodes[id].get("abilities", []):
 			abilities[ability] = true
-	return {"abilities": abilities, "move_speed": 220.0, "sword_range": 92.0, "sword_damage": 1, "dash_speed": 650.0}
+		var modifiers: Dictionary = definition.nodes[id].get("modifiers", {})
+		stats.move_speed *= modifiers.get("move_speed_multiplier", 1.0)
+		stats.sword_range *= modifiers.get("sword_range_multiplier", 1.0)
+		stats.sword_damage += int(modifiers.get("sword_damage_bonus", 0))
+		stats.dash_speed *= modifiers.get("dash_speed_multiplier", 1.0)
+	stats.abilities = abilities
+	return stats
 
 func collect(node_id: String, object_id: String) -> bool:
 	if not active.has(node_id):
@@ -138,9 +145,9 @@ func collect(node_id: String, object_id: String) -> bool:
 		if pickup.id == object_id:
 			collected[key] = true
 			if pickup.kind == "capacity":
-				capacity += 1
+				capacity += pickup.get("value", 1)
 			else:
-				gold += 1
+				gold += pickup.get("value", 1)
 			return true
 	return false
 

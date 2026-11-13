@@ -1,0 +1,71 @@
+{
+  "format": "room-tree",
+  "version": 1,
+  "id": "combat",
+  "name": "Combat Branches",
+  "rooms": [
+    {
+      "id": "empty", "name": "Empty room", "size": [800, 600],
+      "ports": [{"id": "north", "position": [400, 85]}, {"id": "south", "position": [400, 555]}, {"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
+      "objects": []
+    },
+    {
+      "id": "key_room", "name": "Capacity pickup", "size": [800, 600],
+      "ports": [{"id": "east", "position": [735, 320]}],
+      "objects": [{"id": "key", "kind": "pickup", "position": [400, 320], "properties": {"kind": "capacity"}}]
+    },
+    {
+      "id": "sword_room", "name": "Sword reward", "size": [800, 600],
+      "ports": [{"id": "west", "position": [65, 320]}],
+      "objects": [{"id": "coin", "kind": "pickup", "position": [400, 320], "properties": {"kind": "gold"}}]
+    },
+    {
+      "id": "danger", "name": "Danger", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}, {"id": "west", "position": [65, 320]}],
+      "objects": [
+        {"id": "bat_1", "kind": "enemy", "position": [350, 220], "properties": {"hp": 1, "speed": 95}},
+        {"id": "bat_2", "kind": "enemy", "position": [500, 270], "properties": {"hp": 1, "speed": 95}},
+        {"id": "bat_3", "kind": "enemy", "position": [600, 320], "properties": {"hp": 1, "speed": 95}},
+        {"id": "key", "kind": "pickup", "position": [530, 180], "properties": {"kind": "capacity"}}
+      ]
+    },
+    {
+      "id": "danger_prize", "name": "Danger and Prize", "size": [800, 600],
+      "ports": [{"id": "east", "position": [735, 320]}, {"id": "west", "position": [65, 320]}],
+      "objects": [
+        {"id": "bat_1", "kind": "enemy", "position": [250, 220], "properties": {"hp": 1, "speed": 95}},
+        {"id": "bat_2", "kind": "enemy", "position": [350, 270], "properties": {"hp": 1, "speed": 95}},
+        {"id": "bat_3", "kind": "enemy", "position": [450, 320], "properties": {"hp": 1, "speed": 95}},
+        {"id": "coin", "kind": "pickup", "position": [400, 180], "properties": {"kind": "gold"}}
+      ]
+    },
+    {
+      "id": "double_prize", "name": "Double Prize", "size": [800, 600],
+      "ports": [{"id": "east", "position": [735, 320]}],
+      "objects": [
+        {"id": "coin_1", "kind": "pickup", "position": [350, 280], "properties": {"kind": "gold"}},
+        {"id": "coin_2", "kind": "chest", "position": [450, 350], "properties": {"kind": "gold"}}
+      ]
+    }
+  ],
+  "dungeon": {
+    "root": "start", "initial_capacity": 1,
+    "nodes": [
+      {"id": "start", "name": "Starting Room", "template": "empty", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [440, 400]},
+      {"id": "west", "name": "West Room", "template": "key_room", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [250, 400]},
+      {"id": "sword", "name": "Sword Room", "template": "sword_room", "cost": 1, "requires_all": [], "requires_any": [], "abilities": ["sword"], "map_position": [630, 400]},
+      {"id": "danger", "name": "Danger", "template": "danger", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [440, 220]},
+      {"id": "danger_prize", "name": "Danger + Prize", "template": "danger_prize", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [250, 220]},
+      {"id": "double_prize", "name": "Double Prize", "template": "double_prize", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [70, 220]}
+    ],
+    "links": [
+      {"id": "start_west", "a": "start", "b": "west", "a_port": "west", "b_port": "east", "activate_from": ["start", "west"]},
+      {"id": "start_sword", "a": "start", "b": "sword", "a_port": "east", "b_port": "west", "activate_from": ["start", "sword"]},
+      {"id": "start_danger", "a": "start", "b": "danger", "a_port": "north", "b_port": "south", "activate_from": ["start", "danger"]},
+      {"id": "danger_reward", "a": "danger", "b": "danger_prize", "a_port": "west", "b_port": "east", "activate_from": ["danger", "danger_prize"]},
+      {"id": "reward_double", "a": "danger_prize", "b": "double_prize", "a_port": "west", "b_port": "east", "activate_from": ["danger_prize", "double_prize"]}
+    ],
+    "interactions": []
+  },
+  "extensions": {"adaptation_notes": "V1 combat topology and rewards adapted to node allocation. Fixed V2 health; one gold pickup presented as a chest."}
+}

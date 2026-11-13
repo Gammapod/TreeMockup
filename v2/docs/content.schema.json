@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:room-tree:content:1",
+  "title": "Room Tree Content Bundle v1",
+  "type": "object",
+  "required": ["format", "version", "id", "name", "rooms", "dungeon"],
+  "properties": {
+    "format": {"const": "room-tree"},
+    "version": {"const": 1},
+    "id": {"$ref": "#/$defs/id"},
+    "name": {"type": "string"},
+    "rooms": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/room"}},
+    "dungeon": {"$ref": "#/$defs/dungeon"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+    "point": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"type": "number"}
+    },
+    "size": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"type": "number", "exclusiveMinimum": 0}
+    },
+    "ids": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+    "room": {
+      "type": "object", "required": ["id", "name", "size", "ports", "objects"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "name": {"type": "string"},
+        "size": {"$ref": "#/$defs/size"},
+        "spawn": {"$ref": "#/$defs/point"},
+        "ports": {
+          "type": "array", "items": {
+            "type": "object", "required": ["id", "position"],
+            "properties": {"id": {"$ref": "#/$defs/id"}, "position": {"$ref": "#/$defs/point"}}
+          }
+        },
+        "objects": {"type": "array", "items": {"$ref": "#/$defs/object"}}
+      }
+    },
+    "object": {
+      "type": "object", "required": ["id", "kind", "position", "properties"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "kind": {"type": "string"},
+        "position": {"$ref": "#/$defs/point"}, "size": {"$ref": "#/$defs/size"},
+        "properties": {"type": "object"}
+      },
+      "allOf": [{
+        "if": {"properties": {"kind": {"enum": ["obstacle", "wall", "water"]}}},
+        "then": {"required": ["size"]}
+      }]
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "name", "template", "cost", "requires_all", "requires_any", "abilities", "map_position"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "name": {"type": "string"},
+        "template": {"$ref": "#/$defs/id"},
+        "cost": {"type": "integer", "minimum": 0},
+        "requires_all": {"$ref": "#/$defs/ids"}, "requires_any": {"$ref": "#/$defs/ids"},
+        "abilities": {"type": "array", "items": {"type": "string"}},
+        "map_position": {"$ref": "#/$defs/point"},
+        "exclusive_group": {"type": "string"}, "modifiers": {"type": "object"}
+      }
+    },
+    "link": {
+      "type": "object", "required": ["id", "a", "b", "a_port", "b_port", "activate_from"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "a": {"$ref": "#/$defs/id"}, "b": {"$ref": "#/$defs/id"},
+        "a_port": {"$ref": "#/$defs/id"}, "b_port": {"$ref": "#/$defs/id"},
+        "activate_from": {"$ref": "#/$defs/ids"}
+      }
+    },
+    "interaction": {
+      "type": "object", "required": ["id", "source", "target"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "source": {
+          "type": "object", "required": ["node", "object", "event"],
+          "properties": {"node": {"$ref": "#/$defs/id"}, "object": {"$ref": "#/$defs/id"}, "event": {"type": "string", "minLength": 1}}
+        },
+        "target": {
+          "type": "object", "required": ["node", "object", "action"],
+          "properties": {"node": {"$ref": "#/$defs/id"}, "object": {"$ref": "#/$defs/id"}, "action": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "dungeon": {
+      "type": "object", "required": ["root", "initial_capacity", "nodes", "links", "interactions"],
+      "properties": {
+        "root": {"$ref": "#/$defs/id"}, "initial_capacity": {"type": "integer", "minimum": 0},
+        "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}},
+        "links": {"type": "array", "items": {"$ref": "#/$defs/link"}},
+        "interactions": {"type": "array", "items": {"$ref": "#/$defs/interaction"}}
+      }
+    }
+  }
+}

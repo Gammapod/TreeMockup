@@ -1,0 +1,428 @@
+{
+	"format": "room-tree",
+	"version": 1,
+	"id": "switch_wall",
+	"name": "Switch and Remote Wall",
+	"rooms": [
+		{
+			"id": "empty",
+			"name": "Empty",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": []
+		},
+		{
+			"id": "fork",
+			"name": "Fork",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "key",
+					"kind": "pickup",
+					"position": [
+						550,
+						320
+					],
+					"properties": {
+						"kind": "capacity"
+					}
+				}
+			]
+		},
+		{
+			"id": "wall",
+			"name": "Wall",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "barrier",
+					"kind": "wall",
+					"position": [
+						380,
+						70
+					],
+					"size": [
+						40,
+						500
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "key",
+					"kind": "pickup",
+					"position": [
+						550,
+						320
+					],
+					"properties": {
+						"kind": "capacity"
+					}
+				}
+			]
+		},
+		{
+			"id": "lever",
+			"name": "Lever",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "switch",
+					"kind": "switch",
+					"position": [
+						400,
+						250
+					],
+					"properties": {
+
+					}
+				}
+			]
+		},
+		{
+			"id": "treasure",
+			"name": "Treasure",
+			"size": [
+				800,
+				600
+			],
+			"ports": [
+				{
+					"id": "north",
+					"position": [
+						400,
+						85
+					]
+				},
+				{
+					"id": "south",
+					"position": [
+						400,
+						555
+					]
+				},
+				{
+					"id": "west",
+					"position": [
+						65,
+						320
+					]
+				},
+				{
+					"id": "east",
+					"position": [
+						735,
+						320
+					]
+				}
+			],
+			"objects": [
+				{
+					"id": "coin",
+					"kind": "chest",
+					"position": [
+						400,
+						300
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1
+					}
+				}
+			]
+		}
+	],
+	"dungeon": {
+		"root": "start",
+		"initial_capacity": 1,
+		"nodes": [
+			{
+				"id": "start",
+				"name": "Start",
+				"template": "empty",
+				"cost": 0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					620,
+					380
+				]
+			},
+			{
+				"id": "fork",
+				"name": "Fork",
+				"template": "fork",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					420,
+					380
+				]
+			},
+			{
+				"id": "wall",
+				"name": "Wall",
+				"template": "wall",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					220,
+					380
+				]
+			},
+			{
+				"id": "prize",
+				"name": "Prize",
+				"template": "treasure",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					40,
+					380
+				]
+			},
+			{
+				"id": "sword",
+				"name": "Sword",
+				"template": "empty",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [
+					"sword"
+				],
+				"map_position": [
+					420,
+					170
+				]
+			},
+			{
+				"id": "switch",
+				"name": "Switch",
+				"template": "lever",
+				"cost": 1,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					620,
+					170
+				]
+			}
+		],
+		"links": [
+			{
+				"id": "start_fork",
+				"a": "start",
+				"b": "fork",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"start",
+					"fork"
+				]
+			},
+			{
+				"id": "fork_wall",
+				"a": "fork",
+				"b": "wall",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"fork",
+					"wall"
+				]
+			},
+			{
+				"id": "wall_prize",
+				"a": "wall",
+				"b": "prize",
+				"a_port": "west",
+				"b_port": "east",
+				"activate_from": [
+					"wall",
+					"prize"
+				]
+			},
+			{
+				"id": "fork_sword",
+				"a": "fork",
+				"b": "sword",
+				"a_port": "north",
+				"b_port": "south",
+				"activate_from": [
+					"fork",
+					"sword"
+				]
+			},
+			{
+				"id": "sword_switch",
+				"a": "sword",
+				"b": "switch",
+				"a_port": "east",
+				"b_port": "west",
+				"activate_from": [
+					"sword",
+					"switch"
+				]
+			}
+		],
+		"interactions": [
+			{
+				"id": "open_remote_wall",
+				"source": {
+					"node": "switch",
+					"object": "switch",
+					"event": "toggled"
+				},
+				"target": {
+					"node": "wall",
+					"object": "barrier",
+					"action": "set_open"
+				}
+			}
+		]
+	},
+	"extensions": {
+
+	}
+}

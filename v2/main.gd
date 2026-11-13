@@ -13,15 +13,22 @@ var status: Label
 var hud: Label
 var message := "Activate a neighboring room, then walk to its door and press E."
 var transition_pending := false
+var data_override: Dictionary = {}
+var object_records: Dictionary = {}
+var studio
+var sidebar: ScrollContainer
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color("121b28"))
-	data = CONTENT.create()
+	data = CONTENT.create() if data_override.is_empty() else data_override
 	progression = PROGRESSION.new(data)
+	sidebar = ScrollContainer.new()
+	sidebar.position = Vector2(810, 40)
+	sidebar.size = Vector2(380, 680)
+	add_child(sidebar)
 	panel = VBoxContainer.new()
-	panel.position = Vector2(810, 40)
-	panel.size = Vector2(370, 650)
-	add_child(panel)
+	panel.custom_minimum_size = Vector2(365, 0)
+	sidebar.add_child(panel)
 	hud = Label.new()
 	hud.position = Vector2(45, 15)
 	add_child(hud)
@@ -30,7 +37,7 @@ func _ready() -> void:
 	status.size = Vector2(730, 110)
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(status)
-	_enter_room("start", "", 5)
+	_enter_room(data.root, "", 5)
 
 func _process(_delta: float) -> void:
 	if room != null:
@@ -53,6 +60,7 @@ func _enter_room(destination: String, entry: String, hp: int) -> void:
 	room.portal_requested.connect(_request_travel)
 	room.reward_collected.connect(_collect)
 	room.player_defeated.connect(_defeat)
+	room.switch_toggled.connect(_switch_toggled)
 	transition_pending = false
 	_refresh()
 
@@ -80,7 +88,20 @@ func _defeat() -> void:
 		return
 	transition_pending = true
 	message = "Defeated — returned to Sanctuary. Build and collected rewards retained."
-	_enter_room.call_deferred("start", "", 5)
+	_enter_room.call_deferred(data.root, "", 5)
+
+func _switch_toggled(object_id: String) -> void:
+	if not object_records.has(current):
+		object_records[current] = {}
+	var state: bool = not object_records[current].get(object_id, false)
+	object_records[current][object_id] = state
+	for binding in data.get("interactions", []):
+		if binding.source.node == current and binding.source.object == object_id:
+			if not object_records.has(binding.target.node):
+				object_records[binding.target.node] = {}
+			object_records[binding.target.node][binding.target.object] = state
+	message = "Switch %s: %s" % [object_id, "on" if state else "off"]
+	_refresh()
 
 func _toggle(id: String) -> void:
 	var result: Dictionary
@@ -96,6 +117,7 @@ func _toggle(id: String) -> void:
 
 func _refresh() -> void:
 	room.player.capabilities = progression.capabilities()
+	room.apply_object_states(object_records.get(current, {}))
 	room.portals = _portals()
 	for child in panel.get_children():
 		panel.remove_child(child)
@@ -117,7 +139,7 @@ func _refresh() -> void:
 			button.tooltip_text = "Affected: " + ", ".join(preview.affected)
 			button.pressed.connect(_toggle.bind(id))
 			panel.add_child(button)
-	_label("\nPrize needs BOTH landings.\nRemoving either also removes Prize.\n\nWASD: move     E: use nearby door\nSpace: sword     Shift: dash", 16)
+	_label("\nWASD: move     E: door / chest\nSpace: sword     Shift: dash\nF2: content editors", 16)
 	status.text = message + "\n\nActive abilities: " + ", ".join(progression.capabilities().abilities.keys())
 	room.queue_redraw()
 
@@ -126,3 +148,44 @@ func _label(text: String, size: int) -> void:
 	label.text = text
 	label.add_theme_font_size_override("font_size", size)
 	panel.add_child(label)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_F2:
+		_open_studio()
+		get_viewport().set_input_as_handled()
+
+func _open_studio() -> void:
+	if studio == null:
+		studio = load("res://authoring/studio.gd").new()
+		studio.play_requested.connect(_play_document)
+		studio.close_requested.connect(_close_studio)
+		add_child(studio)
+	studio.show()
+	studio.process_mode = Node.PROCESS_MODE_INHERIT
+	room.process_mode = Node.PROCESS_MODE_DISABLED
+	room.hide()
+	sidebar.hide()
+	hud.hide()
+	status.hide()
+
+func _close_studio() -> void:
+	studio.hide()
+	studio.process_mode = Node.PROCESS_MODE_DISABLED
+	room.process_mode = Node.PROCESS_MODE_INHERIT
+	room.show()
+	sidebar.show()
+	hud.show()
+	status.show()
+
+func _play_document(compiled: Dictionary) -> void:
+	# Playtest starts a fresh run, never mutating the editor's source document.
+	remove_child(room)
+	room.queue_free()
+	room = null
+	room_records.clear()
+	object_records.clear()
+	data = compiled
+	progression = PROGRESSION.new(data)
+	message = "Playtesting authored content. F2 returns to the editors."
+	_enter_room(data.root, "", 5)
+	_close_studio()
