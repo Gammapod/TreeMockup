@@ -8,6 +8,7 @@ const BASELINE_SCENARIO_SCRIPT: Script = preload("res://scenarios/baseline_scena
 const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
 const SWITCH_SCENARIO_SCRIPT: Script = preload("res://scenarios/switch_scenario.gd")
 const COMBAT_SCENARIO_SCRIPT: Script = preload("res://scenarios/combat_scenario.gd")
+const BRANCHING_SCENARIO_SCRIPT: Script = preload("res://scenarios/branching_dungeon_scenario.gd")
 const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 
 var scenario
@@ -23,6 +24,7 @@ var scenario_entries: Array = [
 	{"title": "Water & Flippers", "description": "A connected ability changes traversal in another branch.", "script": WATER_FLIPPERS_SCENARIO_SCRIPT},
 	{"title": "Switch & Wall", "description": "Keys, sword activation, and a remote switch-controlled wall.", "script": SWITCH_SCENARIO_SCRIPT},
 	{"title": "Combat", "description": "Connected sword ability, bats, keys, and risk/reward branches.", "script": COMBAT_SCENARIO_SCRIPT},
+	{"title": "Branching Dungeon", "description": "Directional skill branches, reversible forks, and a shared prerequisite gate.", "script": BRANCHING_SCENARIO_SCRIPT},
 ]
 
 func _ready() -> void:
@@ -71,7 +73,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		for door in scenario.doors.values():
 			if Rect2(door.position - Vector2(30, 30), Vector2(60, 60)).has_point(event.position):
-				status_message = _toggle_message(door.id, model.try_toggle_door(door.id))
+				var result: String = model.try_toggle_door(door.id)
+				if result == "gate":
+					result = model.try_unlock_gate(door.gate_id)
+				status_message = _toggle_message(door.id, result)
 				queue_redraw()
 				return
 
@@ -83,6 +88,7 @@ func _handle_menu_input(event: InputEvent) -> void:
 			KEY_2: index = 1
 			KEY_3: index = 2
 			KEY_4: index = 3
+			KEY_5: index = 4
 		if index >= 0:
 			_load_scenario(index)
 			return
@@ -104,7 +110,7 @@ func _load_scenario(index: int) -> void:
 	queue_redraw()
 
 func _menu_entry_rect(index: int) -> Rect2:
-	return Rect2(150, 190 + index * 105, 900, 82)
+	return Rect2(150, 170 + index * 92, 900, 72)
 
 func _move_player(amount: Vector2) -> void:
 	for door in scenario.doors.values():
@@ -116,7 +122,8 @@ func _move_player(amount: Vector2) -> void:
 		var destination_room = scenario.rooms[destination]
 		var travel_direction: Vector2 = (destination_room.bounds.get_center() - source_room.bounds.get_center()).normalized()
 		var aligned: bool = abs(player_position.x - door.position.x) < DOOR_HALF_WIDTH if abs(travel_direction.y) > 0.5 else abs(player_position.y - door.position.y) < DOOR_HALF_WIDTH
-		if aligned and player_position.distance_to(door.position) < 48.0 and amount.dot(travel_direction) > 0.0:
+		var aligned_or_abstract: bool = aligned or door.approach_radius > 48.0
+		if aligned_or_abstract and player_position.distance_to(door.position) < door.approach_radius and amount.dot(travel_direction) > 0.0:
 			if model.try_traverse_door(door.id):
 				player_position = _entry_position(destination_room.bounds, travel_direction)
 				_try_collect_at_player()
@@ -185,6 +192,11 @@ func _toggle_message(door_id: String, result: String) -> String:
 		"remote": return "%s is remote. Move into one of its rooms to operate it." % door_id
 		"capacity": return "%s is sealed: the %d-door limit is reached." % [door_id, model.capabilities.max_open_doors]
 		"loop": return "%s is sealed because opening it would create a loop." % door_id
+		"fork": return "%s is sealed because another fork option is selected." % door_id
+		"direction": return "%s can only be opened from its source room." % door_id
+		"prerequisites": return "%s requires additional connected rooms." % door_id
+		"key": return "%s requires a gate key." % door_id
+		"gate_open": return "%s is held open by its unlocked gate." % door_id
 		_: return "%s is sealed because it would not extend the root-connected tree." % door_id
 
 func _draw() -> void:
@@ -217,7 +229,7 @@ func _draw_menu() -> void:
 		draw_rect(rect, Color("55e6cd"), false, 2)
 		draw_string(font, rect.position + Vector2(24, 31), "%d. %s" % [index + 1, entry.title], HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("eef4ff"))
 		draw_string(font, rect.position + Vector2(24, 59), entry.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("b7c7d8"))
-	draw_string(font, Vector2(150, 665), "Click a scenario or press 1–4. Press Esc during a scenario to return here.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("f6d365"))
+	draw_string(font, Vector2(150, 680), "Click a scenario or press 1–5. Press Esc during a scenario to return here.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("f6d365"))
 
 func _draw_header() -> void:
 	draw_string(font, Vector2(48, 55), "DOOR NETWORK — %s" % scenario.name.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("eef4ff"))

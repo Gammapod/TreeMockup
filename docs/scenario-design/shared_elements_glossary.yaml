@@ -1,0 +1,52 @@
+Graph Traversal:
+  description: Every scenario has a starting root room, which the player spawns in. The dungeon is simultaneously an explorable space and a skill tree.
+  nodes:
+    description: every room in the dungeon is also a skill tree node.
+    abilities: Any rooms connected to the root through active nodes is an active skill that modifies the player's abilities.
+    elements: Every room also contains items, enemies, traps, hazards, etc
+    connections: The player can activate or deactivate nodes that are adjacent to their current room. The player cannot deactivate a node if it would result in their current location to also deactivate. In other words, the player must always be in an active room, connected to the root node. 
+  doors:
+    description: doors connect rooms, and also represent edges on the skill tree. Their state determines both where the player can go and the player's active abilities 
+    closed: doors are closed by default. The player cannot go through closed doors.
+    open: when any two rooms are both active, the doors between them are open. When a door is open, the player can travel between the connected rooms.
+    neutral edges: `---` a neutral edge represents a normal connection. The player can activate or deactivate either node while standing in the other.
+    directed edges: `-->` a directional edge represents a one-way activation rule. The player can activate a downstream node from the upstream node, but not in the other direction.
+    prerequisites: `--x` a prerequisite edge represents a one-way activation rule with multiple requirements. All upstream nodes must be active before the player can activate the node.
+
+Room Elements:
+  description: these exist inside of a given room, and interact with the player.
+  collectables:
+    description: unlike room abilities, these are collected permanently
+    coin: permanently increases coin count by 1 and disappears                                                           
+    key: permanently increases max open doors by 1 and disappears
+    health: heals the player 1 hp (capped at max hp)
+  enemies:
+    description: can move and damage the player                           
+    bat: slowly approaches player (at half of player's default speed), when player is in the room.
+    big bat: same as bat, but twice as large and takes 3 hits to defeat
+  hazards:
+    description: block the player's movement and potentially damage the player
+    water hazard: the player can cross water if the flippers ability is active
+    wall hazard: the wall disappears and allows passage if an associated switch is toggled on
+  interactable objects:
+    description: misc elements
+    switch: can be toggled on or off by being hit with the sword ability (initialized off)
+
+Skill Tree Abilities:
+  description: each room also activates an ability when connected to the active graph. A connected room can also activate a modifier, which only works if the associated ability is active.
+  note: these are all placeholders for the sake of testing the larger graph traversal rules, not polished or balanced.
+  abilities:                                                                                                      
+    sword: 
+      base: when active, player can press `c` to defeat nearby enemies (simple circular range around the player)
+      modifiers:
+        big sword: sword radius decreases by 0.5x, and activates 3 times in quick succession
+        fast sword: sword radius decreases by 0.5x, and activates 3 times in quick succession
+    flippers: 
+      base: when active, player can cross water hazards.
+    boots:
+      base: when active, player can press `z` to dash, quickly moving in the direction last moved. Still takes damage if passing through an enemy.
+      modifiers:
+        big dash: dash travels half as far, but bypasses enemies
+        run: dash removed; activation key instead doubles movement speed while held
+  stat upgrades:
+    +n hp: when active, player's max hp is increased by n

@@ -1,0 +1,65 @@
+flowchart TD
+%% Major idea: two branching paths; one explores attack options, the other explores defence options, and the player can customize their experience before exploring the merged area.
+%% Golden path: explore the sword path as deeply as they care to, retaining their preferred branches, do the same with the movement path, and a merged path is unlocked with a prerequisite from each path.
+%% Starting door capacity: 1
+    start["start"]
+    %% When connected: +1 current/max HP
+    %% Contents: player spawn
+    sword_room["Sword"]
+    %% When connected: sword ability
+    %% Contents: 2 keys
+    sword_practice["Sword Practice"]
+    %% When connected: +1 current/max HP
+    %% Contents: 1 bat
+    big_swing["Big Swing"]
+    %% When connected: big sword modifier
+    %% Contents: 10 bats
+    fast_swing["Fast Swing"]
+    %% When connected: fast sword modifier
+    %% Contents: 1 big bat
+    neutral_swing["HP+"]
+    %% When connected: +5 current/max HP
+    %% Contents: 3 bats
+    sword_landing["Landing"]
+    %% Contents: key
+    boots_room["Boots"]
+    %% When connected: boots ability
+    %% Contents: 2 keys
+    boots_practice["Boots Practice"]
+    %% When connected: +1 current/max HP
+    %% Contents: 1 bat
+    hit_dash["Hit Dash"]
+    %% When connected: hit dash modifier
+    %% Contents: 10 bats
+    run["Run"]
+    %% When connected: run modifier
+    %% Contents: 1 big bat
+    neutral_dash["HP+"]
+    %% When connected: +5 current/max HP
+    %% Contents: 3 bats
+    boots_landing["Landing"]
+    %% Contents: key
+    final_branch["Prize"]
+    %% When connected: +1 current/max HP
+    %% Contents: collectable coin
+
+    start --- sword_room
+    sword_room --- sword_practice
+    sword_room --> big_swing
+    sword_room --> fast_swing
+    big_swing --> sword_landing
+    fast_swing --> sword_landing
+    sword_room --> neutral_swing
+    neutral_swing --> sword_landing
+
+    start --- boots_room
+    boots_room --- boots_practice
+    boots_room --> hit_dash
+    boots_room --> run
+    hit_dash --> boots_landing
+    run --> boots_landing
+    boots_room --> neutral_dash
+    neutral_dash --> boots_landing
+
+    sword_landing --x final_branch
+    boots_landing --x final_branch

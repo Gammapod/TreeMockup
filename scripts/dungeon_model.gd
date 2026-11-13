@@ -17,6 +17,7 @@ var permanent_door_capacity_bonus: int = 0
 var switch_states: Dictionary = {}
 var enemy_states: Dictionary = {}
 var damage_cooldown: float = 0.0
+var gate_states: Dictionary = {}
 
 func _init(p_scenario) -> void:
 	scenario = p_scenario
@@ -28,6 +29,8 @@ func _init(p_scenario) -> void:
 		switch_states[switch_definition.id] = switch_definition.initial_state
 	for enemy_definition in scenario.enemies.values():
 		enemy_states[enemy_definition.id] = ENEMY_STATE_SCRIPT.new(enemy_definition.home_position)
+	for gate_definition in scenario.gates.values():
+		gate_states[gate_definition.id] = false
 	_recalculate()
 
 func is_room_reachable(room_id: String) -> bool:
@@ -41,6 +44,10 @@ func try_toggle_door(door_id: String) -> String:
 	var state = door_state(door_id)
 	if scenario.rules.require_adjacent_interaction and door.other_room(player_room) == "":
 		return "remote"
+	if door.gate_id != "":
+		return "gate" if not is_gate_unlocked(door.gate_id) else "gate_open"
+	if not state.open and door.directional_source_room != "" and player_room != door.directional_source_room:
+		return "direction"
 	if state.open:
 		if state.propped:
 			return "propped"
@@ -100,6 +107,29 @@ func is_wall_passable(wall_id: String) -> bool:
 				return is_switch_active(wall.switch_id)
 	return false
 
+func try_unlock_gate(gate_id: String) -> String:
+	if not scenario.gates.has(gate_id):
+		return "missing"
+	var gate_definition = scenario.gates[gate_id]
+	if not gate_definition.interaction_rooms.has(player_room):
+		return "remote"
+	if is_gate_unlocked(gate_id):
+		return "open"
+	for room_id: String in gate_definition.required_connected_rooms:
+		if not reachable_rooms.has(room_id):
+			return "prerequisites"
+	if open_door_count() + gate_definition.capacity_cost > capabilities.max_open_doors:
+		return "capacity"
+	gate_states[gate_id] = true
+	for door in scenario.doors.values():
+		if door.gate_id == gate_id:
+			door_state(door.id).open = true
+	_recalculate()
+	return "opened"
+
+func is_gate_unlocked(gate_id: String) -> bool:
+	return gate_states.get(gate_id, false)
+
 func is_enemy_alive(enemy_id: String) -> bool:
 	return enemy_states[enemy_id].alive
 
@@ -148,6 +178,8 @@ func _recalculate() -> void:
 	var open_count: int = open_door_count()
 	for door in scenario.doors.values():
 		var state = door_state(door.id)
+		if door.gate_id != "" and is_gate_unlocked(door.gate_id):
+			state.open = true
 		state.propped = state.open and scenario.rules.prop_player_path and _would_disconnect_player(door)
 		state.sealed_reason = "" if state.open else _seal_reason(door, open_count)
 	_respawn_defeated_enemies_in_disconnected_rooms()
@@ -169,7 +201,16 @@ func _derive_capabilities():
 func _seal_reason(door, open_count: int) -> String:
 	var reaches_a: bool = reachable_rooms.has(door.room_a)
 	var reaches_b: bool = reachable_rooms.has(door.room_b)
-	if scenario.rules.require_root_connection and reaches_a == reaches_b:
+	if door.gate_id != "" and not is_gate_unlocked(door.gate_id):
+		return "gate"
+	if door.fork_group != "" and _fork_has_open_sibling(door):
+		return "fork"
+	for room_id: String in door.required_connected_rooms:
+		if not reachable_rooms.has(room_id):
+			return "prerequisites"
+	if scenario.rules.require_root_connection and door.directional_source_room != "" and not reachable_rooms.has(door.directional_source_room):
+		return "root"
+	if scenario.rules.require_root_connection and door.directional_source_room == "" and not reaches_a and not reaches_b:
 		return "root"
 	if scenario.rules.prevent_loops and _would_form_loop(door):
 		return "loop"
@@ -177,11 +218,20 @@ func _seal_reason(door, open_count: int) -> String:
 		return "capacity"
 	return ""
 
+func _fork_has_open_sibling(candidate) -> bool:
+	for door in scenario.doors.values():
+		if door.id != candidate.id and door.fork_group == candidate.fork_group and door_state(door.id).open:
+			return true
+	return false
+
 func open_door_count() -> int:
 	var count: int = 0
-	for state in door_states.values():
-		if state.open:
+	for door in scenario.doors.values():
+		if door.gate_id == "" and door_state(door.id).open:
 			count += 1
+	for gate_definition in scenario.gates.values():
+		if is_gate_unlocked(gate_definition.id):
+			count += gate_definition.capacity_cost
 	return count
 
 func _calculate_reachable_rooms() -> Dictionary:

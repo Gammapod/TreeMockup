@@ -5,6 +5,7 @@ const DUNGEON_MODEL_SCRIPT: Script = preload("res://scripts/dungeon_model.gd")
 const WATER_FLIPPERS_SCENARIO_SCRIPT: Script = preload("res://scenarios/water_flippers_scenario.gd")
 const SWITCH_SCENARIO_SCRIPT: Script = preload("res://scenarios/switch_scenario.gd")
 const COMBAT_SCENARIO_SCRIPT: Script = preload("res://scenarios/combat_scenario.gd")
+const BRANCHING_SCENARIO_SCRIPT: Script = preload("res://scenarios/branching_dungeon_scenario.gd")
 
 var failures: Array[String] = []
 
@@ -16,6 +17,8 @@ func _init() -> void:
 	_test_health_flippers_and_gold()
 	_test_switch_wall_and_key_progression()
 	_test_combat_enemy_rules()
+	_test_directional_fork_rules()
+	_test_shared_gate_uses_one_capacity_slot()
 	if failures.is_empty():
 		print("All dungeon model tests passed.")
 		quit(0)
@@ -38,6 +41,10 @@ func _switch_model():
 
 func _combat_model():
 	var scenario_factory = COMBAT_SCENARIO_SCRIPT.new()
+	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
+
+func _branching_model():
+	var scenario_factory = BRANCHING_SCENARIO_SCRIPT.new()
 	return DUNGEON_MODEL_SCRIPT.new(scenario_factory.create())
 
 func _test_initial_root_and_capabilities() -> void:
@@ -133,6 +140,46 @@ func _test_combat_enemy_rules() -> void:
 	_expect_equal(model.try_traverse_door("Start—Danger"), true, "Player returns to Starting Room")
 	_expect_equal(model.try_toggle_door("Start—Danger"), "closed", "Danger branch closes")
 	_expect(model.is_enemy_alive("danger_bat_1"), "Defeated bat respawns when its room disconnects")
+
+func _test_directional_fork_rules() -> void:
+	var model = _branching_model()
+	_expect_equal(model.try_toggle_door("Start—Sword"), "opened", "Sword root connection opens")
+	_expect_equal(model.try_traverse_door("Start—Sword"), true, "Player enters Sword")
+	_expect_equal(model.try_collect("sword_key_1"), true, "Sword capacity key is collected")
+	_expect_equal(model.try_collect("sword_key_2"), true, "Second Sword capacity key is collected")
+	_expect_equal(model.try_toggle_door("Sword—Big Swing"), "opened", "Directional fork opens from its source room")
+	_expect_equal(model.door_state("Sword—Fast Swing").sealed_reason, "fork", "Sibling fork option seals")
+	_expect_equal(model.try_traverse_door("Sword—Big Swing"), true, "Directional door can be traversed forward")
+	_expect_equal(model.try_traverse_door("Sword—Big Swing"), true, "Directional door can be traversed backward")
+	_expect_equal(model.try_toggle_door("Sword—Big Swing"), "closed", "Selected fork can close from its source")
+	_expect_equal(model.door_state("Sword—Fast Swing").sealed_reason, "", "Sibling unseals when the selected fork closes")
+
+func _test_shared_gate_uses_one_capacity_slot() -> void:
+	var model = _branching_model()
+	model.try_toggle_door("Start—Sword")
+	model.try_traverse_door("Start—Sword")
+	model.try_collect("sword_key_1")
+	model.try_collect("sword_key_2")
+	model.try_toggle_door("Sword—Big Swing")
+	model.try_traverse_door("Sword—Big Swing")
+	model.try_toggle_door("Big Swing—Landing")
+	model.try_traverse_door("Big Swing—Landing")
+	model.try_collect("sword_landing_key")
+	model.try_traverse_door("Big Swing—Landing")
+	model.try_traverse_door("Sword—Big Swing")
+	model.try_traverse_door("Start—Sword")
+	model.try_toggle_door("Start—Boots")
+	model.try_traverse_door("Start—Boots")
+	model.try_collect("boots_key_1")
+	model.try_collect("boots_key_2")
+	model.try_toggle_door("Boots—Hit Dash")
+	model.try_traverse_door("Boots—Hit Dash")
+	model.try_toggle_door("Hit Dash—Landing")
+	model.try_traverse_door("Hit Dash—Landing")
+	model.try_collect("boots_landing_key")
+	_expect_equal(model.capabilities.max_open_doors, 7, "All six normal capacity keys raise capacity to seven")
+	_expect_equal(model.try_unlock_gate("prize_gate"), "opened", "Shared gate unlocks with both landings connected")
+	_expect_equal(model.open_door_count(), 7, "Two gate entrances consume one shared capacity slot")
 
 func _expect(condition: bool, description: String) -> void:
 	if not condition:

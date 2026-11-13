@@ -8,8 +8,9 @@ var rules
 var collectables: Dictionary
 var switches: Dictionary
 var enemies: Dictionary
+var gates: Dictionary
 
-func _init(p_name: String, p_rooms: Dictionary, p_doors: Dictionary, p_rules, p_collectables: Dictionary = {}, p_switches: Dictionary = {}, p_enemies: Dictionary = {}) -> void:
+func _init(p_name: String, p_rooms: Dictionary, p_doors: Dictionary, p_rules, p_collectables: Dictionary = {}, p_switches: Dictionary = {}, p_enemies: Dictionary = {}, p_gates: Dictionary = {}) -> void:
 	name = p_name
 	rooms = p_rooms
 	doors = p_doors
@@ -17,3 +18,4 @@ func _init(p_name: String, p_rooms: Dictionary, p_doors: Dictionary, p_rules, p_
 	collectables = p_collectables
 	switches = p_switches
 	enemies = p_enemies
+	gates = p_gates
