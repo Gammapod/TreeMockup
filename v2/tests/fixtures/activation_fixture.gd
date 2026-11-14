@@ -14,6 +14,9 @@ static func create() -> Dictionary:
 	for id in ["start", "sword", "boots", "sword_landing", "boots_landing", "prize"]:
 		data.nodes[id] = {"id": id, "name": id, "template": "practice" if id in ["sword", "boots"] else "empty", "cost": 0 if id == "start" else 1, "requires_all": [], "requires_any": [], "abilities": []}
 	data.nodes.sword.abilities = ["sword"]
+	data.templates.home = data.templates.empty.duplicate(true)
+	data.templates.home.clear = {"conditions": [], "effects": [{"kind": "become_root"}]}
+	data.nodes.start.template = "home"
 	data.nodes.boots.abilities = ["dash"]
 	data.nodes.sword_landing.requires_all = ["sword"]
 	data.nodes.boots_landing.requires_all = ["boots"]

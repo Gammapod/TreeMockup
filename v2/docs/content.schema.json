@@ -35,8 +35,25 @@
             "properties": {"id": {"$ref": "#/$defs/id"}, "position": {"$ref": "#/$defs/point"}}
           }
         },
-        "objects": {"type": "array", "items": {"$ref": "#/$defs/object"}}
+        "objects": {"type": "array", "items": {"$ref": "#/$defs/object"}},
+        "clear": {"$ref": "#/$defs/clear"}
       }
+    },
+    "clear": {
+      "type": "object",
+      "properties": {
+        "block_tree_editing_until_cleared": {"type": "boolean", "default": false},
+        "conditions": {"type": "array", "items": {"$ref": "#/$defs/clear_entry"}},
+        "effects": {"type": "array", "items": {"$ref": "#/$defs/clear_entry"}}
+      }
+    },
+    "clear_entry": {
+      "type": "object", "required": ["kind"],
+      "properties": {"kind": {"type": "string"}, "object": {"$ref": "#/$defs/id"}},
+      "allOf": [{
+        "if": {"properties": {"kind": {"enum": ["switch_hit", "reveal_pickup"]}}},
+        "then": {"required": ["object"]}
+      }]
     },
     "object": {
       "type": "object", "required": ["id", "kind", "position", "properties"],

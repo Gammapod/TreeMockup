@@ -2,12 +2,15 @@ extends VBoxContainer
 
 # Presentation only: receives model snapshots, emits commands for the coordinator.
 signal action_requested(id: String)
+signal root_travel_requested(id: String)
 
 var data: Dictionary = {}
 var snapshot: Dictionary = {}
 var gameplay_map
 var selection: Label
 var node_action: Button
+var root_travel: Button
+var edit_permission: Label
 var selection_scroll: ScrollContainer
 var inspected_node := ""
 
@@ -18,10 +21,13 @@ func _ready() -> void:
 	fit_button.focus_mode = Control.FOCUS_NONE
 	add_child(fit_button)
 	var help := Label.new()
-	help.text = "Click: select • Wheel: zoom • Right/middle drag: pan\nSolid: travel • Dashed arrow: prerequisite\n✓ Active • + Available • × Blocked"
+	help.text = "Click: select • Wheel: zoom • Right/middle drag: pan\nSolid: travel • Dashed arrow: prerequisite\n✓ Active • + Available • × Blocked • C Cleared • R Root"
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.add_theme_font_size_override("font_size", 13)
 	add_child(help)
+	edit_permission = Label.new()
+	edit_permission.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	edit_permission.add_theme_color_override("font_color", Color("ffd569"))
 	gameplay_map = preload("res://gameplay_map.gd").new()
 	gameplay_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(gameplay_map)
@@ -34,13 +40,27 @@ func _ready() -> void:
 	selection_scroll.custom_minimum_size.y = 120
 	selection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(selection_scroll)
-	selection_scroll.add_child(selection)
+	var details := VBoxContainer.new()
+	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selection_scroll.add_child(details)
+	details.add_child(edit_permission)
+	details.add_child(selection)
 	resized.connect(func():
 		selection_scroll.custom_minimum_size.y = 120 if size.y >= 560 else 80)
 	node_action = Button.new()
 	node_action.focus_mode = Control.FOCUS_NONE
 	node_action.pressed.connect(request_selected_action)
-	add_child(node_action)
+	var actions := HBoxContainer.new()
+	add_child(actions)
+	node_action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(node_action)
+	root_travel = Button.new()
+	root_travel.text = "Travel to root"
+	root_travel.focus_mode = Control.FOCUS_NONE
+	root_travel.pressed.connect(func():
+		if not gameplay_map.selected.is_empty():
+			root_travel_requested.emit(gameplay_map.selected))
+	actions.add_child(root_travel)
 	var controls := Label.new()
 	controls.text = "WASD: move • E: door / chest • Space: sword\nShift: dash / run • F2: editors"
 	controls.add_theme_font_size_override("font_size", 13)
@@ -52,17 +72,23 @@ func configure(definition: Dictionary) -> void:
 	# Definitions are validated immutable content for the duration of a run.
 	data = definition
 	snapshot = {}
+	edit_permission.text = ""
+	edit_permission.hide()
 	gameplay_map.set_definition(data)
 	select_node("")
 
 func refresh(state: Dictionary) -> void:
 	# Keep a coherent presentation while the mutable run advances.
 	snapshot = state.duplicate(true)
+	edit_permission.text = "" if snapshot.get("can_edit_tree", true) else "Tree editing disabled while this room is uncleared."
+	edit_permission.visible = not edit_permission.text.is_empty()
 	gameplay_map.set_occupied(snapshot.current)
 	var states: Dictionary = {}
 	for id in data.nodes:
 		states[id] = "active" if snapshot.active.has(id) else ("available" if snapshot.previews[id].ok else "blocked")
 	gameplay_map.set_node_states(states)
+	gameplay_map.cleared = snapshot.get("cleared", {})
+	gameplay_map.roots = snapshot.get("roots", {})
 	select_node(gameplay_map.selected)
 
 func frame_current_room() -> void:
@@ -78,6 +104,9 @@ func select_node(id: String) -> void:
 	gameplay_map.selected = id
 	gameplay_map.set_removal_preview([], false)
 	gameplay_map.queue_redraw()
+	var travel: Dictionary = snapshot.get("travel_previews", {}).get(id, {"ok": false, "reason": "not_cleared_active_root"})
+	root_travel.disabled = not travel.ok
+	root_travel.tooltip_text = "Travel to this root's spawn without changing HP or build." if travel.ok else _action_reason(travel.reason)
 	if id.is_empty():
 		selection.text = "Select a node to inspect or change its activation.\nActivation and deactivation are local."
 		node_action.text = "Select a node"
@@ -89,9 +118,13 @@ func select_node(id: String) -> void:
 	var preview: Dictionary = snapshot.previews[id]
 	var state_text := "Active" if is_active else ("Available to activate" if preview.ok else "Inactive — blocked")
 	var reason_text := _action_reason(preview.reason)
-	if id == snapshot.current and id != data.root and not preview.ok:
+	if id == snapshot.current and preview.reason not in ["root", "tree_editing_locked"] and not preview.ok:
 		reason_text = "You cannot deactivate the room you occupy."
 	selection.text = "%s • Cost: %d\n%s%s" % [node.name, node.cost, state_text, " • You are here" if id == snapshot.current else ""]
+	selection.text += "\n" + ("Cleared" if snapshot.get("cleared", {}).has(id) else "Uncleared")
+	var is_root: bool = snapshot.get("roots", {}).has(id)
+	if is_root:
+		selection.text += " • Root — permanently active, allocation 0"
 	if not preview.ok:
 		selection.text += "\n" + reason_text
 	node_action.text = "Deactivate / refund" if is_active else "Activate (%d %s)" % [node.cost, "point" if node.cost == 1 else "points"]
@@ -112,7 +145,16 @@ func select_node(id: String) -> void:
 			node_action.text = "Deactivate / refund %d points" % refund
 		else:
 			selection.text += "\nWould refund %d points, but this action is blocked. No refund." % refund
-	selection.text += _requirement_details(node)
+	selection.text += "\nUpstream prerequisites waived for this root." if is_root else _requirement_details(node)
+	var rule: Dictionary = data.get("templates", {}).get(node.template, {}).get("clear", {})
+	if not rule.get("conditions", []).is_empty():
+		selection.text += "\nClear objectives (ALL):"
+		for condition in rule.conditions:
+			selection.text += "\n  " + condition.kind.replace("_", " ").capitalize() + (" — " + condition.object if condition.has("object") else "")
+	if not rule.get("effects", []).is_empty():
+		selection.text += "\nClear effects:"
+		for effect in rule.effects:
+			selection.text += "\n  " + effect.kind.replace("_", " ").capitalize() + (" — " + effect.object if effect.has("object") else "")
 	node_action.tooltip_text = selection.text
 
 func _requirement_details(node: Dictionary) -> String:
@@ -154,4 +196,7 @@ func _action_reason(reason: String) -> String:
 		"missing": "This room no longer exists.",
 		"already_active": "This room is already active.",
 		"inactive": "This room is already inactive.",
+		"tree_editing_locked": "Clear the room you occupy before editing the tree.",
+		"not_cleared_active_root": "Travel requires a cleared, active root.",
+		"already_here": "You are already in this room.",
 	}.get(reason, reason.replace("_", " ").capitalize())

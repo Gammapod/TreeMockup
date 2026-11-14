@@ -6,6 +6,7 @@
   "rooms": [
     {
       "id": "sanctuary", "name": "Starting Room", "size": [800, 600],
+      "clear": {"conditions": [], "effects": [{"kind": "become_root"}]},
       "ports": [{"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
       "objects": []
     },

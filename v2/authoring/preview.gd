@@ -47,7 +47,7 @@ func _draw() -> void:
 			_text(p + Vector2(16, 5), port.id)
 		for object in content.get("objects", []):
 			var p := Vector2(object.position[0], object.position[1])
-			var color: Color = {"enemy": Color("c580df"), "pickup": Color("88cbff"), "chest": Color("ffd569"), "switch": Color("e5935d"), "water": Color("3479b5")}.get(object.kind, Color("909dad"))
+			var color: Color = {"token": Color("ff95df"), "enemy": Color("c580df"), "pickup": Color("88cbff"), "chest": Color("ffd569"), "switch": Color("e5935d"), "water": Color("3479b5")}.get(object.kind, Color("909dad"))
 			if object.has("size") and object.size is Array and object.size.size() == 2:
 				draw_rect(Rect2(p, Vector2(object.size[0], object.size[1])), color)
 			else:

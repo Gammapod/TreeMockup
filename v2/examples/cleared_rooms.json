@@ -1,0 +1,77 @@
+{
+  "format": "room-tree", "version": 1,
+  "id": "cleared_rooms", "name": "Cleared Rooms Lab",
+  "rooms": [
+    {
+      "id": "home", "name": "Immediate root", "size": [800, 600],
+      "ports": [{"id": "north", "position": [400, 85]}, {"id": "south", "position": [400, 555]}, {"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
+      "objects": [{"id": "welcome", "kind": "pickup", "position": [400, 250], "properties": {"kind": "gold"}}],
+      "clear": {"conditions": [], "effects": [{"kind": "become_root"}, {"kind": "reveal_pickup", "object": "welcome"}]}
+    },
+    {
+      "id": "combat", "name": "Defeat enemies for a key", "size": [800, 600],
+      "ports": [{"id": "east", "position": [735, 320]}, {"id": "west", "position": [65, 320]}],
+      "objects": [
+        {"id": "bat_a", "kind": "enemy", "position": [340, 220], "properties": {"hp": 1, "speed": 55}},
+        {"id": "bat_b", "kind": "enemy", "position": [500, 220], "properties": {"hp": 1, "speed": 55}},
+        {"id": "key", "kind": "pickup", "position": [400, 170], "properties": {"kind": "capacity"}}
+      ],
+      "clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": [{"kind": "reveal_pickup", "object": "key"}, {"kind": "prevent_enemy_respawn"}]}
+    },
+    {
+      "id": "switch_room", "name": "Hit the switch for gold", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}],
+      "objects": [
+        {"id": "lever", "kind": "switch", "position": [400, 280], "properties": {}},
+        {"id": "gold", "kind": "chest", "position": [550, 200], "properties": {"kind": "gold", "value": 5}}
+      ],
+      "clear": {"conditions": [{"kind": "switch_hit", "object": "lever"}], "effects": [{"kind": "reveal_pickup", "object": "gold"}]}
+    },
+    {
+      "id": "tokens", "name": "Collect every pink token", "size": [800, 600],
+      "ports": [{"id": "north", "position": [400, 85]}, {"id": "east", "position": [735, 320]}],
+      "objects": [
+        {"id": "token_a", "kind": "token", "position": [250, 280], "properties": {}},
+        {"id": "token_b", "kind": "token", "position": [550, 280], "properties": {}},
+        {"id": "token_c", "kind": "token", "position": [400, 450], "properties": {}},
+        {"id": "gold", "kind": "pickup", "position": [400, 200], "properties": {"kind": "gold", "value": 3}}
+      ],
+      "clear": {"block_tree_editing_until_cleared": true, "conditions": [{"kind": "all_tokens_collected"}], "effects": [{"kind": "reveal_pickup", "object": "gold"}]}
+    },
+    {
+      "id": "combined", "name": "All objectives earn a root", "size": [800, 600],
+      "ports": [{"id": "west", "position": [65, 320]}],
+      "objects": [
+        {"id": "bat", "kind": "enemy", "position": [450, 200], "properties": {"hp": 1, "speed": 55}},
+        {"id": "lever", "kind": "switch", "position": [550, 350], "properties": {}},
+        {"id": "token_a", "kind": "token", "position": [300, 200], "properties": {}},
+        {"id": "token_b", "kind": "token", "position": [550, 450], "properties": {}},
+        {"id": "gold", "kind": "pickup", "position": [400, 300], "properties": {"kind": "gold", "value": 10}}
+      ],
+      "clear": {
+        "conditions": [{"kind": "all_enemies_defeated"}, {"kind": "switch_hit", "object": "lever"}, {"kind": "all_tokens_collected"}],
+        "effects": [{"kind": "reveal_pickup", "object": "gold"}, {"kind": "prevent_enemy_respawn"}, {"kind": "become_root"}]
+      }
+    }
+  ],
+  "dungeon": {
+    "root": "start", "initial_capacity": 6, "base_hp": 10,
+    "nodes": [
+      {"id": "start", "name": "Immediate Root", "template": "home", "cost": 0, "requires_all": [], "requires_any": [], "abilities": ["sword"], "map_position": [400, 300]},
+      {"id": "combat_a", "name": "Enemy Clear A", "template": "combat", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [170, 300]},
+      {"id": "combat_b", "name": "Enemy Clear B", "template": "combat", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [630, 300]},
+      {"id": "switch", "name": "Switch Clear", "template": "switch_room", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [400, 100]},
+      {"id": "tokens", "name": "Token Clear", "template": "tokens", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [400, 500]},
+      {"id": "combined", "name": "Earned Root", "template": "combined", "cost": 2, "requires_all": ["tokens"], "requires_any": [], "abilities": [], "map_position": [630, 500]}
+    ],
+    "links": [
+      {"id": "left", "a": "start", "b": "combat_a", "a_port": "west", "b_port": "east", "activate_from": ["start", "combat_a"]},
+      {"id": "right", "a": "start", "b": "combat_b", "a_port": "east", "b_port": "west", "activate_from": ["start", "combat_b"]},
+      {"id": "up", "a": "start", "b": "switch", "a_port": "north", "b_port": "south", "activate_from": ["start", "switch"]},
+      {"id": "down", "a": "start", "b": "tokens", "a_port": "south", "b_port": "north", "activate_from": ["start", "tokens"]},
+      {"id": "root_trial", "a": "tokens", "b": "combined", "a_port": "east", "b_port": "west", "activate_from": ["tokens", "combined"]}
+    ],
+    "interactions": []
+  },
+  "extensions": {"playtest": "Sword is granted by the immediate starting root. A/B reuse a template but have independent clears and keys. Exit token rooms early to check resets. Clear Earned Root, return home and remove Token Clear to check root independence."}
+}

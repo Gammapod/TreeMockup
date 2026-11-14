@@ -4,7 +4,7 @@
 
 **Find which game elements work well with “the dungeon is also a skill tree.”** V2 is a featureful testbed, not a production-game milestone list.
 
-This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01 is now **Completed** with accepted behavior recorded below. Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
+This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01 and CLEAR-01/02/07/08/09/10/11 are **Completed** as accepted baselines, with contracts linked below. Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
 
 Prefer work that:
 
@@ -21,15 +21,17 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 - **P2 — pull when needed:** promising mechanics and authoring aids with a concrete experimental use.
 - **P3 — parked:** broad, costly, or underspecified ideas that currently teach less than smaller experiments.
 
-## Recommended initial sequence
+## Current checkpoint
 
 1. **UI-01: interactive dungeon/skill-tree map — Completed.** Baseline functionality accepted; UX polish deferred.
-2. **CLEAR-01, then CLEAR-02:** establish separate clear state with one enemy-clear condition and one reward result. Test each increment.
-3. **CLEAR-04: earn persistent activation by clearing.** Compare against today's freely retained active rooms on the same small layout.
-4. **CLEAR-05: remote reconfiguration of cleared rooms.** Measure whether it removes tedious walking or removes meaningful spatial decisions.
-5. **CLEAR-06: warping to cleared rooms.** Test independently of remote reconfiguration before trying both together.
+2. **CLEAR-01/02/07/08/09/10/11 — Completed, baseline accepted:** clear conditions/effects, permanent roots, optional occupied-uncleared editing locks and root travel. `examples/cleared_rooms.json` remains the demonstration fixture.
+3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [hardening record](cleared-rooms.md#baseline-hardening).
+4. **Next experiment undecided.** CLEAR-03 through CLEAR-06 are potential future experiments, not remaining work required to complete clearing.
 
-**UI-02 (walk-through doors)** is a useful early supporting experiment, but need not block the clear-state experiments. Pull it forward if deliberate door interaction is obscuring how exploration feels. Use the existing branching scenario for map/transition work and a smaller 4–6-node fixture for new clear-state rules.
+See [Cleared rooms: confirmed requirements, review and decisions](cleared-rooms.md).
+The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
+
+**UI-02 (walk-through doors)** remains a candidate supporting experiment if deliberate door interaction obscures how exploration feels. It has not been selected as the next task. Keep the existing branching scenario and the six-node clearing lab as regression baselines.
 
 ## Gameplay presentation and traversal
 
@@ -53,17 +55,17 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 
 ## Clear state and activation experiments
 
-Keep **active**, **cleared**, **discovered**, **loaded**, and **physically traversable** as separate concepts. Clear state belongs to a node instance, not its shared room template. New rules are opt-in per scenario/room; existing scenarios remain the control condition.
+Keep **active**, **cleared**, **discovered**, **loaded**, and **physically traversable** as separate concepts. The progression model owns clear state per node instance, parallel to activation; templates author optional condition/effect arrays. Rooms without a condition are cleared by default, and clear state persists through deactivation. Additional effects and permission rules are opt-in. Existing scenarios remain the activation/traversal control condition.
 
-### CLEAR-01 · Optional clear conditions and visible clear state — P1
+### CLEAR-01 · Optional clear conditions and visible clear state — Completed — Accepted baseline
 
 - **Question:** Does “cleared” convey a useful kind of progress independent of the current build?
-- **First slice:** a room can declare “all authored enemies defeated.” Record clear state and show a separate cleared marker on the gameplay map. Do not change activation permissions yet. Make the condition opt-in so empty rooms are not silently auto-cleared.
-- **Decide before implementation:** does clearing persist through deactivation, death, and encounter reset? Suggested first experiment: it persists for the current run, independently of current enemy respawns. Runtime save games remain a separate concern.
+- **First slice:** a room can declare “all authored enemies defeated” within an optional condition array. Record model-owned clear state and show a separate cleared marker on the gameplay map. Rooms without conditions start cleared, including inactive rooms.
+- **Confirmed:** ALL composition; persistence through deactivation, death and room reload for the run; default-clear effects apply immediately. Runtime save games remain a separate concern.
 - **Evaluate:** can a player distinguish active-but-uncleared, cleared-but-inactive, and cleared-and-active rooms? Does the chosen persistence policy make sense?
 - **Depends on:** encounter events and per-node run state; UI-01 is useful for feedback.
 
-### CLEAR-02 · Clear-triggered results: reveal a pickup — P1
+### CLEAR-02 · Clear-triggered results: reveal a pickup — Completed — Accepted baseline
 
 - **Question:** Does rewarding completion strengthen the relationship between room challenges and build progression?
 - **First slice:** clearing an enemy room reveals one pre-authored hidden capacity pickup or coin. Give it a stable object ID; the result fires once per intended clear lifecycle and collecting it cannot duplicate rewards on re-entry or scene reload.
@@ -71,7 +73,7 @@ Keep **active**, **cleared**, **discovered**, **loaded**, and **physically trave
 - **Evaluate:** is the objective/reward understandable, and does the reward change the next allocation decision?
 - **Depends on:** CLEAR-01.
 
-### CLEAR-03 · Button-controlled persistent door locks — P2
+### CLEAR-03 · Button-controlled persistent door locks — P3 — Potential future experiment
 
 - **Question:** Can room objectives gate physical travel without making activation rules confusing?
 - **First slice:** one authored door starts locked and becomes permanently unlocked for the run when a button is pressed. The destination must still be active to traverse it. Later compare a clear-triggered unlock using the same result mechanism.
@@ -79,7 +81,7 @@ Keep **active**, **cleared**, **discovered**, **loaded**, and **physically trave
 - **Evaluate:** can players explain why a door is blocked and what will open it? Does the objective add a useful encounter decision?
 - **Depends on:** UI-02 for the intended doorway experience; explicit run-state results similar to CLEAR-02.
 
-### CLEAR-04 · Uncleared rooms lose activation on retreat — P1
+### CLEAR-04 · Uncleared rooms lose activation on retreat — P3 — Potential future experiment
 
 - **Question:** Is earning the ability to retain a room more interesting than retaining it immediately on activation?
 - **First slice:** in a simple rooted branch, activate and enter an uncleared room normally; leaving back toward its parent deactivates it and refunds its allocation. Clearing it allows the same exit without deactivation. Compare the identical room without this rule.
@@ -87,7 +89,7 @@ Keep **active**, **cleared**, **discovered**, **loaded**, and **physically trave
 - **Evaluate:** does the room feel like an ability trial? Do players make different choices, or simply endure repeated encounters/backtracking? Watch for reward farming and repeated activation healing under the existing HP rule.
 - **Depends on:** CLEAR-01; CLEAR-02 provides a useful comparison reward but is not mandatory.
 
-### CLEAR-05 · Remote activation/deactivation of cleared rooms — P1
+### CLEAR-05 · Remote activation/deactivation of cleared rooms — P3 — Potential future experiment
 
 - **Question:** Does earned remote reconfiguration preserve the meaningful part of local exploration while removing busywork?
 - **First slice:** map interaction can remotely activate/deactivate cleared nodes. Uncleared nodes retain local rules. Keep costs, ongoing prerequisites, exclusivity, root connection, cascading refunds, and player-location safety.
@@ -95,13 +97,44 @@ Keep **active**, **cleared**, **discovered**, **loaded**, and **physically trave
 - **Evaluate:** compare walking/reconfiguration time and build changes before/after unlocking this permission. Are players still making spatial decisions?
 - **Depends on:** CLEAR-01 and UI-01. Can be tested without CLEAR-04.
 
-### CLEAR-06 · Warp to cleared rooms — P1
+### CLEAR-06 · Warp to cleared rooms — P3 — Potential future experiment
 
 - **Question:** Is travel between solved spaces useful pacing, or friction that conceals the interesting allocation decisions?
 - **First slice:** warp between cleared, currently active rooms to authored safe arrival points. Compare to normal traversal with remote activation disabled, then test the combination separately.
 - **Decide before implementation:** the proposal “any cleared room” includes inactive rooms, which conflicts with the current occupied-room invariant. A later variant can activate an inactive target first, but must obey allocation/support rules. Define whether warping is allowed during combat and from uncleared rooms; start with cleared source rooms so it is not an accidental encounter escape mechanic.
 - **Evaluate:** does warping encourage trying more builds, or make the physical dungeon irrelevant?
 - **Depends on:** CLEAR-01 and a target-selection interface, ideally UI-01.
+
+### CLEAR-07 · Switch and room-token clear conditions — Completed — Accepted baseline
+
+- Support hitting a named switch and collecting all room-local tokens, including combined objectives.
+- Tokens respawn on exit/re-entry only while uncleared; clearing removes remaining tokens and prevents future spawns. They never enter currency or persistent reward ledgers.
+- ALL composition; switch hits latch for the run, enemy progress lasts until deactivation, token progress lasts one visit. See [contracts](cleared-rooms.md).
+- **Depends on:** CLEAR-01.
+
+### CLEAR-08 · Clear effect: enemies do not respawn — Completed — Accepted baseline
+
+- Optional template effect prevents enemy respawn after clearing, including after deactivation/reactivation.
+- Clear state itself does not imply this effect; ordinary encounter reset behavior remains independent.
+- **Depends on:** CLEAR-01.
+
+### CLEAR-09 · Clear effect: permanent secondary root — Completed — Accepted baseline
+
+- Clearing can make a node another root, permanently active and able to anchor connected branches.
+- Promotion releases allocation, waives upstream support and protects the root from cascades. Root-effect nodes reject exclusive groups. The starting root is also created by an immediate clear effect.
+- **Depends on:** CLEAR-01 and clear-effect handling.
+
+### CLEAR-10 · Optional occupied-uncleared-room editing lock — Completed — Accepted baseline
+
+- Templates can opt into `clear.block_tree_editing_until_cleared`; default is false. Gate build changes on the **occupied room's** clear state, not the target.
+- Both model transaction previews and execution enforce the lock. Clearing immediately restores normal local rules. Travel and F2 content authoring remain available.
+- **Depends on:** settable clear conditions/effects.
+
+### CLEAR-11 · Fast-travel to roots — Completed — Accepted baseline
+
+- Map selection exposes **Travel to root** for cleared, active roots, including disconnected earned roots.
+- Any active source is allowed, including uncleared encounters and edit-locked rooms. Arrival uses authored spawn; HP/build unchanged; normal departure lifecycle applies.
+- **Depends on:** CLEAR-09.
 
 ## Authoring quality of life
 
@@ -230,6 +263,50 @@ Next experiment:
 ```
 
 ### Experiment log
+
+### Clearing — accepted baseline and hardening closeout
+
+- **Status:** Completed — kept as the baseline.
+- **Feedback:** user accepted the current functionality and requested hardening
+  before selecting further work. CLEAR-03 through CLEAR-06 are potential future
+  experiments.
+- **Hardening:** reproduced and fixed stale deferred transitions crossing into a
+  fresh playtest, editor pause bypass on arrival, door-travel validation/death
+  races, and single-root initial-health validation.
+- **Evidence:** [contracts, architectural review and red/green regression trace](cleared-rooms.md#baseline-hardening);
+  all 12 headless suites pass.
+- **Next:** choose the next experiment separately. Presentation polish and new
+  clear mechanics are not prerequisites for this checkpoint.
+
+The following entries retain the history of the implementation slices; their
+earlier “Ready to playtest” statuses are superseded by the closeout above.
+
+### CLEAR-10/11 — root travel and optional editing lock
+
+- **Status:** Ready to playtest.
+- **Scope:** explicit map travel action, validated cleared/active-root targets;
+  optional room-template editing lock enforced by progression and exposed in the
+  clear-rules editor.
+- **Fixture:** Token Clear in `cleared_rooms.json` locks editing until cleared.
+  Escape to the initial root via map; earn the second root and travel to its
+  disconnected branch after deactivating Token Clear.
+- **Evidence:** [secondary-feature contracts and test trace](cleared-rooms.md).
+- **Evaluate:** whether combat escape via root travel and the optional editing
+  lock produce useful encounter/build decisions.
+
+### CLEAR-01/02/07/08/09 — authorable clear conditions and effects
+
+- **Status:** Ready to playtest.
+- **Implemented:** per-node clear state; ALL enemy/switch/token objectives; reveal
+  collectible, no-respawn and permanent-root effects; immediate default-clear
+  effects; root allocation release and independent connectivity.
+- **Authoring:** Clear rules dialog, token brush, JSON declarations and a six-node
+  `examples/cleared_rooms.json` fixture. Starting-root status uses the same effect.
+- **Evidence:** [contracts, lifecycle, test trace and walkthrough](cleared-rooms.md).
+  Headless checks cover runtime events, persistence, reward eligibility, multi-root
+  graph behavior, authoring validation and editor save/open/playtest.
+- **Next:** foundation playtest was positively received; token spawning policy
+  was revised, followed by CLEAR-10/11 above.
 
 The entries below record successive slices; temporary controls described in earlier
 entries were superseded by later slices. UI-01 is completed as a whole.

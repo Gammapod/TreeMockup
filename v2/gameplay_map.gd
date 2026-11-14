@@ -12,6 +12,8 @@ var node_states: Dictionary = {}
 var framing_node := ""
 var removal_preview: Array = []
 var removal_blocked := false
+var cleared: Dictionary = {}
+var roots: Dictionary = {}
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -22,6 +24,8 @@ func set_definition(data: Dictionary) -> void:
 	definition = data
 	selected = ""
 	node_states = {}
+	cleared = {}
+	roots = {}
 	removal_preview = []
 	framing_node = ""
 	needs_fit = true
@@ -160,7 +164,9 @@ func _draw() -> void:
 		var state: String = node_states.get(id, "blocked")
 		var color: Color = {"active": Color("287d75"), "available": Color("477d39"), "blocked": Color("465366")}[state]
 		draw_circle(point, 18, color)
-		_text(point + Vector2(0, 5), str(definition.nodes[id].cost), Color.WHITE)
+		_text(point + Vector2(0, 5), "0" if roots.has(id) else str(definition.nodes[id].cost), Color.WHITE)
+		if cleared.has(id):
+			_text(point + Vector2(-18, -15), "R" if roots.has(id) else "C", Color("a7f0cd"))
 		var badge := point + Vector2(17, -15)
 		draw_circle(badge, 9, Color("121b28"))
 		_text(badge + Vector2(0, 5), {"active": "✓", "available": "+", "blocked": "×"}[state], Color.WHITE)

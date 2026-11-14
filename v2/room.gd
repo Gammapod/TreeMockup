@@ -4,6 +4,7 @@ signal portal_requested(destination: String, entry_port: String)
 signal reward_collected(object_id: String)
 signal player_defeated
 signal switch_toggled(object_id: String)
+signal objective_event(event: String, object_id: String)
 
 const PLAYER = preload("res://player.gd")
 const PORTS := {"north": Vector2(400, 85), "south": Vector2(400, 555), "west": Vector2(65, 320), "east": Vector2(735, 320)}
@@ -18,11 +19,13 @@ var ports: Dictionary = PORTS.duplicate()
 var objects: Array = []
 var object_states: Dictionary = {}
 var barriers: Dictionary = {}
+var tokens: Array = []
 
-func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dictionary, entry: String, caps: Dictionary, hp: int) -> void:
+func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dictionary, entry: String, caps: Dictionary, hp: int, cleared: bool = false) -> void:
 	template = data
 	ports = data.get("ports", PORTS)
 	objects = data.get("objects", [])
+	tokens = [] if cleared else data.get("tokens", []).duplicate(true)
 	portals = links
 	defeated = dead.duplicate()
 	obstacles = data.obstacles
@@ -60,6 +63,17 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 		enemies.append({"id": id, "body": body, "hp": enemy.get("hp", 2) if enemy is Dictionary else 2, "speed": enemy.get("speed", 95.0) if enemy is Dictionary else 95.0, "radius": circle.radius})
 	apply_object_states({})
 
+func suppress_tokens() -> void:
+	tokens.clear()
+	queue_redraw()
+
+func sync_pickups(collected: Dictionary, visible: Dictionary) -> void:
+	pickups.clear()
+	for pickup in template.pickups:
+		if visible.get(pickup.id, true) and not collected.has(pickup.id):
+			pickups.append(pickup.duplicate())
+	queue_redraw()
+
 func _wall(rect: Rect2) -> StaticBody2D:
 	var body := StaticBody2D.new()
 	body.position = rect.get_center()
@@ -93,6 +107,11 @@ func _physics_process(_delta: float) -> void:
 			var id: String = pickups[i].id
 			pickups.remove_at(i)
 			reward_collected.emit(id)
+	for i in range(tokens.size() - 1, -1, -1):
+		if player.position.distance_to(tokens[i].position) < 27:
+			var id: String = tokens[i].id
+			tokens.remove_at(i)
+			objective_event.emit("token_collected", id)
 	queue_redraw()
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -125,6 +144,7 @@ func _attack(origin: Vector2, facing: Vector2, reach: float, damage: int) -> voi
 			defeated[enemy.id] = true
 			enemy.body.queue_free()
 			enemies.remove_at(i)
+			objective_event.emit("enemy_defeated", enemy.id)
 
 func _in_attack(origin: Vector2, facing: Vector2, target: Vector2, reach: float) -> bool:
 	var offset := target - origin
@@ -156,3 +176,6 @@ func _draw() -> void:
 	for enemy in enemies:
 		draw_circle(enemy.body.position, enemy.radius, Color("c580df"))
 		draw_string(ThemeDB.fallback_font, enemy.body.position + Vector2(-4, 5), str(enemy.hp), HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
+	for token in tokens:
+		var p: Vector2 = token.position
+		draw_colored_polygon(PackedVector2Array([p + Vector2(0, -12), p + Vector2(9, 0), p + Vector2(0, 12), p + Vector2(-9, 0)]), Color("ff95df"))

@@ -1,6 +1,7 @@
 extends RefCounted
 
 const STORE = preload("res://authoring/content_store.gd")
+const PROGRESSION = preload("res://progression.gd")
 
 func compile(document: Dictionary) -> Dictionary:
 	var errors: Array[String] = STORE.new().validate(document)
@@ -15,12 +16,22 @@ func compile(document: Dictionary) -> Dictionary:
 	for room in document.rooms:
 		if _vector(room.size) != Vector2(800, 600):
 			errors.append("Runtime requires 800x600 rooms: " + room.id)
-		var template := {"obstacles": [], "enemies": [], "pickups": [], "objects": [], "ports": {}, "spawn": _vector(room.get("spawn", [400, 400]))}
+		var template := {"obstacles": [], "enemies": [], "pickups": [], "tokens": [], "objects": [], "ports": {}, "spawn": _vector(room.get("spawn", [400, 400]))}
+		if room.has("clear"):
+			template.clear = room.clear.duplicate(true)
+			for condition in room.clear.get("conditions", []):
+				if condition.kind not in ["all_enemies_defeated", "switch_hit", "all_tokens_collected"]:
+					errors.append("Unsupported clear condition: " + condition.kind)
+			for effect in room.clear.get("effects", []):
+				if effect.kind not in ["reveal_pickup", "prevent_enemy_respawn", "become_root"]:
+					errors.append("Unsupported clear effect: " + effect.kind)
 		for port in room.ports:
 			template.ports[port.id] = _vector(port.position)
 		for object in room.objects:
 			var position := _vector(object.position)
 			match object.kind:
+				"token":
+					template.tokens.append({"id": object.id, "position": position})
 				"obstacle":
 					template.obstacles.append(Rect2(position, _vector(object.size)))
 				"enemy":
@@ -68,8 +79,26 @@ func compile(document: Dictionary) -> Dictionary:
 			elif modifier in ["max_hp_bonus", "sword_damage_bonus"] and floor(node.modifiers[modifier]) != node.modifiers[modifier]:
 				errors.append("Modifier must be an integer: " + modifier)
 		data.nodes[node.id] = result
-	if errors.is_empty() and base_hp + data.nodes[data.root].get("modifiers", {}).get("max_hp_bonus", 0) < 1:
-		errors.append("Root and base_hp must grant at least one HP")
+	# Compatibility for pre-clear V1 bundles: translate the old implicit start
+	# root into the same effect used by authored rooms, isolated from reused templates.
+	var start_template: Dictionary = data.templates[data.nodes[data.root].template]
+	if not start_template.has("clear"):
+		var legacy_id: String = "__legacy_start"
+		while data.templates.has(legacy_id):
+			legacy_id += "_"
+		var legacy: Dictionary = start_template.duplicate(true)
+		legacy.clear = {"conditions": [], "effects": [{"kind": "become_root"}]}
+		data.templates[legacy_id] = legacy
+		data.nodes[data.root].template = legacy_id
+	for id in data.nodes:
+		var rule: Dictionary = data.templates[data.nodes[id].template].get("clear", {})
+		var becomes_root: bool = rule.get("effects", []).any(func(effect): return effect.kind == "become_root")
+		if becomes_root and not data.nodes[id].get("exclusive_group", "").is_empty():
+			errors.append("Permanent root cannot belong to an exclusive group: " + id)
+		if id == data.root and (not becomes_root or not rule.get("conditions", []).is_empty()):
+			errors.append("Starting room must be default-cleared with a become_root effect")
+	if errors.is_empty() and PROGRESSION.new(data).capabilities().max_hp < 1:
+		errors.append("Initial active roots and base_hp must grant at least one HP")
 	for interaction in data.interactions:
 		var source := _object(document, interaction.source)
 		var target := _object(document, interaction.target)

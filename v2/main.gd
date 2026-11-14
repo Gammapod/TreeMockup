@@ -12,6 +12,7 @@ var status: Label
 var hud: Label
 var message := "Activate a neighboring room, then walk to its door and press E."
 var transition_pending := false
+var room_generation := 0
 var data_override: Dictionary = {}
 var object_records: Dictionary = {}
 var studio
@@ -30,6 +31,7 @@ func _ready() -> void:
 	shell.map_region.add_child(tree_ui)
 	tree_ui.configure(data)
 	tree_ui.action_requested.connect(_toggle)
+	tree_ui.root_travel_requested.connect(_request_root_travel)
 	_enter_room(data.root, "", progression.capabilities().max_hp)
 
 func _process(_delta: float) -> void:
@@ -37,7 +39,10 @@ func _process(_delta: float) -> void:
 		hud.text = "%s   |   HP %d/%d   |   Points %d/%d   |   Gold %d" % [data.nodes[current].name, room.player.hp, room.player.max_hp, progression.available_points(), progression.capacity, progression.gold]
 
 func _enter_room(destination: String, entry: String, hp: int) -> void:
+	# Every replacement invalidates deferred commands from the previous scene/run.
+	room_generation += 1
 	if room != null:
+		progression.leave_room(current)
 		room_records[current] = room.defeated.duplicate()
 		room.get_parent().remove_child(room)
 		room.queue_free()
@@ -49,14 +54,22 @@ func _enter_room(destination: String, entry: String, hp: int) -> void:
 	for pickup in template.pickups:
 		if progression.collected.has(current + "/" + pickup.id):
 			collected[pickup.id] = true
-	room.configure(template, _portals(), collected, room_records.get(current, {}), entry, progression.capabilities(), hp)
+	var dead: Dictionary = room_records.get(current, {}).duplicate()
+	if progression.prevents_respawn(current):
+		for enemy in template.enemies:
+			dead[enemy.id] = true
+	room.configure(template, _portals(), collected, dead, entry, progression.capabilities(), hp, progression.cleared.has(current))
 	room.portal_requested.connect(_request_travel)
 	room.reward_collected.connect(_collect)
 	room.player_defeated.connect(_defeat)
 	room.switch_toggled.connect(_switch_toggled)
+	room.objective_event.connect(_objective_event)
 	transition_pending = false
 	_refresh()
 	tree_ui.frame_current_room()
+	if studio != null and studio.visible:
+		room.process_mode = Node.PROCESS_MODE_DISABLED
+		room.hide()
 
 func _portals() -> Array:
 	var result: Array = []
@@ -69,8 +82,40 @@ func _portals() -> Array:
 
 func _request_travel(destination: String, entry: String) -> void:
 	if not transition_pending and progression.can_travel(current, destination):
-		transition_pending = true
-		_enter_room.call_deferred(destination, entry, room.player.hp)
+		_queue_transition("door", destination, entry)
+
+func _queue_transition(kind: String, destination: String, entry: String = "") -> void:
+	transition_pending = true
+	_finish_transition.call_deferred(room_generation, kind, destination, entry)
+
+func _request_root_travel(destination: String) -> void:
+	if transition_pending:
+		return
+	var preview: Dictionary = progression.preview_root_travel(destination, current)
+	if not preview.ok:
+		message = "Travel blocked: " + preview.reason
+		_refresh()
+		return
+	_queue_transition("root", destination)
+
+func _finish_transition(generation: int, kind: String, destination: String, entry: String) -> void:
+	if generation != room_generation:
+		return
+	transition_pending = false
+	if kind == "defeat":
+		_enter_room(data.root, "", progression.capabilities().max_hp)
+		return
+	if room.player.hp <= 0:
+		_defeat()
+		return
+	var preview: Dictionary = progression.preview_root_travel(destination, current) if kind == "root" else {"ok": progression.can_travel(current, destination), "reason": "door_unavailable"}
+	if not preview.ok:
+		message = "Travel blocked: " + preview.reason
+		_refresh()
+		return
+	if kind == "root":
+		message = "Traveled to root: " + data.nodes[destination].name
+	_enter_room(destination, entry, room.player.hp)
 
 func _collect(object_id: String) -> void:
 	if progression.collect(current, object_id):
@@ -80,11 +125,11 @@ func _collect(object_id: String) -> void:
 func _defeat() -> void:
 	if transition_pending:
 		return
-	transition_pending = true
 	message = "Defeated — returned to Sanctuary. Build and collected rewards retained."
-	_enter_room.call_deferred(data.root, "", progression.capabilities().max_hp)
+	_queue_transition("defeat", data.root)
 
 func _switch_toggled(object_id: String) -> void:
+	progression.record_objective(current, "switch_hit", object_id)
 	if not object_records.has(current):
 		object_records[current] = {}
 	var state: bool = not object_records[current].get(object_id, false)
@@ -97,7 +142,14 @@ func _switch_toggled(object_id: String) -> void:
 	message = "Switch %s: %s" % [object_id, "on" if state else "off"]
 	_refresh()
 
+func _objective_event(event: String, object_id: String) -> void:
+	if progression.record_objective(current, event, object_id):
+		message = "Room cleared: " + data.nodes[current].name
+	_refresh()
+
 func _toggle(id: String) -> void:
+	if transition_pending:
+		return
 	var result: Dictionary
 	if progression.active.has(id):
 		result = progression.deactivate(id, current)
@@ -113,11 +165,22 @@ func _refresh() -> void:
 	room.player.set_capabilities(progression.capabilities())
 	room.apply_object_states(object_records.get(current, {}))
 	room.portals = _portals()
+	var collected: Dictionary = {}
+	var visible: Dictionary = {}
+	for pickup in data.templates[data.nodes[current].template].pickups:
+		if progression.collected.has(current + "/" + pickup.id):
+			collected[pickup.id] = true
+		visible[pickup.id] = progression.pickup_visible(current, pickup.id)
+	room.sync_pickups(collected, visible)
+	if progression.cleared.has(current):
+		room.suppress_tokens()
 	var previews: Dictionary = {}
+	var travel_previews: Dictionary = {}
 	for id in data.nodes:
 		var is_active: bool = progression.active.has(id)
 		previews[id] = progression.preview_deactivation(id, current) if is_active else progression.preview_activation(id, current)
-	tree_ui.refresh({"current": current, "active": progression.active, "available_points": progression.available_points(), "previews": previews})
+		travel_previews[id] = progression.preview_root_travel(id, current)
+	tree_ui.refresh({"current": current, "active": progression.active, "cleared": progression.cleared, "roots": progression.roots, "can_edit_tree": progression.can_edit_tree(current), "travel_previews": travel_previews, "available_points": progression.available_points(), "previews": previews})
 	status.text = message + "\n\nActive abilities: " + ", ".join(progression.capabilities().abilities.keys())
 	room.queue_redraw()
 

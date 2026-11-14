@@ -14,7 +14,9 @@ func new_node(id: String, template: String) -> Dictionary:
 func new_project() -> Dictionary:
 	var node := new_node("start", "empty")
 	node.cost = 0
-	return {"format": "room-tree", "version": 1, "id": "new_project", "name": "New project", "rooms": [new_room("empty")], "dungeon": {"root": "start", "initial_capacity": 4, "nodes": [node], "links": [], "interactions": []}, "extensions": {}}
+	var room := new_room("empty")
+	room.clear = {"conditions": [], "effects": [{"kind": "become_root"}]}
+	return {"format": "room-tree", "version": 1, "id": "new_project", "name": "New project", "rooms": [room], "dungeon": {"root": "start", "initial_capacity": 4, "nodes": [node], "links": [], "interactions": []}, "extensions": {}}
 
 func parse_document(text: String) -> Dictionary:
 	var json := JSON.new()
@@ -75,8 +77,6 @@ func validate(document: Variant) -> Array[String]:
 		errors.append("base_hp must be a nonnegative integer")
 	if not dungeon.get("root") is String or not nodes.has(dungeon.get("root")):
 		errors.append("root must reference a node")
-	elif nodes[dungeon.root].get("cost") != 0:
-		errors.append("Root must cost zero")
 	for id in nodes:
 		var node: Dictionary = nodes[id]
 		if not node.get("name") is String or not node.get("template") is String or not rooms.has(node.get("template")):
@@ -94,10 +94,6 @@ func validate(document: Variant) -> Array[String]:
 			errors.append("Node %s exclusive_group must be a string" % id)
 		if node.has("modifiers") and not node.modifiers is Dictionary:
 			errors.append("Node %s modifiers must be an object" % id)
-	if nodes.has(dungeon.get("root")):
-		var root: Dictionary = nodes[dungeon.root]
-		if root.get("requires_all", []) != [] or root.get("requires_any", []) != []:
-			errors.append("Root cannot have prerequisites")
 	var used_ports: Dictionary = {}
 	for id in links:
 		var link: Dictionary = links[id]
@@ -160,6 +156,31 @@ func _validate_room(room: Dictionary, errors: Array[String]) -> void:
 			errors.append("Room %s object %s needs positive size" % [label, object.id])
 		elif object.has("size") and not _positive_size(object.size):
 			errors.append("Room %s object %s has invalid size" % [label, object.id])
+	if room.has("clear"):
+		if not room.clear is Dictionary:
+			errors.append("Room %s clear must be an object" % label)
+			return
+		if room.clear.has("block_tree_editing_until_cleared") and not room.clear.block_tree_editing_until_cleared is bool:
+			errors.append("Room %s clear.block_tree_editing_until_cleared must be a boolean" % label)
+		for field in ["conditions", "effects"]:
+			if not room.clear.get(field, []) is Array:
+				errors.append("Room %s clear.%s must be an array" % [label, field])
+				continue
+			for entry in room.clear.get(field, []):
+				if not entry is Dictionary or not entry.get("kind") is String:
+					errors.append("Room %s clear entries need a kind" % label)
+					continue
+				var kinds: Array = []
+				match entry.kind:
+					"switch_hit": kinds = ["switch"]
+					"reveal_pickup": kinds = ["pickup", "chest"]
+				if not kinds.is_empty():
+					if not entry.get("object") is String or not objects.has(entry.get("object")) or objects[entry.object].get("kind") not in kinds:
+						errors.append("Room %s %s needs a valid %s object" % [label, entry.kind, "/".join(kinds)])
+				if entry.kind in ["all_enemies_defeated", "all_tokens_collected"]:
+					var kind := "enemy" if entry.kind == "all_enemies_defeated" else "token"
+					if not objects.values().any(func(item): return item.get("kind") == kind):
+						errors.append("Room %s %s needs at least one %s" % [label, entry.kind, kind])
 
 func _index(items: Variant, label: String, errors: Array[String]) -> Dictionary:
 	var result: Dictionary = {}

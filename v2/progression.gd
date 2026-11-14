@@ -2,6 +2,9 @@ extends RefCounted
 
 var definition: Dictionary
 var active: Dictionary = {}
+var cleared: Dictionary = {}
+var roots: Dictionary = {}
+var objective_progress: Dictionary = {}
 var capacity: int
 var collected: Dictionary = {}
 var gold: int = 0
@@ -9,12 +12,80 @@ var gold: int = 0
 func _init(data: Dictionary) -> void:
 	definition = data
 	capacity = data.initial_capacity
-	active[data.root] = true
+	for id in definition.nodes:
+		if _clear_rule(id).get("conditions", []).is_empty():
+			_complete_clear(id)
+
+func _template(id: String) -> Dictionary:
+	return definition.templates[definition.nodes[id].template]
+
+func _clear_rule(id: String) -> Dictionary:
+	return _template(id).get("clear", {})
+
+func _complete_clear(id: String) -> void:
+	if cleared.has(id):
+		return
+	cleared[id] = true
+	for effect in _clear_rule(id).get("effects", []):
+		if effect.kind == "become_root":
+			roots[id] = true
+			active[id] = true
+
+func prevents_respawn(id: String) -> bool:
+	if cleared.has(id):
+		for effect in _clear_rule(id).get("effects", []):
+			if effect.kind == "prevent_enemy_respawn":
+				return true
+	return false
+
+func pickup_visible(id: String, object_id: String) -> bool:
+	for effect in _clear_rule(id).get("effects", []):
+		if effect.kind == "reveal_pickup" and effect.object == object_id:
+			return cleared.has(id)
+	return true
+
+func record_objective(id: String, event: String, object_id: String) -> bool:
+	if not active.has(id) or cleared.has(id):
+		return false
+	var template := _template(id)
+	var candidates: Array = []
+	match event:
+		"enemy_defeated": candidates = template.get("enemies", [])
+		"switch_hit": candidates = template.get("objects", []).filter(func(item): return item.kind == "switch")
+		"token_collected": candidates = template.get("tokens", [])
+		_: return false
+	if not candidates.any(func(item): return item is Dictionary and item.id == object_id):
+		return false
+	if not objective_progress.has(id):
+		objective_progress[id] = {}
+	if not objective_progress[id].has(event):
+		objective_progress[id][event] = {}
+	objective_progress[id][event][object_id] = true
+	for condition in _clear_rule(id).get("conditions", []):
+		match condition.kind:
+			"all_enemies_defeated":
+				if not _all_recorded(id, "enemy_defeated", template.enemies): return false
+			"switch_hit":
+				if not objective_progress[id].get("switch_hit", {}).has(condition.object): return false
+			"all_tokens_collected":
+				if not _all_recorded(id, "token_collected", template.tokens): return false
+			_: return false
+	_complete_clear(id)
+	return true
+
+func _all_recorded(id: String, event: String, objects: Array) -> bool:
+	var recorded: Dictionary = objective_progress[id].get(event, {})
+	return not objects.is_empty() and objects.all(func(item): return recorded.has(item.id))
+
+func leave_room(id: String) -> void:
+	if objective_progress.has(id):
+		objective_progress[id].erase("token_collected")
 
 func available_points() -> int:
 	var spent := 0
 	for id in active:
-		spent += definition.nodes[id].cost
+		if not roots.has(id):
+			spent += definition.nodes[id].cost
 	return capacity - spent
 
 func neighbors(id: String) -> Array:
@@ -41,10 +112,11 @@ func supported(id: String, selected: Dictionary) -> bool:
 
 func connected(selected: Dictionary) -> Dictionary:
 	var found: Dictionary = {}
-	if not selected.has(definition.root):
-		return found
-	var pending: Array = [definition.root]
-	found[definition.root] = true
+	var pending: Array = []
+	for id in roots:
+		if selected.has(id):
+			pending.append(id)
+			found[id] = true
 	while not pending.is_empty():
 		for neighbor in neighbors(pending.pop_front()):
 			if selected.has(neighbor) and not found.has(neighbor):
@@ -59,6 +131,8 @@ func preview_activation(id: String, current: String) -> Dictionary:
 		return _failure("already_active")
 	if not active.has(current):
 		return _failure("invalid_location")
+	if not can_edit_tree(current):
+		return _failure("tree_editing_locked")
 	var local := false
 	for link in definition.links:
 		if ((link.a == current and link.b == id) or (link.b == current and link.a == id)) and current in link.activate_from:
@@ -83,7 +157,9 @@ func activate(id: String, current: String) -> Dictionary:
 	return result
 
 func preview_deactivation(id: String, current: String) -> Dictionary:
-	if id == definition.root:
+	if active.has(current) and not can_edit_tree(current):
+		return _failure("tree_editing_locked")
+	if roots.has(id):
 		return _failure("root")
 	if not active.has(id):
 		return _failure("inactive")
@@ -96,7 +172,7 @@ func preview_deactivation(id: String, current: String) -> Dictionary:
 		var remove: Array = []
 		var reachable := connected(remaining)
 		for candidate in remaining:
-			if candidate != definition.root and (not supported(candidate, remaining) or not reachable.has(candidate)):
+			if not roots.has(candidate) and (not supported(candidate, remaining) or not reachable.has(candidate)):
 				remove.append(candidate)
 		if remove.is_empty():
 			break
@@ -115,10 +191,27 @@ func deactivate(id: String, current: String) -> Dictionary:
 	if result.ok:
 		for candidate in result.affected:
 			active.erase(candidate)
+			if objective_progress.has(candidate):
+				objective_progress[candidate].erase("enemy_defeated")
+				objective_progress[candidate].erase("token_collected")
 	return result
 
 func can_travel(source: String, destination: String) -> bool:
 	return active.has(source) and active.has(destination) and destination in neighbors(source)
+
+func can_edit_tree(current: String) -> bool:
+	return active.has(current) and (cleared.has(current) or not _clear_rule(current).get("block_tree_editing_until_cleared", false))
+
+func preview_root_travel(destination: String, current: String) -> Dictionary:
+	if not definition.nodes.has(destination):
+		return _failure("missing")
+	if not active.has(current) or not definition.nodes.has(current):
+		return _failure("invalid_location")
+	if destination == current:
+		return _failure("already_here")
+	if not roots.has(destination) or not cleared.has(destination) or not active.has(destination):
+		return _failure("not_cleared_active_root")
+	return {"ok": true, "reason": "", "affected": []}
 
 func capabilities() -> Dictionary:
 	var abilities: Dictionary = {}
@@ -157,7 +250,7 @@ func capabilities() -> Dictionary:
 	return stats
 
 func collect(node_id: String, object_id: String) -> bool:
-	if not active.has(node_id):
+	if not active.has(node_id) or not pickup_visible(node_id, object_id):
 		return false
 	var key := node_id + "/" + object_id
 	if collected.has(key):

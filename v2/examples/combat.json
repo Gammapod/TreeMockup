@@ -6,6 +6,7 @@
   "rooms": [
     {
       "id": "empty", "name": "Empty room", "size": [800, 600],
+      "clear": {"conditions": [], "effects": [{"kind": "become_root"}]},
       "ports": [{"id": "north", "position": [400, 85]}, {"id": "south", "position": [400, 555]}, {"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
       "objects": []
     },

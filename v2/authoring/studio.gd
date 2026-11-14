@@ -54,10 +54,11 @@ func _ready() -> void:
 	_button(tools, "+ Node", _add_node)
 	_button(tools, "+ Link", _add_link)
 	brush = OptionButton.new()
-	for kind in ["select", "enemy", "pickup", "chest", "obstacle", "water", "switch", "wall"]:
+	for kind in ["select", "enemy", "pickup", "chest", "token", "obstacle", "water", "switch", "wall"]:
 		brush.add_item(kind)
 	brush.item_selected.connect(func(index): preview.brush = brush.get_item_text(index))
 	tools.add_child(brush)
+	_button(tools, "Clear rules…", _edit_clear)
 	title = Label.new()
 	title.position = Vector2(15, 92)
 	add_child(title)
@@ -246,6 +247,90 @@ func _place(point: Vector2) -> void:
 	objects.append(object)
 	dirty = true
 	_refresh()
+
+func _edit_clear() -> void:
+	if not _apply() or document.rooms.is_empty(): return
+	var index := room_index
+	var room: Dictionary = document.rooms[index]
+	var rule: Dictionary = room.get("clear", {})
+	var window := ConfirmationDialog.new()
+	window.title = "Clear rules — " + room.id
+	window.dialog_hide_on_ok = false
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(500, 400)
+	var fields := VBoxContainer.new()
+	fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(fields)
+	window.add_child(scroll)
+	var help := Label.new()
+	help.text = "ALL checked conditions are required.\nNo conditions = cleared immediately; effects apply at run start.\nTokens reset on exit while uncleared; cleared rooms have none.\nSwitch hits persist for the run.\nRoot effects waive cost/support and keep the node active."
+	fields.add_child(help)
+	var editing_lock := CheckBox.new()
+	editing_lock.text = "Disable tree editing while inside this uncleared room"
+	editing_lock.button_pressed = rule.get("block_tree_editing_until_cleared", false)
+	fields.add_child(editing_lock)
+	var choices: Array = []
+	_clear_choice(fields, choices, rule, "conditions", {"kind": "all_enemies_defeated"}, "Defeat all enemies", room.objects.any(func(item): return item.kind == "enemy"))
+	_clear_choice(fields, choices, rule, "conditions", {"kind": "all_tokens_collected"}, "Collect all tokens in one visit", room.objects.any(func(item): return item.kind == "token"))
+	for object in room.objects:
+		if object.kind == "switch":
+			_clear_choice(fields, choices, rule, "conditions", {"kind": "switch_hit", "object": object.id}, "Hit switch: " + object.id)
+	var label := Label.new()
+	label.text = "\nEffects (all checked effects apply):"
+	fields.add_child(label)
+	for object in room.objects:
+		if object.kind in ["pickup", "chest"]:
+			_clear_choice(fields, choices, rule, "effects", {"kind": "reveal_pickup", "object": object.id}, "Reveal collectible: " + object.id)
+	_clear_choice(fields, choices, rule, "effects", {"kind": "prevent_enemy_respawn"}, "Enemies never respawn after clearing")
+	_clear_choice(fields, choices, rule, "effects", {"kind": "become_root"}, "Become a permanent root")
+	window.confirmed.connect(func():
+		var next: Dictionary = rule.duplicate(true)
+		next.block_tree_editing_until_cleared = editing_lock.button_pressed
+		for field in ["conditions", "effects"]:
+			var entries: Array = next.get(field, []).duplicate(true)
+			for choice in choices:
+				if choice.field != field: continue
+				var matching := -1
+				for i in range(entries.size()):
+					if entries[i].kind == choice.entry.kind and entries[i].get("object", "") == choice.entry.get("object", ""):
+						matching = i
+						break
+				if choice.check.button_pressed and matching == -1:
+					entries.append(choice.entry)
+				elif not choice.check.button_pressed and matching != -1:
+					entries.remove_at(matching)
+			next[field] = entries
+		if set_clear_rule(index, next):
+			window.queue_free())
+	window.canceled.connect(window.queue_free)
+	add_child(window)
+	window.popup_centered(Vector2i(540, 450))
+
+func _clear_choice(parent: Node, choices: Array, rule: Dictionary, field: String, entry: Dictionary, text: String, enabled: bool = true) -> void:
+	var check := CheckBox.new()
+	check.text = text
+	check.button_pressed = rule.get(field, []).any(func(item): return item.kind == entry.kind and item.get("object", "") == entry.get("object", ""))
+	check.disabled = not enabled
+	if not enabled:
+		check.tooltip_text = "Place matching objects in the room first."
+	parent.add_child(check)
+	choices.append({"field": field, "entry": entry, "check": check})
+
+func set_clear_rule(index: int, rule: Dictionary) -> bool:
+	if not _apply(): return false
+	var candidate := document.duplicate(true)
+	candidate.rooms[index].clear = rule.duplicate(true)
+	var errors: Array[String] = store.validate(candidate)
+	if not errors.is_empty():
+		_message("Clear rules rejected: " + "; ".join(errors))
+		return false
+	document = candidate
+	dirty = true
+	mode = "room"
+	room_index = index
+	_refresh()
+	_message("Clear rules applied. Validate or Playtest checks runtime compatibility.")
+	return true
 
 func _move(id: String, point: Vector2) -> void:
 	if not _apply(): return

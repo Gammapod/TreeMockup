@@ -41,6 +41,37 @@ IDs are nonempty ASCII letters/digits/underscore/hyphen. They are stable authori
 
 Rooms contain `id`, `name`, `size: [width, height]`, `ports: [{id, position: [x,y]}]`, and `objects: [{id, kind, position: [x,y], properties: {}}]`. Optional `spawn: [x,y]` sets the initial/recovery spawn (default `[400,400]`). Rectangular objects also have `size: [width,height]` with position at the top-left; circular actors/pickups use center positions. Coordinates are local world units with x right/y down. Runtime currently supports 800×600 rooms; other sizes can be saved but are rejected for playtest until runtime scaling exists. Port names are arbitrary IDs; geometry, not names, places them. Keep spawn and ports in the walkable interior (x 65–735, y 85–555) and clear of solid objects. The editor does not solve room navigation or detect unreachable content.
 
+Optional `clear: {conditions: [...], effects: [...]}` authors ALL-combined objectives
+and completion effects. Missing/empty conditions mean cleared immediately, even
+for inactive nodes. Conditions: `all_enemies_defeated`, `all_tokens_collected`,
+`switch_hit` (with local `object` switch ID). Effects: `reveal_pickup` (with local
+pickup/chest `object` ID), `prevent_enemy_respawn`, `become_root`. Referenced objects
+must exist with the correct kind; enemy/token objectives require matching objects.
+Unknown condition/effect kinds survive storage but block playtest. `token` objects
+have a position and empty properties; they never grant persistent currency.
+They spawn only in uncleared rooms, reset on uncleared re-entry, and disappear
+immediately when the room clears.
+
+Optional `clear.block_tree_editing_until_cleared` is a boolean (default `false`).
+When true, occupying this node while uncleared prevents both activation and
+deactivation commands. Clearing or leaving the room restores ordinary editing
+permissions. This is a runtime build restriction, not a restriction on the F2
+authoring studio or on travel.
+
+Clear state is runtime-only, per node instance, and persists until a fresh run.
+Root effects waive allocation costs and upstream support and cannot be assigned to
+exclusive-group nodes. `dungeon.root` identifies the starting/defeat-return room;
+its explicit clear rule must produce an immediate root. For legacy V1 documents
+with no `clear` field on that template, the adapter creates an isolated runtime
+template copy with an immediate root effect. Other instances and source JSON are
+unchanged. New projects and the default branching scenario author the effect
+explicitly. This optional V1 vocabulary preserves existing gameplay without a
+file-version migration. See [clear contracts and lifecycle](cleared-rooms.md).
+
+Cleared active roots are fast-travel destinations from any active occupied room,
+without requiring a travel path. Arrival uses `spawn`; HP, capacity and allocation
+are unchanged. Travel retains normal departure/re-entry encounter/token policies.
+
 Nodes contain `id`, `name`, `template` (room ID), nonnegative integer `cost`, `requires_all` / `requires_any` (node ID arrays), `abilities` (string IDs), and `map_position: [x,y]` (advisory editor coordinates, independent of geometry). Optional `exclusive_group` and `modifiers` describe build constraints/effects. Prerequisites are ongoing, and ALL and ANY clauses are combined with AND. Cyclic prerequisite references are rejected in this first authoring contract; cycles in travel links are permitted.
 
 Links contain `id`, `a`, `b` (node IDs), `a_port`, `b_port`, and `activate_from` (endpoint node IDs). Travel is bidirectional. Each instantiated port has at most one link. Links and prerequisites are deliberately separate.
@@ -65,13 +96,13 @@ The room editor and tree editor share one bundle in memory. Their JSON inspector
 
 | Data | Supported values |
 | --- | --- |
-| Object kinds | `obstacle`, `water`, `wall`, `switch`, `enemy`, `pickup`, `chest` |
+| Object kinds | `obstacle`, `water`, `wall`, `switch`, `enemy`, `pickup`, `chest`, `token` |
 | Enemy properties | `hp` (positive integer, default 2), `speed` (nonnegative, default 95), `radius` (positive, default 14; affects physics, contact, drawing and sword reach) |
 | Pickup/chest properties | `kind`: `gold` or `capacity`; `value`: positive integer, default 1 |
 | Node abilities | `sword`, `dash`, `flippers` |
 | Numeric node modifiers | `move_speed_multiplier`, `sword_range_multiplier`, `sword_damage_bonus`, `dash_speed_multiplier`, `max_hp_bonus` (health/damage bonuses are nonnegative integers) |
 | Behavior modifiers | `sword_style`: `big` or `fast`; `dash_style`: `phase` or `run` |
-| Scenario health | `dungeon.base_hp`: nonnegative integer, default 5; base plus root bonus must provide at least one HP |
+| Scenario health | `dungeon.base_hp`: nonnegative integer, default 5; base plus all immediately active root bonuses must provide at least one HP |
 | Interaction | switch `toggled` → wall `set_open` |
 
 Switch state and wall state persist for the run, including through node deactivation. Multiple writers use the most recent event. Water collision is bypassed by flippers. Chests are opened using E rather than walking over them. Node modifiers are aggregated from the active set; multiplier defaults are 1 and bonus defaults are 0. Maximum-HP increases grant the difference in current HP; decreases clamp current HP, and applying an unchanged snapshot never heals. Room loading preserves current HP. Behavior modifiers apply only when their base ability is active. Use exclusive groups to avoid competing styles; if multiple styles are authored active, the last in authored node order wins deterministically. Attacks and dashes capture their parameters at action start.

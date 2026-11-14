@@ -46,7 +46,7 @@ func _run() -> void:
 	doc.dungeon.nodes.append(second)
 	doc.dungeon.links.append({"id": "passage", "a": "start", "b": "second", "a_port": "east", "b_port": "west", "activate_from": ["start", "second"]})
 	var adapter = load("res://authoring/runtime_adapter.gd").new()
-	for example in ["branching", "water_flippers", "switch_wall", "combat"]:
+	for example in ["branching", "water_flippers", "switch_wall", "combat", "cleared_rooms"]:
 		var fixture: Dictionary = store.load_document("res://examples/" + example + ".json")
 		_expect(fixture.ok and adapter.compile(fixture.document).ok, "Example validates and compiles: " + example)
 	var compiled: Dictionary = adapter.compile(doc)
