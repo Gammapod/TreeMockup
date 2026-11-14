@@ -1,4 +1,4 @@
-extends Node2D
+extends Control
 
 const CONTENT = preload("res://content.gd")
 const PROGRESSION = preload("res://progression.gd")
@@ -8,7 +8,6 @@ var progression
 var current := "start"
 var room
 var room_records: Dictionary = {}
-var panel: VBoxContainer
 var status: Label
 var hud: Label
 var message := "Activate a neighboring room, then walk to its door and press E."
@@ -16,27 +15,21 @@ var transition_pending := false
 var data_override: Dictionary = {}
 var object_records: Dictionary = {}
 var studio
-var sidebar: ScrollContainer
+var shell
+var tree_ui
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color("121b28"))
 	data = CONTENT.create() if data_override.is_empty() else data_override
 	progression = PROGRESSION.new(data)
-	sidebar = ScrollContainer.new()
-	sidebar.position = Vector2(810, 40)
-	sidebar.size = Vector2(380, 680)
-	add_child(sidebar)
-	panel = VBoxContainer.new()
-	panel.custom_minimum_size = Vector2(365, 0)
-	sidebar.add_child(panel)
-	hud = Label.new()
-	hud.position = Vector2(45, 15)
-	add_child(hud)
-	status = Label.new()
-	status.position = Vector2(45, 620)
-	status.size = Vector2(730, 110)
-	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	add_child(status)
+	shell = preload("res://gameplay_shell.gd").new()
+	add_child(shell)
+	hud = shell.hud
+	status = shell.status
+	tree_ui = preload("res://gameplay_tree.gd").new()
+	shell.map_region.add_child(tree_ui)
+	tree_ui.configure(data)
+	tree_ui.action_requested.connect(_toggle)
 	_enter_room(data.root, "", progression.capabilities().max_hp)
 
 func _process(_delta: float) -> void:
@@ -46,11 +39,11 @@ func _process(_delta: float) -> void:
 func _enter_room(destination: String, entry: String, hp: int) -> void:
 	if room != null:
 		room_records[current] = room.defeated.duplicate()
-		remove_child(room)
+		room.get_parent().remove_child(room)
 		room.queue_free()
 	current = destination
 	room = ROOM.new()
-	add_child(room)
+	shell.room_viewport.add_child(room)
 	var collected: Dictionary = {}
 	var template: Dictionary = data.templates[data.nodes[current].template]
 	for pickup in template.pickups:
@@ -63,6 +56,7 @@ func _enter_room(destination: String, entry: String, hp: int) -> void:
 	room.switch_toggled.connect(_switch_toggled)
 	transition_pending = false
 	_refresh()
+	tree_ui.frame_current_room()
 
 func _portals() -> Array:
 	var result: Array = []
@@ -119,40 +113,23 @@ func _refresh() -> void:
 	room.player.set_capabilities(progression.capabilities())
 	room.apply_object_states(object_records.get(current, {}))
 	room.portals = _portals()
-	for child in panel.get_children():
-		panel.remove_child(child)
-		child.queue_free()
-	_label("ROOM SKILL TREE", 24)
-	_label("Green doors connect active rooms.\nActivation and refunds are local.\nBlue pickups permanently add capacity.", 16)
+	var previews: Dictionary = {}
 	for id in data.nodes:
-		var node: Dictionary = data.nodes[id]
 		var is_active: bool = progression.active.has(id)
-		_label(("● " if is_active else "○ ") + node.name + ("  ← you" if id == current else ""), 18)
-		if id in progression.neighbors(current):
-			var preview: Dictionary = progression.preview_deactivation(id, current) if is_active else progression.preview_activation(id, current)
-			var button := Button.new()
-			button.focus_mode = Control.FOCUS_NONE
-			button.text = ("Deactivate / refund" if is_active else "Activate (%d point)" % node.cost)
-			button.disabled = not preview.ok
-			if not preview.ok:
-				button.text += " — " + preview.reason.replace("_", " ")
-			button.tooltip_text = "Affected: " + ", ".join(preview.affected)
-			button.pressed.connect(_toggle.bind(id))
-			panel.add_child(button)
-	_label("\nWASD: move     E: door / chest\nSpace: sword     Shift: dash / hold to run\nF2: content editors", 16)
+		previews[id] = progression.preview_deactivation(id, current) if is_active else progression.preview_activation(id, current)
+	tree_ui.refresh({"current": current, "active": progression.active, "available_points": progression.available_points(), "previews": previews})
 	status.text = message + "\n\nActive abilities: " + ", ".join(progression.capabilities().abilities.keys())
 	room.queue_redraw()
 
-func _label(text: String, size: int) -> void:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", size)
-	panel.add_child(label)
-
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_F2:
+	if event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_F11:
+		shell.toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+	elif event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_F2:
 		_open_studio()
 		get_viewport().set_input_as_handled()
+	else:
+		shell.forward_gameplay_key(event)
 
 func _open_studio() -> void:
 	if studio == null:
@@ -164,27 +141,24 @@ func _open_studio() -> void:
 	studio.process_mode = Node.PROCESS_MODE_INHERIT
 	room.process_mode = Node.PROCESS_MODE_DISABLED
 	room.hide()
-	sidebar.hide()
-	hud.hide()
-	status.hide()
+	shell.hide()
 
 func _close_studio() -> void:
 	studio.hide()
 	studio.process_mode = Node.PROCESS_MODE_DISABLED
 	room.process_mode = Node.PROCESS_MODE_INHERIT
 	room.show()
-	sidebar.show()
-	hud.show()
-	status.show()
+	shell.show()
 
 func _play_document(compiled: Dictionary) -> void:
 	# Playtest starts a fresh run, never mutating the editor's source document.
-	remove_child(room)
+	room.get_parent().remove_child(room)
 	room.queue_free()
 	room = null
 	room_records.clear()
 	object_records.clear()
 	data = compiled
+	tree_ui.configure(data)
 	progression = PROGRESSION.new(data)
 	message = "Playtesting authored content. F2 returns to the editors."
 	_enter_room(data.root, "", progression.capabilities().max_hp)

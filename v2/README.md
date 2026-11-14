@@ -5,7 +5,11 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 ## Playable experiment
 
 - WASD moves; E uses a nearby green doorway.
-- The side panel activates/deactivates adjacent rooms. Hover a button to preview affected nodes.
+- The map shows authored node positions, travel links (solid), prerequisite arrows (dashed), and a yellow **YOU** marker. Click a node to select it, use the wheel to zoom, right/middle-drag to pan, and **Fit graph** to reset the view.
+- Nodes show **✓ active**, **+ available to activate**, or **× blocked**, with allocation costs in their centers. Select any node to see its state and use **Activate / Deactivate** below the map. Unavailable actions explain why. Active markers describe allocation, not permission to deactivate. Selection (white ring) does not move the player or change the build.
+- Selecting an active room previews removal with **orange boxes** around all affected nodes, a named cascade list, and a total refund/post-action point budget. **Red boxes** mark a blocked removal preview; no changes or refund can occur. Scroll the selected-node details for ongoing **ALL / ANY** prerequisites, each room's current active state, and exclusive-group conflicts. Hovering the action also shows the details.
+- Entering a room centers it on the map and fits its directly linked neighbors, including inactive rooms, without changing selection. Pan/zoom remains manual until the next entry; **Fit graph** shows the whole graph.
+- Drag the divider between room and map to adjust their space. The window can be resized (minimum 960×640); **F11** or the header button switches fullscreen/windowed. The room scales proportionally with letterboxing, keeping its 800×600 gameplay coordinates. Resizing the map refits the current neighborhood, or the whole graph after manual navigation.
 - Space performs a timed directional sword attack when Sword is active.
 - Shift dashes when Boots is active. Hit Dash halves its distance and bypasses enemy contact damage; Run replaces it with double-speed movement while Shift is held. Walls still block movement.
 - Blue pickups permanently increase allocation capacity; yellow pickups grant gold.
@@ -59,6 +63,9 @@ These use V2's room-activation rules. Health is configurable per scenario; the o
 - `content.gd`: loads the default JSON fixture through the same adapter used by playtest.
 - `progression.gd`: headless activation evaluation, cascade previews, transactions and capability derivation. Also holds the small prototype run ledger (capacity, rewards, gold). It has no movement, enemy, input or rendering dependencies.
 - `main.gd`: run coordinator, local debug controls, scene transitions and per-node encounter records.
+- `gameplay_shell.gd`: responsive HUD/status and adjustable room/map regions, fullscreen control, and an isolated fixed-size room viewport. Unhandled gameplay keys are forwarded to that viewport.
+- `gameplay_tree.gd`: selected-node controls and presentation from copied run snapshots; emits action intents to the coordinator. It has no progression model reference or transaction authority.
+- `gameplay_map.gd`: graph rendering, selection and pan/zoom; independent of progression transactions.
 - `room.gd`: transient room gameplay, physics geometry, encounters and portals. Emits reward/transition intents; receives capabilities and persistent room data. Does not inspect the progression graph.
 - `player.gd`: physics motor, dash, timed directional attack and damage cooldown. Attack parameters are captured at action start.
 
@@ -81,10 +88,15 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/content_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/editor_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/branching_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/shell_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_preview_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_camera_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/tree_panel_tests.gd
 ```
 
 Run from the repository root (use `--path .` if already in `v2`). Tests cover allocations/refunds, permanent rewards, ongoing ALL/ANY prerequisites, exclusivity, player safety, transaction previews and room/coordinator integration.
 
 ## Experiment roadmap
 
-See the [V2 experiment backlog](docs/backlog.md) for prioritized gameplay, UI, authoring, primitive and layout ideas. Its guiding goal is to learn what supports **“the dungeon is also a skill tree.”** The recommended next experiment is an interactive gameplay map/skill tree, followed by separate tests of room clearing, retained activation, remote reconfiguration and warping.
+See the [V2 experiment backlog](docs/backlog.md) for prioritized gameplay, UI, authoring, primitive and layout ideas. Its guiding goal is to learn what supports **“the dungeon is also a skill tree.”** UI-01 is completed; UX polish is deferred. Its [accepted contracts and architecture review](docs/ui-01-review.md) document the checkpoint. The recommended next experiment is CLEAR-01 (separate room-clear state), followed by separate tests of clear rewards, retained activation, remote reconfiguration and warping.

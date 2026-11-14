@@ -4,7 +4,7 @@
 
 **Find which game elements work well with “the dungeon is also a skill tree.”** V2 is a featureful testbed, not a production-game milestone list.
 
-This is a backlog of proposals, not accepted gameplay rules. All items start **Backlog**. Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
+This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01 is now **Completed** with accepted behavior recorded below. Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
 
 Prefer work that:
 
@@ -23,7 +23,7 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 
 ## Recommended initial sequence
 
-1. **UI-01: interactive dungeon/skill-tree map.** Make the existing branching scenario understandable before changing its rules.
+1. **UI-01: interactive dungeon/skill-tree map — Completed.** Baseline functionality accepted; UX polish deferred.
 2. **CLEAR-01, then CLEAR-02:** establish separate clear state with one enemy-clear condition and one reward result. Test each increment.
 3. **CLEAR-04: earn persistent activation by clearing.** Compare against today's freely retained active rooms on the same small layout.
 4. **CLEAR-05: remote reconfiguration of cleared rooms.** Measure whether it removes tedious walking or removes meaningful spatial decisions.
@@ -33,7 +33,9 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 
 ## Gameplay presentation and traversal
 
-### UI-01 · Interactive dungeon map / skill tree — P1
+### UI-01 · Interactive dungeon map / skill tree — P1 — Completed
+
+- **Closeout:** user accepted baseline actions, room-entry framing and consequence clarity, and explicitly deferred UX polish. The original functional scope is complete. See [accepted contracts and architectural review](ui-01-review.md). This is a UI acceptance milestone, not a claim that the full scenario has been independently usability-tested.
 
 - **Question:** Does seeing the graph make build choices, routes, and consequences easier to understand?
 - **First slice:** replace the gameplay node list with a graph using authored map positions, following the supplied mockup: room on the left, tree/map on the right. Support fitting the graph and basic pan/zoom if needed for legibility. Show the occupied room, active nodes, activation costs, physical links, prerequisite direction and ALL/ANY requirements. Selecting a node exposes activation/deactivation and a short reason when unavailable; preview cascading removals/refunds.
@@ -214,7 +216,7 @@ Suggested log entry (append here or link a dedicated note):
 
 ```text
 Item ID / date:
-Status: Backlog | Selected | In progress | Ready to playtest | Evaluated
+Status: Backlog | Selected | In progress | Ready to playtest | Evaluated | Completed
 Question and predicted benefit:
 Scenario and baseline:
 Exact rule/UI change:
@@ -229,4 +231,69 @@ Next experiment:
 
 ### Experiment log
 
-No experiments from this backlog have been selected or implemented yet. The existing branching scenario and its tests are the starting baseline.
+The entries below record successive slices; temporary controls described in earlier
+entries were superseded by later slices. UI-01 is completed as a whole.
+
+### UI-01 — slice 1: graph navigation
+
+- **Status:** Evaluated — kept.
+- **Question:** Are authored positions, graph connections, and a distinct player marker readable in the gameplay sidebar?
+- **Scenario and baseline:** existing branching scenario; original node list retained in a temporary Actions tab.
+- **Exact UI change:** Map tab renders authored positions, solid travel links and dashed prerequisite arrows. Click selects a node and shows its name/cost; wheel zooms around the pointer; right/middle drag pans; Fit graph resets framing. White selection ring and yellow YOU marker are separate.
+- **Scope:** map state/action indicators and cascade previews follow in later slices. The Actions tab retains current activation/deactivation controls.
+- **Playtest focus:** initial framing, label overlap, pan/zoom comfort, player orientation after travel, selection versus occupied-room clarity, and returning from editor/playtest.
+- **Decision:** user confirmed functionality and useful pan/zoom; crowding motivated the responsive shell.
+- **Next experiment:** connect map state indicators and selected-node actions to existing progression previews.
+
+### UI-01 — intermediate slice: responsive gameplay shell
+
+- **Status:** Evaluated — kept.
+- **Feedback from slice 1:** graph interaction works; crowding remains, with pan/zoom useful. Add layout foundations before map actions.
+- **Question:** Can players allocate enough space to the room and graph across window sizes?
+- **Exact UI change:** anchored/container-based HUD, status and adjustable horizontal room/map split. Both panes start with equal allocation. Room rendering uses an independent 800×600 viewport scaled proportionally into its region. Minimum window size is 960×640; F11/header button toggles fullscreen.
+- **Boundaries:** room geometry and movement coordinates remain fixed. The shell owns placement; the map owns its selection/view. Map resize currently refits the graph. Split settings are session-only; visual styling remains provisional.
+- **Checks:** headless layout/input tests cover 960×640, 1280×720, 1920×1080 and 960×1000, adjustable allocation, attack/door input forwarding, and editor input isolation. Rendered windowed/fullscreen layouts were inspected.
+- **Playtest focus:** divider usability, room/map proportions, fullscreen/window resize, map refitting, and combat/door controls after using the UI.
+- **Decision:** user accepted proportions and verified fullscreen outside the embedded game panel.
+- **Next experiment:** map state indicators and selected-node activation/deactivation, then cascade/requirement presentation.
+
+### UI-01 — slice 2: map state and selected-node actions
+
+- **Status:** Evaluated — kept.
+- **Prior feedback:** responsive proportions are satisfactory for now; fullscreen works outside Godot's embedded game panel.
+- **Exact UI change:** replace the temporary Actions tab with selected-node details and an explicit Activate/Deactivate button. Map badges distinguish active (✓), available (+), and blocked (×) nodes using symbols and color. Costs, selection ring, and occupied-room marker remain independent.
+- **Rules:** indicators and action availability come from progression previews; transactions revalidate on execution. Active nodes remain marked active even when deactivation is unavailable. Selection never activates or travels.
+- **Feedback:** selection shows unavailable reasons; state/action refresh follows allocations, refunds, rewards, room changes, and fresh playtests. The existing affected-room tooltip is retained.
+- **Checks:** map integration tests cover click-versus-action, capacity/refunds, reward refresh, exclusive choices, remote/root protection, and playtest reset. Existing progression, shell and editor checks pass.
+- **Friction / mitigation:** selected-node controls consume vertical map space; the adjustable split, fullscreen and pan/zoom remain useful. The reason text is provisional until richer prerequisite/cascade details are added.
+- **Decision:** user accepted baseline functionality; control refinements deferred.
+- **Next experiment:** cascade highlighting, refund previews, and clearer prerequisite details.
+
+### UI-01 — room-entry framing experiment
+
+- **Status:** Evaluated — kept.
+- **Prior feedback:** baseline map states and actions work well; explore automatic orientation before continuing.
+- **Exact UI change:** entering a room centers the occupied node and fits directly travel-linked neighbors, including inactive ones. Symmetric fitting keeps the player centered on one-sided branches; screen-space label margins are reserved. Selection is preserved.
+- **Boundary:** only room entry requests this framing, including fresh runs and defeat returns. Rewards/allocations preserve manual navigation. Fit graph still shows everything; resizing retains neighborhood framing until manual navigation.
+- **Tradeoff:** immediate reframing rather than animated movement; distant adjacent nodes can still require zooming out substantially.
+- **Checks:** entry centering, neighbor visibility, preserved selection and manual camera after reward refresh.
+- **Decision:** user liked and accepted framing; proceeded to consequence presentation.
+
+### UI-01 — slice 3: consequences and prerequisites
+
+- **Status:** Evaluated — kept.
+- **Prior feedback:** room-entry framing is useful and should remain.
+- **Exact UI change:** selecting an active node marks the selected removal and cascading removals with orange boxes. Details name the cascade, sum authored allocation costs for the refund, and show available points afterward. Rejected occupied-room cascades use red boxes and explicitly promise no changes/refund.
+- **Prerequisites:** named ALL/ANY lists describe ongoing requirements and mark each room active/inactive. Exclusive groups list other active choices. Current local-interaction failure reasons remain visible.
+- **Boundary:** previews come from progression; no speculative rule implementation in the renderer. Highlighting does not change selection or camera. The list exposes affected rooms even when they are outside the current map framing.
+- **Friction / mitigation:** expanded details need scrolling; the panel is bounded and shrinks in short windows to preserve map space. Refund totals also appear on the action button.
+- **Checks:** unequal-cost refunds, committed/preview agreement, side-effect-free inspection, blocked occupied-room cascades, ALL/ANY detail state, alternate-support survival, and clearing stale highlights. Existing map, responsive layout, progression, branching, content and editor suites pass.
+- **Decision:** user confirmed each consequence is clear; UX polish deferred.
+- **Next:** UI-01 completed. The recommended next gameplay experiment is CLEAR-01, subject to choosing its persistence policy and fixture.
+
+### UI-01 — architectural closeout
+
+- **Status:** Completed.
+- **Hardening:** extracted a standalone snapshot-driven tree panel, retained coordinator/model transaction ownership, and corrected large-coordinate map fitting/wheel zoom.
+- **Evidence:** accepted contracts, test trace, red/green regression evidence and architecture decisions are recorded in [ui-01-review.md](ui-01-review.md).
+- **Deferred:** visual polish, control redesign, map overlay/menu modes, warping and visibility experiments.

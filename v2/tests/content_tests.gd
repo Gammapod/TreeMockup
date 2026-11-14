@@ -87,8 +87,12 @@ func _run() -> void:
 	game._enter_room("wall", "east", 5)
 	_expect(game.room.barriers.barrier.collision_layer == 1, "C5: toggling off restores unloaded wall")
 	var water_doc: Dictionary = store.load_document("res://examples/water_flippers.json")
-	game.data = adapter.compile(water_doc.document).data
-	game.progression = load("res://progression.gd").new(game.data)
+	game.queue_free()
+	await process_frame
+	game = load("res://main.tscn").instantiate()
+	game.data_override = adapter.compile(water_doc.document).data
+	root.add_child(game)
+	await process_frame
 	game.progression.activate("water", "start")
 	game._enter_room("water", "east", 5)
 	_expect(game.room.barriers.water_strip.collision_layer == 1, "Water blocks without flippers")
