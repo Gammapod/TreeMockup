@@ -25,10 +25,10 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 
 1. **UI-01: interactive dungeon/skill-tree map — Completed.** Baseline functionality accepted; UX polish deferred.
 2. **CLEAR-01/02/07/08/09/10/11 — Completed, baseline accepted:** clear conditions/effects, permanent roots, optional occupied-uncleared editing locks and root travel. `examples/cleared_rooms.json` remains the demonstration fixture.
-3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [hardening record](cleared-rooms.md#baseline-hardening).
+3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [archived hardening record](archive/cleared-rooms-closeout.md#baseline-hardening).
 4. **Next experiment undecided.** CLEAR-03 through CLEAR-06 are potential future experiments, not remaining work required to complete clearing.
 
-See [Cleared rooms: confirmed requirements, review and decisions](cleared-rooms.md).
+See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
 
 **UI-02 (walk-through doors)** remains a candidate supporting experiment if deliberate door interaction obscures how exploration feels. It has not been selected as the next task. Keep the existing branching scenario and the six-node clearing lab as regression baselines.
@@ -37,7 +37,7 @@ The earlier CLEAR-03/04/05/06 proposals are retained below for future considerat
 
 ### UI-01 · Interactive dungeon map / skill tree — P1 — Completed
 
-- **Closeout:** user accepted baseline actions, room-entry framing and consequence clarity, and explicitly deferred UX polish. The original functional scope is complete. See [accepted contracts and architectural review](ui-01-review.md). This is a UI acceptance milestone, not a claim that the full scenario has been independently usability-tested.
+- **Closeout:** user accepted baseline actions, room-entry framing and consequence clarity, and explicitly deferred UX polish. The original functional scope is complete. See the current [UI contract](knowledge/ui.md). This is a UI acceptance milestone, not a claim that the full scenario has been independently usability-tested.
 
 - **Question:** Does seeing the graph make build choices, routes, and consequences easier to understand?
 - **First slice:** replace the gameplay node list with a graph using authored map positions, following the supplied mockup: room on the left, tree/map on the right. Support fitting the graph and basic pan/zoom if needed for legibility. Show the occupied room, active nodes, activation costs, physical links, prerequisite direction and ALL/ANY requirements. Selecting a node exposes activation/deactivation and a short reason when unavailable; preview cascading removals/refunds.
@@ -109,7 +109,7 @@ Keep **active**, **cleared**, **discovered**, **loaded**, and **physically trave
 
 - Support hitting a named switch and collecting all room-local tokens, including combined objectives.
 - Tokens respawn on exit/re-entry only while uncleared; clearing removes remaining tokens and prevents future spawns. They never enter currency or persistent reward ledgers.
-- ALL composition; switch hits latch for the run, enemy progress lasts until deactivation, token progress lasts one visit. See [contracts](cleared-rooms.md).
+- ALL composition; switch hits latch for the run, enemy progress lasts until deactivation, token progress lasts one visit. See the [clear-state contract](knowledge/clear-state.md).
 - **Depends on:** CLEAR-01.
 
 ### CLEAR-08 · Clear effect: enemies do not respawn — Completed — Accepted baseline
@@ -237,6 +237,10 @@ Avoid building the whole catalogue first. Each primitive should enable a choice 
 
 Before implementing an item, agree on its smallest slice and unresolved rule choices. Use scenario-specific policy/data where practical so competing rules can be compared. Preserve current portable IDs and unknown fields; introduce explicit, tested migrations when content semantics require a format change. Experimental clear/permission state should not be inferred from whether a scene happens to be loaded.
 
+The current, minimal experiment record and entry template live in the
+[knowledge bundle](knowledge/experiments.md). Keep this backlog for proposed
+work; record only evaluated outcomes in the knowledge bundle.
+
 For each experiment:
 
 1. Pick one hypothesis and a baseline scenario. Change one major rule at a time.
@@ -245,7 +249,8 @@ For each experiment:
 4. Playtest, recording useful decisions separately from confusion, backtracking and authoring friction.
 5. Decide **keep / revise / discard** and choose the next item from that evidence.
 
-Suggested log entry (append here or link a dedicated note):
+Suggested log entry (append to the [experiment record](knowledge/experiments.md)
+or link a dedicated note):
 
 ```text
 Item ID / date:
@@ -273,7 +278,7 @@ Next experiment:
 - **Hardening:** reproduced and fixed stale deferred transitions crossing into a
   fresh playtest, editor pause bypass on arrival, door-travel validation/death
   races, and single-root initial-health validation.
-- **Evidence:** [contracts, architectural review and red/green regression trace](cleared-rooms.md#baseline-hardening);
+- **Evidence:** [archived architectural review and red/green regression trace](archive/cleared-rooms-closeout.md#baseline-hardening);
   all 12 headless suites pass.
 - **Next:** choose the next experiment separately. Presentation polish and new
   clear mechanics are not prerequisites for this checkpoint.
@@ -290,7 +295,7 @@ earlier “Ready to playtest” statuses are superseded by the closeout above.
 - **Fixture:** Token Clear in `cleared_rooms.json` locks editing until cleared.
   Escape to the initial root via map; earn the second root and travel to its
   disconnected branch after deactivating Token Clear.
-- **Evidence:** [secondary-feature contracts and test trace](cleared-rooms.md).
+- **Evidence:** [archived secondary-feature test trace](archive/cleared-rooms-closeout.md).
 - **Evaluate:** whether combat escape via root travel and the optional editing
   lock produce useful encounter/build decisions.
 
@@ -302,7 +307,7 @@ earlier “Ready to playtest” statuses are superseded by the closeout above.
   effects; root allocation release and independent connectivity.
 - **Authoring:** Clear rules dialog, token brush, JSON declarations and a six-node
   `examples/cleared_rooms.json` fixture. Starting-root status uses the same effect.
-- **Evidence:** [contracts, lifecycle, test trace and walkthrough](cleared-rooms.md).
+- **Evidence:** [archived lifecycle, test trace and walkthrough](archive/cleared-rooms-closeout.md).
   Headless checks cover runtime events, persistence, reward eligibility, multi-root
   graph behavior, authoring validation and editor save/open/playtest.
 - **Next:** foundation playtest was positively received; token spawning policy
@@ -372,5 +377,5 @@ entries were superseded by later slices. UI-01 is completed as a whole.
 
 - **Status:** Completed.
 - **Hardening:** extracted a standalone snapshot-driven tree panel, retained coordinator/model transaction ownership, and corrected large-coordinate map fitting/wheel zoom.
-- **Evidence:** accepted contracts, test trace, red/green regression evidence and architecture decisions are recorded in [ui-01-review.md](ui-01-review.md).
+- **Evidence:** accepted contracts are in the [UI contract](knowledge/ui.md); the red/green history is [archived](archive/ui-01-review-closeout.md).
 - **Deferred:** visual polish, control redesign, map overlay/menu modes, warping and visibility experiments.

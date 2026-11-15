@@ -21,7 +21,7 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 
 The default scenario follows [branching-dungeon.mmd](examples/scenario-designs/branching-dungeon.mmd): activate Sword or Boots with your initial point, collect both keys, choose a style, reach its landing and collect another key. Explore the other branch, then activate Prize with both landings active. There are 14 nodes and 18 connections; all six keys fund the seven active non-root rooms on the final route. Practice rooms are optional allocations. Each branch's three styles are mutually exclusive.
 
-Big Swing grants 1.5× reach with a two-second attack cooldown; Fast Swing performs three half-range strikes. The HP+ choices grant five current/max HP, and the practice rooms grant one. Starting Room and Prize each grant one; this scenario starts with one HP. Defeated enemies stay defeated while their room remains active; keys remain collected permanently. See [branching-design.md](docs/branching-design.md) for the design mapping and test trace.
+Big Swing grants 1.5× reach with a two-second attack cooldown; Fast Swing performs three half-range strikes. The HP+ choices grant five current/max HP, and the practice rooms grant one. Starting Room and Prize each grant one; this scenario starts with one HP. Defeated enemies stay defeated while their room remains active; keys remain collected permanently. See the [branching scenario record](docs/knowledge/branching-scenario.md) for the design mapping and test trace.
 
 Press **F2** to open the content editors. The current run pauses while editing.
 
@@ -45,11 +45,11 @@ Open `v2/examples/*.json` from the editor:
 - `water_flippers.json`: the old water/flippers topology with an actual water barrier and a prize chest. Activate Flippers from Start to cross the barrier in Water.
 - `switch_wall.json`: the old switch/wall topology, capacity pickups, and a sword-operated switch that changes a wall in another room. Its state persists while the target room is unloaded or inactive.
 - `combat.json`: the old combat topology, capacity progression, bats and gold rewards adapted to node allocation.
-- `cleared_rooms.json`: six-node clear-state lab with shared-template enemy rooms, a switch reward, token collection and combined objectives earning a second root. [Walkthrough and contracts](docs/cleared-rooms.md).
+- `cleared_rooms.json`: six-node clear-state lab with shared-template enemy rooms, a switch reward, token collection and combined objectives earning a second root. [Contracts](docs/knowledge/clear-state.md); the former walkthrough is [archived](docs/archive/cleared-rooms-closeout.md).
 
 These use V2's room-activation rules. Health is configurable per scenario; the other examples retain five base HP. The original baseline's temporary capacity bonuses remain additional runtime work; unknown mechanics are retained by the format and reported by the playtest adapter rather than ignored.
 
-**Format and compatibility:** [content-format.md](docs/content-format.md) and [JSON Schema](docs/content.schema.json). Files use versioned, engine-neutral JSON; stable IDs; local coordinates; and explicit references. No Godot scene paths, executable code or live-run state are saved.
+**Format and compatibility:** [content contract](docs/knowledge/content.md) and [JSON Schema](docs/content.schema.json). Files use versioned, engine-neutral JSON; stable IDs; local coordinates; and explicit references. No Godot scene paths, executable code or live-run state are saved.
 
 ## Accepted rules
 
@@ -64,6 +64,7 @@ These use V2's room-activation rules. Health is configurable per scenario; the o
 
 ## Architecture and future authoring
 
+- **Start a handoff here:** [V2 knowledge bundle](docs/knowledge/index.md) is an [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)-style, minimal handoff record. Read its [glossary and primitives](docs/knowledge/glossary.md), [architecture boundaries](docs/knowledge/architecture.md), [functional invariants and test traces](docs/knowledge/invariants.md), [content contract](docs/knowledge/content.md), [clear-state contract](docs/knowledge/clear-state.md), [UI contract](docs/knowledge/ui.md), [branching scenario](docs/knowledge/branching-scenario.md), and [experiment log](docs/knowledge/experiments.md) before changing V2. Its [recording policy](docs/knowledge/index.md#recording-policy) defines what future agents should—and should not—add. The former feature closeouts are [archived](docs/archive/README.md).
 - `authoring/content_store.gd`: portable JSON, validation and temporary-file/rename saves. Source documents retain unknown fields.
 - `authoring/runtime_adapter.gd`: translates portable values into runtime dictionaries and Godot geometry; explicitly reports unsupported mechanics.
 - `authoring/studio.gd` / `preview.gd`: room/tree editors, source inspectors, placement and graph preview.
@@ -109,4 +110,4 @@ Run from the repository root (use `--path .` if already in `v2`). Tests cover al
 
 ## Experiment roadmap
 
-See the [V2 experiment backlog](docs/backlog.md) for prioritized gameplay, UI, authoring, primitive and layout ideas. Its guiding goal is to learn what supports **“the dungeon is also a skill tree.”** UI-01 and the clearing functionality are accepted baselines. The [cleared-room contracts](docs/cleared-rooms.md) include the walkthrough, architectural review and hardening test trace. CLEAR-03 through CLEAR-06 are potential future experiments; the next experiment has not been selected.
+See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines and the required log format. The [V2 experiment backlog](docs/backlog.md) holds prioritized gameplay, UI, authoring, primitive and layout ideas. Its guiding goal is to learn what supports **“the dungeon is also a skill tree.”** UI-01 and the clearing functionality are accepted baselines. The [clear-state contract](docs/knowledge/clear-state.md) holds current rules; its walkthrough, architectural review and hardening trace are [archived](docs/archive/cleared-rooms-closeout.md). CLEAR-03 through CLEAR-06 are potential future experiments; the next experiment has not been selected.

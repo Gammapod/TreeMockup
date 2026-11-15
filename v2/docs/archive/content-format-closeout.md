@@ -66,7 +66,7 @@ with no `clear` field on that template, the adapter creates an isolated runtime
 template copy with an immediate root effect. Other instances and source JSON are
 unchanged. New projects and the default branching scenario author the effect
 explicitly. This optional V1 vocabulary preserves existing gameplay without a
-file-version migration. See [clear contracts and lifecycle](cleared-rooms.md).
+file-version migration. See the archived [clear contracts and lifecycle](cleared-rooms-closeout.md).
 
 Cleared active roots are fast-travel destinations from any active occupied room,
 without requiring a travel path. Arrival uses `spawn`; HP, capacity and allocation
