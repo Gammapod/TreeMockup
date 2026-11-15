@@ -28,6 +28,10 @@ sources:
 * The shell owns responsive room/map/HUD layout. The displayed room is an
   independent fixed 800×600 world; unhandled gameplay keys are forwarded to
   it and authoring pauses it.
+* Linked ports map to visible boundary doors. An active linked door is crossed
+  by movement (including dash); unavailable links remain physically blocked and
+  visibly distinct. Paired-port arrivals are held until the player moves away,
+  preventing immediate bounce-back. `E` remains for deliberate interactions.
 
 # Boundary
 
@@ -40,4 +44,5 @@ panel heights, and camera animation are presentation details, not contracts.
 
 `tests/tree_panel_tests.gd`, `tests/map_tests.gd`,
 `tests/map_preview_tests.gd`, `tests/map_camera_tests.gd`, and
-`tests/shell_tests.gd` are the primary traces.
+`tests/shell_tests.gd` are the primary traces. The room-boundary mapping and
+door transition trace are in `tests/shell_tests.gd`.

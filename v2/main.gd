@@ -10,7 +10,7 @@ var room
 var room_records: Dictionary = {}
 var status: Label
 var hud: Label
-var message := "Activate a neighboring room, then walk to its door and press E."
+var message := "Activate a neighboring room, then walk through its doorway."
 var transition_pending := false
 var room_generation := 0
 var data_override: Dictionary = {}
@@ -164,7 +164,7 @@ func _toggle(id: String) -> void:
 func _refresh() -> void:
 	room.player.set_capabilities(progression.capabilities())
 	room.apply_object_states(object_records.get(current, {}))
-	room.portals = _portals()
+	room.set_portals(_portals())
 	var collected: Dictionary = {}
 	var visible: Dictionary = {}
 	for pickup in data.templates[data.nodes[current].template].pickups:

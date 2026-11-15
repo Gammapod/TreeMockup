@@ -25,6 +25,7 @@ sources:
 | A1 | Source bundles validate before replacement, retain unknown fields, reject unsupported runtime vocabulary explicitly, and never contain live-run state. | `tests/content_tests.gd`, `tests/editor_tests.gd` |
 | U1 | Presentation only consumes snapshots/intents. Inspection does not mutate the run; selection, player location, and camera are separate state. | `tests/tree_panel_tests.gd`, `tests/map_tests.gd`, `tests/map_camera_tests.gd` |
 | L1 | Stale deferred transitions cannot affect a fresh run; authoring pauses loaded gameplay. | `tests/clear_hardening_tests.gd`, `tests/editor_tests.gd` |
+| R1 | Active linked ports are crossed through their room-boundary openings; unavailable links stay blocked, and paired arrivals cannot immediately retrigger travel. | `tests/shell_tests.gd` |
 
 # Change rule
 

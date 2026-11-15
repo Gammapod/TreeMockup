@@ -4,7 +4,7 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 
 ## Playable experiment
 
-- WASD moves; E uses a nearby green doorway.
+- WASD moves through open green doorways; E opens nearby chests and remains for deliberate object interactions.
 - The map shows authored node positions, travel links (solid), prerequisite arrows (dashed), and a yellow **YOU** marker. Click a node to select it, use the wheel to zoom, right/middle-drag to pan, and **Fit graph** to reset the view.
 - Nodes show **✓ active**, **+ available to activate**, or **× blocked**, with allocation costs in their centers. Select any node to see its state and use **Activate / Deactivate** below the map. Unavailable actions explain why. Active markers describe allocation, not permission to deactivate. Selection (white ring) does not move the player or change the build.
 - Selecting an active room previews removal with **orange boxes** around all affected nodes, a named cascade list, and a total refund/post-action point budget. **Red boxes** mark a blocked removal preview; no changes or refund can occur. Scroll the selected-node details for ongoing **ALL / ANY** prerequisites, each room's current active state, and exclusive-group conflicts. Hovering the action also shows the details.

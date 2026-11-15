@@ -62,7 +62,7 @@ func _ready() -> void:
 			root_travel_requested.emit(gameplay_map.selected))
 	actions.add_child(root_travel)
 	var controls := Label.new()
-	controls.text = "WASD: move • E: door / chest • Space: sword\nShift: dash / run • F2: editors"
+	controls.text = "WASD: move • E: chest • Space: sword\nShift: dash / run • F2: editors"
 	controls.add_theme_font_size_override("font_size", 13)
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(controls)

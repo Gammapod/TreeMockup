@@ -16,10 +16,12 @@ sources:
 | Baseline | Scenario | Decision |
 | --- | --- | --- |
 | Dungeon/skill-tree map (UI-01) | `examples/branching.json` | Kept; functional clarity accepted, visual polish deferred. |
+| Walk-through border doors (UI-02) | `examples/branching.json` | Kept; continuous traversal accepted as the baseline. |
 | Clear conditions/effects | `examples/cleared_rooms.json` | Kept; clear state, rewards, roots, editing lock, and root travel are accepted. |
 | Branching build choices | `examples/branching.json` | Regression scenario for local allocation, styles, prerequisites, and merge behavior. |
 
-The next experiment is **not selected**. Candidate questions live in the
+The next experiment is **EDIT-01 — focus selected tree JSON**. Candidate
+questions live in the
 [backlog](../backlog.md); that list is not an accepted-rule document.
 
 # Required entry for a selected experiment
@@ -39,3 +41,11 @@ Append one short entry below only after an experiment produces evidence:
 Do not log implementation chronology, unplayed ideas, or every test run.
 Use a dedicated scenario/feature note only when the entry cannot link to
 existing content and needs reusable setup.
+
+## UI-02 — walk-through border doors (2026-11-15)
+* **Status**: accepted
+* **Question**: Does continuous doorway movement make visiting and revisiting build branches feel more natural?
+* **Slice**: `examples/branching.json`; linked ports open the fixed room border, and crossing an active opening transitions to the paired port.
+* **Observation**: Walk-through doors were more intuitive than the prior deliberate door interaction.
+* **Decision**: keep as the traversal baseline; blocked links remain visibly solid and arrivals suppress immediate bounce-back. See [UI contract](ui.md) and `tests/shell_tests.gd`.
+* **Next**: EDIT-01.

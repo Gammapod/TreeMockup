@@ -40,15 +40,18 @@ func _run() -> void:
 	root.push_input(key)
 	_expect(game.room.player.attack_time == 0, "Editor blocks gameplay input")
 	game._close_studio()
-	# Door input crosses the same boundary and still uses the coordinator.
+	# Crossing a linked boundary uses the same coordinator path; E remains for
+	# deliberate object interactions.
 	for portal in game.room.portals:
 		if portal.destination == "sword":
-			game.room.player.position = game.room.ports[portal.port]
-	key.physical_keycode = KEY_E
-	root.push_input(key)
+			game.room.player.position = game.room.ports[portal.port] + Vector2.LEFT * 40
+	game.room._physics_process(0.0)
 	await process_frame
-	_expect(game.current == "sword", "Door input still transitions rooms")
+	await process_frame
+	_expect(game.current == "sword", "Walking through an enabled doorway transitions rooms")
 	_expect(game.room.get_viewport() == game.shell.room_viewport, "Transitions retain the room viewport")
+	game.room._physics_process(0.0)
+	_expect(game.current == "sword", "Arrival inside a paired doorway does not immediately bounce back")
 	game.queue_free()
 	await process_frame
 	if failures.is_empty():

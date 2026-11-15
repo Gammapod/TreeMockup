@@ -26,12 +26,12 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 1. **UI-01: interactive dungeon/skill-tree map — Completed.** Baseline functionality accepted; UX polish deferred.
 2. **CLEAR-01/02/07/08/09/10/11 — Completed, baseline accepted:** clear conditions/effects, permanent roots, optional occupied-uncleared editing locks and root travel. `examples/cleared_rooms.json` remains the demonstration fixture.
 3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [archived hardening record](archive/cleared-rooms-closeout.md#baseline-hardening).
-4. **Next experiment undecided.** CLEAR-03 through CLEAR-06 are potential future experiments, not remaining work required to complete clearing.
+4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline; **EDIT-01** is the next planned experiment. CLEAR-03 through CLEAR-06 remain potential future experiments, not remaining work required to complete clearing.
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
 
-**UI-02 (walk-through doors)** remains a candidate supporting experiment if deliberate door interaction obscures how exploration feels. It has not been selected as the next task. Keep the existing branching scenario and the six-node clearing lab as regression baselines.
+**UI-02 (walk-through doors)** is accepted. Keep the existing branching scenario and the six-node clearing lab as regression baselines. **EDIT-01** is next.
 
 ## Gameplay presentation and traversal
 
@@ -45,10 +45,12 @@ The earlier CLEAR-03/04/05/06 proposals are retained below for future considerat
 - **Evaluate:** can someone find a route to Prize, identify what funds their build, and predict what removing a style will deactivate without consulting the JSON?
 - **Depends on:** current progression previews and authored coordinates; not automatic layout.
 
-### UI-02 · Border doors with walk-through transitions — P1
+### UI-02 · Border doors with walk-through transitions — P1 — Completed
 
 - **Question:** Does continuous doorway movement make visiting and revisiting build branches feel more natural?
 - **First slice:** a visible room boundary with physical openings for linked doors. Walking across an available opening transitions into the destination at its paired entrance. Inactive/unavailable destinations remain blocked and visibly distinct. Keep E for chests and other deliberate interactions.
+- **Accepted mapping:** a port maps to its nearest inner room edge (x=50/750 or y=70/570 in the fixed 800×600 room), and its coordinate along that edge centers a 64px boundary opening. An arrival starts at its paired port and cannot retrigger that exit until the player has moved 80px away.
+- **Closeout:** playtesting found the walk-through doors more intuitive than deliberate door interaction. Keep the traversal behavior; visual polish remains deferred.
 - **Boundary:** preserve named port references; document how existing interior port positions map to boundary openings. Place arrivals inside the destination and prevent immediate bounce-back. Test both walking and dash crossing. Door passability remains separate from node cost/activation.
 - **Evaluate:** can players intentionally enter/leave rooms without accidental transitions, wall snagging, or needing an extra interaction key?
 - **Depends on:** current links and portal pairing. CLEAR-03 later adds encounter-controlled locks.
