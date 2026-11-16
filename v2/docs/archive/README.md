@@ -10,3 +10,7 @@ extended unless recovering historical context.
 
 * [BUILD-01](build-01-closeout.md): accepted stackable-ability workshop,
   architectural review, resolved lifecycle finding and verification trace.
+* [BOSS-01](boss-01-closeout.md): accepted capstone encounter, architecture
+  review, geometry constraints and larger-dungeon handoff.
+* [EDITOR-01](editor-01-closeout.md): accepted in-project authoring baseline,
+  source/history ownership review, and deferred authoring primitives.

@@ -4,7 +4,7 @@
 
 **Find which game elements work well with “the dungeon is also a skill tree.”** V2 is a featureful testbed, not a production-game milestone list.
 
-This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01/UI-02, CLEAR-01/02/07/08/09/10/11 and BUILD-01 are **Completed** as accepted baselines. See the [experiment record](knowledge/experiments.md). Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
+This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01/UI-02, CLEAR-01/02/07/08/09/10/11, BUILD-01 and BOSS-01 are **Completed** as accepted baselines. See the [experiment record](knowledge/experiments.md). Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
 
 Prefer work that:
 
@@ -28,13 +28,34 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [archived hardening record](archive/cleared-rooms-closeout.md#baseline-hardening).
 4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline. CLEAR-03 through CLEAR-06 remain potential future experiments.
 5. **BUILD-01 — Completed, baseline accepted.** Stackable sword/dash modifiers, max-HP-only upgrades, and the expanded eight-point workshop are retained. See the [architectural closeout](archive/build-01-closeout.md).
-6. **BOSS-01 — Ready to playtest:** free Roost Guardian trial in the build workshop; tethered movement, telegraphed gapped shockwave, recovery and capped bat summons. Evaluate build reconsideration before the larger dungeon. EDIT-01 remains an authoring candidate.
+6. **BOSS-01 — Completed, capstone accepted (2026-11-16):** free Roost Guardian trial retained as the encounter to design the dungeon around. Tweaking/polish is deferred. See the [architectural closeout](archive/boss-01-closeout.md).
+7. **Current focus:** editor UX exploration, with the door selector accepted and canvas/history ready for playtest. Contextual panels follow. The interconnected 14–18-node dungeon remains the next gameplay design target.
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
 
 Keep the branching scenario, clearing lab and BUILD-01 workshop as regression
-baselines. Boss evaluation precedes the planned 14–18-node dungeon.
+baselines. The boss is now an accepted capstone for dungeon design.
+
+### Next design target — interconnected prototype dungeon
+
+Use the accepted ability and boss baselines to design rooms, build working
+subsections, then connect them into one shareable 14–18-node dungeon.
+Carry forward the user's desired moments:
+
+* A constrained point budget that makes retaining navigation and combat
+  investment a genuine tradeoff at the end boss.
+* An early obstacle with multiple skill solutions, followed by specialized
+  challenges; author within current mechanics or explicitly select additions.
+* Individual skill customization plus merged branches rewarding pairings.
+* A required progression ability reachable through mutually exclusive routes.
+* A multi-room puzzle requiring deliberate ability use, refund and reallocation
+  in sequence, with persistent world changes.
+* A halfway mini-boss that earns the second root/warp point; two roots maximum.
+
+Plan build funding and persistent-state transitions alongside physical routes.
+The 29-node workshop remains a testing fixture, not the target dungeon layout.
+Presentation legibility and boss tuning follow the dungeon design and feedback.
 
 ## Gameplay presentation and traversal
 
@@ -143,34 +164,49 @@ Keep **active**, **cleared**, **discovered**, **loaded**, and **physically trave
 
 ## Authoring quality of life
 
+**EDITOR-01 — Completed and accepted.** The author accepted instance-owned
+doors, canvas selection/history/direct manipulation, contextual node/room
+properties, template navigation/copy, and switch-to-wall binding controls.
+See the [closeout](archive/editor-01-closeout.md). This supersedes the narrower
+JSON-focus-first implementation order below. Future flags and broader
+interaction vocabulary require separate design rather than expansion by editor UI.
+
+**Deferred from this change:** per-enemy damage authoring and runtime support
+(current contact damage is not an authored enemy stat); playable room resizing
+(LAYOUT-02); a general scoped/persistent variable-flag system. Existing
+switch-to-wall bindings are sufficient for the first editor UX pass.
+
 These generally follow gameplay experiments unless editing friction is preventing them. Preserve the portable content boundary: UI controls edit source JSON values and stable IDs, not runtime objects; unknown fields survive edits.
 
-### EDIT-01 · Select a tree element to focus its JSON — P2
+### EDIT-01 · Select a tree element to focus its JSON — Completed
 
 - **First slice:** selecting a node or link focuses/highlights its JSON object with a clear way back to the full tree document. Apply edits to that identified element while retaining unrelated fields and pending text.
 - **Evaluate:** can a larger graph be edited without searching through the full document or accidentally modifying the wrong node?
 - **Depends on:** existing tree preview and inspector.
+  The accepted panel goes beyond JSON focus while retaining JSON as the advanced
+  view; see EDITOR-01.
 
-### EDIT-02 · Select a room element to focus its JSON — P2
+### EDIT-02 · Select a room element to focus its JSON — Completed
 
 - **First slice:** selecting an object or port focuses its JSON entry; show selection on the canvas and retain a full-template view. Handle overlapping objects deliberately.
 - **Evaluate:** does this remove the main friction in changing dimensions, enemy stats, and pickup properties?
 - **Depends on:** existing room preview and inspector; can share selection/inspector mechanics with EDIT-01.
+  Accepted behavior includes typed object controls and direct rectangle resizing.
 
-### EDIT-03 · Node template and ability selectors — P2
+### EDIT-03 · Node template and ability selectors — Completed
 
 - **First slice:** a selected tree node has dropdowns/lists for room template and granted abilities. Preserve JSON access for modifiers and experimental values. Allow multiple grants rather than assuming each node grants exactly one ability.
 - **Boundary:** changing a template can invalidate linked ports and cross-room object references. Show those conflicts and let the author repair them; do not silently delete bindings or invent replacements. Existing unknown ability values must survive opening the selector.
 - **Evaluate:** is assigning/reusing rooms appreciably faster without hiding the data model?
 - **Depends on:** EDIT-01; a small supported-ability catalogue, not a new ability framework.
 
-### EDIT-04 · Cross-room interaction indicators — P2
+### EDIT-04 · Cross-room interaction indicators — Completed
 
 - **First slice:** mark nodes containing switches or other cross-room endpoints; selecting one lists inbound/outbound bindings and identifies source and target objects.
 - **Evaluate:** can an author locate and explain a remote wall interaction from the graph alone?
 - **Depends on:** existing binding data; EDIT-01 helps navigation.
 
-### EDIT-05 · Cross-room binding picker — P2
+### EDIT-05 · Cross-room binding picker — Completed
 
 - **First slice:** a submenu chooses a source switch, target node and compatible target wall/action. Show object IDs and template context; validate before applying.
 - **Evaluate:** can the existing switch/wall example be recreated without manually typing addresses?

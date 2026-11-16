@@ -1,5 +1,30 @@
 extends RefCounted
 
+const DOORS = preload("res://authoring/door_layout.gd")
+
+# Explicit editor upgrade; loading/compiling legacy fixtures stays lossless.
+func migrate(document: Dictionary) -> Dictionary:
+	var result := document.duplicate(true)
+	if result.version == 2:
+		return result
+	result.version = 2
+	for link in result.dungeon.links:
+		for end in ["a", "b"]:
+			for node in result.dungeon.nodes:
+				if node.id != link[end]:
+					continue
+				for room in result.rooms:
+					if room.id != node.template:
+						continue
+					for port in room.ports:
+						if port.id == link[end + "_port"]:
+							var point := Vector2(port.position[0], port.position[1])
+							var door := DOORS.placement(point)
+							door.legacy_position = port.position.duplicate()
+							link[end + "_door"] = door
+			# Old fields are retained as inert compatibility metadata.
+	return result
+
 # This boundary operates only on JSON values. Never convert the editor's source
 # document to engine objects or reconstruct it from runtime state when saving.
 func new_room(id: String = "room") -> Dictionary:
@@ -57,13 +82,13 @@ func validate(document: Variant) -> Array[String]:
 	var errors: Array[String] = []
 	if not document is Dictionary:
 		return ["Document must be an object"]
-	if document.get("format") != "room-tree" or document.get("version") != 1:
-		return ["Expected room-tree format version 1; unsupported or missing version"]
+	if document.get("format") != "room-tree" or (document.get("version") != 1 and document.get("version") != 2):
+		return ["Expected room-tree format version 1 or 2; unsupported or missing version"]
 	if not _id(document.get("id")) or not document.get("name") is String:
 		errors.append("Project needs a stable id and name")
 	var rooms := _index(document.get("rooms"), "rooms", errors)
 	for id in rooms:
-		_validate_room(rooms[id], errors)
+		_validate_room(rooms[id], errors, document.version == 1)
 	if not document.get("dungeon") is Dictionary:
 		errors.append("dungeon must be an object")
 		return errors
@@ -101,6 +126,16 @@ func validate(document: Variant) -> Array[String]:
 			errors.append("Link %s needs two distinct existing nodes" % id)
 			continue
 		for end in ["a", "b"]:
+			if document.version == 2:
+				if link.has(end + "_door"):
+					var door: Variant = link[end + "_door"]
+					if not door is Dictionary or door.get("wall") not in DOORS.SIDES or not _finite_number(door.get("offset")):
+						errors.append("Link %s %s_door needs wall and numeric offset" % [id, end])
+					elif door.offset < 0 or door.offset > 1:
+						errors.append("Link %s door offset must be between 0 and 1" % id)
+					elif door.has("legacy_position") and (not _point(door.legacy_position) or DOORS.side_at(Vector2(door.legacy_position[0], door.legacy_position[1])) != door.wall):
+						errors.append("Link %s has invalid legacy arrival" % id)
+				continue
 			var room: Dictionary = rooms.get(nodes[link[end]].get("template"), {})
 			var port: Variant = link.get(end + "_port")
 			if not port is String or not _has_id(room.get("ports", []), port):
@@ -138,13 +173,13 @@ func validate(document: Variant) -> Array[String]:
 				break
 	return errors
 
-func _validate_room(room: Dictionary, errors: Array[String]) -> void:
+func _validate_room(room: Dictionary, errors: Array[String], legacy: bool = true) -> void:
 	var label: String = room.get("id", "room")
 	if not room.get("name") is String or not _positive_size(room.get("size")):
 		errors.append("Room %s needs name and positive size" % label)
 	if room.has("spawn") and not _point(room.spawn):
 		errors.append("Room %s spawn must be a numeric point" % label)
-	var ports := _index(room.get("ports"), label + " ports", errors)
+	var ports := _index(room.get("ports", [] if not legacy else null), label + " ports", errors)
 	var objects := _index(room.get("objects"), label + " objects", errors)
 	for port in ports.values():
 		if not _point(port.get("position")):
@@ -206,6 +241,9 @@ func _id(value: Variant) -> bool:
 
 func _integer(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(value) and value >= 0 and floor(value) == value
+
+func _finite_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(value)
 
 func _point(value: Variant) -> bool:
 	return value is Array and value.size() == 2 and (value[0] is float or value[0] is int) and (value[1] is float or value[1] is int) and is_finite(value[0]) and is_finite(value[1])

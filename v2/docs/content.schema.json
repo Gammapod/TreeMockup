@@ -1,17 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:room-tree:content:1",
-  "title": "Room Tree Content Bundle v1",
+  "$id": "urn:room-tree:content:2",
+  "title": "Room Tree Content Bundle v1/v2",
   "type": "object",
   "required": ["format", "version", "id", "name", "rooms", "dungeon"],
   "properties": {
     "format": {"const": "room-tree"},
-    "version": {"const": 1},
+    "version": {"enum": [1, 2]},
     "id": {"$ref": "#/$defs/id"},
     "name": {"type": "string"},
     "rooms": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/room"}},
     "dungeon": {"$ref": "#/$defs/dungeon"}
   },
+  "allOf": [{
+    "if": {"properties": {"version": {"const": 1}}},
+    "then": {"properties": {
+      "rooms": {"items": {"required": ["ports"]}},
+      "dungeon": {"properties": {"links": {"items": {"required": ["a_port", "b_port"]}}}}
+    }}
+  }],
   "$defs": {
     "id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
     "point": {
@@ -24,7 +31,7 @@
     },
     "ids": {"type": "array", "items": {"$ref": "#/$defs/id"}},
     "room": {
-      "type": "object", "required": ["id", "name", "size", "ports", "objects"],
+      "type": "object", "required": ["id", "name", "size", "objects"],
       "properties": {
         "id": {"$ref": "#/$defs/id"}, "name": {"type": "string"},
         "size": {"$ref": "#/$defs/size"},
@@ -80,11 +87,20 @@
         "exclusive_group": {"type": "string"}, "modifiers": {"type": "object"}
       }
     },
+    "door": {
+      "type": "object", "required": ["wall", "offset"],
+      "properties": {
+        "wall": {"enum": ["north", "south", "west", "east"]},
+        "offset": {"type": "number", "minimum": 0, "maximum": 1},
+        "legacy_position": {"$ref": "#/$defs/point"}
+      }
+    },
     "link": {
-      "type": "object", "required": ["id", "a", "b", "a_port", "b_port", "activate_from"],
+      "type": "object", "required": ["id", "a", "b", "activate_from"],
       "properties": {
         "id": {"$ref": "#/$defs/id"}, "a": {"$ref": "#/$defs/id"}, "b": {"$ref": "#/$defs/id"},
         "a_port": {"$ref": "#/$defs/id"}, "b_port": {"$ref": "#/$defs/id"},
+        "a_door": {"$ref": "#/$defs/door"}, "b_door": {"$ref": "#/$defs/door"},
         "activate_from": {"$ref": "#/$defs/ids"}
       }
     },

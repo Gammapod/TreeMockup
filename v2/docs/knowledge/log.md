@@ -1,5 +1,30 @@
 # V2 Knowledge Update Log
 
+## 2026-11-16
+* **Instance doors accepted**: V2 tree links own door placements; a shared
+  resolver keeps editor preview and runtime geometry aligned. Manual overrides,
+  reset and legacy arrival preservation are captured by A2. Editor UX is now
+  the active focus; [canvas/history exploration](../editor-exploration.md)
+  precedes contextual panels and the larger dungeon design.
+* **Canvas authoring accepted; node panel completed**: persistent selection,
+  direct manipulation, camera controls and bounded source history form the
+  editor foundation. The tree node panel now exposes typed grants/modifiers,
+  template navigation/copy and instance summaries without replacing portable
+  JSON as the advanced surface; room-object controls were completed in EDITOR-01.
+* **Room contextual panel completed**: selected objects now receive typed,
+  kind-specific controls and direct rectangle resize gestures, while template
+  clear rules remain shared with the existing dialog. Fixed playable dimensions,
+  per-enemy damage and flags remain deliberately deferred.
+* **EDITOR-01 accepted**: automatic/manual instance doors, canvas/history,
+  node/room contextual panels and filtered switch-to-wall bindings are the
+  accepted authoring baseline. The [closeout](../archive/editor-01-closeout.md)
+  records the retained ownership seams and deferred scope.
+* **BOSS-01 accepted**: Closed the Roost Guardian as the capstone baseline.
+  [Architectural review](../archive/boss-01-closeout.md) records ownership,
+  lifecycle and fixture-specific geometry constraints; tuning/polish remains
+  follow-up work. README, experiment record and backlog now point to
+  interconnected 14–18-node dungeon design as the next session's target.
+
 ## 2026-11-15
 * **BOSS-01 ready for evaluation**: Added the room-local guardian behavior and
   free Boss Trial. Content/architecture document transient summons and

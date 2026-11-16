@@ -54,7 +54,9 @@ func _enter_room(destination: String, entry: String, hp: int) -> void:
 	room = ROOM.new()
 	shell.room_viewport.add_child(room)
 	var collected: Dictionary = {}
-	var template: Dictionary = data.templates[data.nodes[current].template]
+	var template: Dictionary = data.templates[data.nodes[current].template].duplicate()
+	if data.nodes[current].has("ports"):
+		template.ports = data.nodes[current].ports
 	for pickup in template.pickups:
 		if progression.collected.has(current + "/" + pickup.id):
 			collected[pickup.id] = true

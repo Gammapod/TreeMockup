@@ -14,6 +14,14 @@ sources:
 
 # Boundary
 
+**Accepted door-authoring baseline:** authoring now upgrades opened
+bundles to version 2 in memory. See [editor exploration](../editor-exploration.md).
+The version-1 contract below remains the legacy loading/runtime path.
+V2 links own optional `a_door` / `b_door` placements (`wall`, normalized
+`offset`); omission means automatic. Template ports and link port references
+are inert legacy metadata in V2. New template exports use version 2; both
+versions import. The shared schema describes both versions.
+
 A bundle is UTF-8 JSON with `format: "room-tree"` and `version: 1`. It is
 portable source content, never a Godot resource, executable code, scene path,
 or run save. Stable IDs—not labels or array positions—are references.

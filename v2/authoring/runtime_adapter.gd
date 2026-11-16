@@ -2,6 +2,7 @@ extends RefCounted
 
 const STORE = preload("res://authoring/content_store.gd")
 const PROGRESSION = preload("res://progression.gd")
+const DOORS = preload("res://authoring/door_layout.gd")
 
 func compile(document: Dictionary) -> Dictionary:
 	var errors: Array[String] = STORE.new().validate(document)
@@ -26,7 +27,7 @@ func compile(document: Dictionary) -> Dictionary:
 			for effect in room.clear.get("effects", []):
 				if effect.kind not in ["reveal_pickup", "prevent_enemy_respawn", "become_root"]:
 					errors.append("Unsupported clear effect: " + effect.kind)
-		for port in room.ports:
+		for port in room.get("ports", []) if document.version == 1 else []:
 			template.ports[port.id] = _vector(port.position)
 		for object in room.objects:
 			var position := _vector(object.position)
@@ -87,6 +88,16 @@ func compile(document: Dictionary) -> Dictionary:
 			elif modifier.ends_with("_multiplier") and node.modifiers[modifier] <= 0:
 				errors.append("Multiplier must be positive: " + modifier)
 		data.nodes[node.id] = result
+	if document.version == 2:
+		var layout := DOORS.resolve(document)
+		errors.append_array(layout.errors)
+		for id in layout.nodes:
+			data.nodes[id].ports = {}
+			for door in layout.nodes[id]:
+				data.nodes[id].ports[door.id] = door.position
+		for link in data.links:
+			link.a_port = link.id + "_a"
+			link.b_port = link.id + "_b"
 	# Compatibility for pre-clear V1 bundles: translate the old implicit start
 	# root into the same effect used by authored rooms, isolated from reused templates.
 	var start_template: Dictionary = data.templates[data.nodes[data.root].template]

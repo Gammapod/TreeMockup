@@ -44,6 +44,10 @@ Flippers remain binary. See [BUILD-01](docs/knowledge/experiments.md#build-01--s
 
 ### BOSS-01: Roost Guardian trial
 
+**Completed and accepted as the dungeon capstone baseline.** Encounter tuning
+and presentation polish remain follow-up work. See the
+[architectural closeout](docs/archive/boss-01-closeout.md).
+
 From Workshop, activate **Boss Trial** (zero points) and enter its north doorway
 between Durable Trial and Phase Dash. The boss is damageable throughout:
 
@@ -62,8 +66,8 @@ and clears the trial. These are initial encounter tuning values.
 **Restart trial (keep build)** resets boss HP, position, cycle, summons and
 clear state, restores full build health, and returns you to Workshop. Normal
 retreat/root travel follows existing room persistence rules and does not heal.
-Try different allocations after observing the cycle; BOSS-01 awaits player
-evaluation. The workshop now has 29 nodes, still separate from the planned dungeon.
+Try different allocations after observing the cycle. The workshop has 29 nodes;
+the next design target is a separate, interconnected 14–18-node dungeon.
 
 ### Controls and original branching scenario
 
@@ -90,10 +94,45 @@ Press **F2** to open the content editors. The current run pauses while editing.
 
 ## Content editors
 
-1. **Room editor:** select a template, choose an object brush, then click to place. Drag objects to move them. The JSON inspector edits names, ports, object IDs, geometry, enemy stats, pickup values and other properties. Remove entries in the inspector to delete them.
+**Editor UX experiment:** tree links now own instance doors. Select a tree node
+and choose **Instance doors…** to preview/drag its doors, set a wall and position,
+or **Reset to automatic**. New links need only two node IDs. Existing files
+upgrade to V2 in memory with their door positions preserved as manual overrides;
+saving writes V2. See [exploration status and next slices](docs/editor-exploration.md).
+
+**Canvas/history slice:** click to select; Alt-click cycles overlaps. Choose
+**Select** to drag objects, or another brush to place over existing terrain.
+Wheel zooms, right/middle-drag pans, **F** fits, and **Escape** deselects.
+**Ctrl+D** duplicates; **Delete** removes; **Ctrl+Z / Ctrl+Shift+Z** undo/redo.
+Each drag is one undo step. Drag the canvas/JSON divider to adjust their space.
+Referenced elements explain what must be repaired before deletion.
+
+**Tree contextual panel:** selecting a node opens **Properties**: name, cost,
+multiple ability grants, supported modifiers, and room-template assignment.
+**Edit template** navigates to the reusable source; **Duplicate & assign**
+isolates the current room instance. The panel previews instance doors, including
+manual dragging and the full reset selector, and summarizes dimensions, clear
+rules/effects and capacity rewards. Unsupported experimental grants/modifiers
+remain in JSON rather than being discarded.
+
+**Room contextual panel:** selecting an object exposes its ID and local position,
+rectangle dimensions, supported enemy HP/speed/radius, or collectible kind/value
+as appropriate. White rectangle handles support edge/corner resizing. With no
+object selected, **Properties** exposes the template name, instance usage, fixed
+playtest dimensions, and the existing clear-rules dialog. Per-enemy damage and
+playable room resizing remain deferred.
+
+**Switch bindings:** **Bindings…** creates/removes the supported persistent
+`switch.toggled → wall.set_open` interaction using node-instance and object
+pickers. Selected switches/walls and tree nodes show their inbound/outbound
+bindings. Templates not used by any tree node cannot be bound yet.
+
+1. **Room editor:** select a template, choose an object brush, then click to place. Choose **Select** and drag objects to move them; drag white rectangle handles to resize. Selected-object **Properties** edits IDs, geometry, supported enemy stats and pickup values. With no object selected it edits template metadata and opens clear rules. JSON retains advanced/experimental properties. Select an object and press **Delete** to remove it.
    Use **Clear rules…** to combine enemy, switch and token conditions, reveal authored pickups/chests, prevent enemy respawns, or grant permanent root status. All selected conditions are required. With none selected, the room starts cleared and its effects apply immediately. Use the `token` brush to place room-local tokens.
    The same dialog has **Disable tree editing while inside this uncleared room** (off by default).
-2. **Tree editor:** add nodes using the selected room template, drag their map positions, and use **+ Link** to connect named ports. Edit activation costs, prerequisites, abilities, modifiers, exclusive groups and cross-room bindings in the tree JSON inspector. Solid lines show travel; dashed gold lines show prerequisites.
+2. **Tree editor:** add nodes using the selected room template, drag their map positions, and use **+ Link** to connect nodes with automatic doors. Selected-node **Properties** edits names, costs, ability grants, supported modifiers and template assignment; JSON retains prerequisites, exclusive groups and cross-room bindings. Solid lines show travel; dashed gold lines show prerequisites.
+   Use **Bindings…** to connect an instantiated switch to an instantiated wall;
+   the same picker is available from selected switches/walls.
 3. **Apply JSON edits** validates changes. Selection changes, saves and playtests also apply pending inspector edits; invalid edits remain available for correction.
 4. **Save / Save as** writes one portable content bundle; **Open** restores it. **Import/Export room** shares individual templates between bundles. Imports reject duplicate template IDs; change the exported ID before importing a second copy.
 5. **Playtest** starts a fresh run from the editor's current document, without requiring a save. **F2** returns to your retained editor document; **Resume run** continues the current run.
@@ -142,9 +181,9 @@ These use V2's room-activation rules. Health is configurable per scenario; the o
 - `roost_guardian.gd`: loaded-room boss cycle, tethered movement, wave collision and telegraphs; room owns health, summons and clear events.
 - `player.gd`: physics motor, dash, timed directional attack and damage cooldown. Attack parameters are captured at action start.
 
-The room editor authors reusable templates with stable object IDs and named ports. The tree editor authors instances and cross-room bindings. Bindings use `(node_id, object_id, event/action)` addresses resolved by the run coordinator, including when the target scene is unloaded. Shared template instances have independent pickups, enemies and switch/wall states.
+The room editor authors reusable templates with stable object IDs. The tree editor authors instances, link-owned doors and cross-room bindings. Bindings use `(node_id, object_id, event/action)` addresses resolved by the run coordinator, including when the target scene is unloaded. Shared template instances have independent pickups, enemies and switch/wall states.
 
-Map coordinates are advisory and distinct from room-local geometry. No spatial packing constraint is enforced. The authoring validator checks IDs, template/object references, prerequisite cycles and port conflicts. Runtime room geometry is currently 800×600; other sizes are preserved in content but rejected for playtest.
+Map coordinates determine automatic door directions in V2, while manual overrides remain fixed. Room geometry stays local; no spatial packing constraint is enforced. Validation checks IDs, template/object references, prerequisite cycles, endpoint overrides and automatic doorway capacity. Legacy V1 bundles retain port-conflict validation. Runtime room geometry is currently 800×600; other sizes are preserved in content but rejected for playtest.
 
 ### Explicit prototype policies
 
@@ -160,6 +199,11 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/run_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/content_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/editor_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/editor_canvas_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/node_panel_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/room_panel_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/binding_editor_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/door_layout_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/branching_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/build_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/arena_tests.gd
@@ -178,4 +222,4 @@ Run from the repository root (use `--path .` if already in `v2`). Tests cover al
 
 ## Experiment roadmap
 
-See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 is complete and accepted. BOSS-01 is ready for evaluation; the 14–18-node dungeon follows boss feedback.
+See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 and BOSS-01 are complete and accepted. Current work is the [editor UX exploration](docs/editor-exploration.md); the interconnected 14–18-node dungeon remains the next gameplay design target.

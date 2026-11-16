@@ -4,11 +4,12 @@ title: V2 gameplay experiments
 description: Accepted gameplay baselines and the minimal record for future experiments.
 tags: [v2, design, experiments, level-design]
 status: stable
-generated: { by: "openai/gpt-6-astra", at: 2026-11-15T00:00:00Z }
+generated: { by: "openai/gpt-6-astra", at: 2026-11-16T00:00:00Z }
 sources:
   - { resource: ../backlog.md, title: Experiment candidates }
   - { resource: content.md, title: Ability vocabulary and tuning }
   - { resource: ../archive/build-01-closeout.md, title: BUILD-01 review and closeout }
+  - { resource: ../archive/boss-01-closeout.md, title: BOSS-01 review and closeout }
 ---
 
 # Current baseline
@@ -20,10 +21,11 @@ sources:
 | Clear conditions/effects | `examples/cleared_rooms.json` | Kept; clearing, roots, editing locks and root travel accepted. |
 | Branching build choices | `examples/branching.json` | Regression fixture for allocation, prerequisites, exclusivity and merges. |
 | Stackable ability tradeoffs (BUILD-01) | `examples/build_arena.json` | Completed; user accepted the expanded workshop as a baseline. |
+| Roost Guardian capstone (BOSS-01) | Boss Trial in `examples/build_arena.json` | Completed; accepted for larger-dungeon design, tuning/polish deferred. |
 
-**Current experiment:** BOSS-01 adds a Roost Guardian trial to the accepted
-workshop and is ready for evaluation. The planned 14–18-node dungeon follows
-boss feedback.
+**Next design target:** the interconnected 14–18-node dungeon, using the
+accepted abilities and boss capstone. Concrete layout and implementation scope
+remain to be designed.
 Other candidates, including EDIT-01, live in the [backlog](../backlog.md).
 
 # Recording an experiment
@@ -65,10 +67,10 @@ tables here.
 * **Next**: define the smallest boss encounter that makes multiple builds and movement choices relevant.
 
 ## BOSS-01 — tethered Roost Guardian (2026-11-15)
-* **Status**: ready to playtest; implementation and automated checks complete.
+* **Status**: completed (accepted capstone baseline, 2026-11-16).
 * **Question**: Does a readable boss cycle prompt useful changes between the accepted sword/movement builds?
-* **Slice**: Add a free Boss Trial to the build workshop. A 120-HP, always-vulnerable boss makes short 60-unit/second advances inside a 60-unit spawn tether: pressure (3s), locked gap telegraph (1.5s), expanding shockwave, contact-safe recovery (1.5s). The 20-unit ring travels at 180 units/second with a fixed 90° gap. Wave duration must cover the arena before recovery. Every second pressure cycle warns, then replenishes summoned 4-HP bats up to a cap of three.
-* **Rules**: Ordinary walking can reach the gap. Phase Dash protects from contact, not shockwaves; a wave deals at most one HP. Boss death removes summons and clears the trial. Existing trial restart retains the build and resets the encounter.
-* **Trace**: `tests/boss_tests.gd` covers enemy vocabulary, cycle/tether, wave geometry, immunity, summons, death and retry; `tests/arena_tests.gd` extends free-access checks to the boss. The initial test failed on the missing Boss Trial before implementation. Walking escape paths are sampled across the arena including corners and tether offsets; all 15 headless suites pass. Rendered checks cover telegraph, wave, recovery and summon warnings.
-* **Observation**: Pending player evaluation.
-* **Next**: Evaluate whether multiple builds are viable and whether players voluntarily reallocate.
+* **Slice**: Free Boss Trial adds a tethered, always-vulnerable guardian with pressure, locked shockwave telegraph, gapped wave, contact-safe recovery and capped bat summons. The workshop now has 29 nodes; build-preserving trial restart also resets this encounter.
+* **Observation**: The user accepted the fight as a good capstone to design the larger dungeon around, while explicitly leaving tweaking/polish for later. Final balance and dungeon-induced respec decisions remain to be evaluated.
+* **Decision**: keep the encounter and ownership boundaries. [Content contract](content.md#boss-01-enemy-behavior) owns the preset's scope; [README](../../README.md#boss-01-roost-guardian-trial) owns current timings/play instructions; E1/E2 in [invariants](invariants.md) link to the tests.
+* **Review**: [Architectural closeout](../archive/boss-01-closeout.md). No blocking findings for the current fixture; geometry assumptions and future extraction points are recorded there.
+* **Next**: design the 14–18-node dungeon around this capstone.

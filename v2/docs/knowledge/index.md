@@ -18,7 +18,10 @@ implementation detail.
 * [UI contract](ui.md) - Map/shell behavior and presentation boundaries.
 * [Branching scenario](branching-scenario.md) - Default regression scenario and design mapping.
 * [BUILD-01 workshop](../../README.md#build-01-stackable-ability-arena) - Accepted stackable-build arena and play instructions.
+* [BOSS-01 capstone](../../README.md#boss-01-roost-guardian-trial) - Accepted encounter to design the larger dungeon around; tuning/polish remains open.
 * [Experiment record](experiments.md) - Current baselines, open questions, and the only log format for new gameplay experiments.
+* [EDITOR-01 authoring baseline](../archive/editor-01-closeout.md) - Accepted
+  direct-manipulation/editor-panel baseline and deferred authoring scope.
 
 ## Recording policy
 
