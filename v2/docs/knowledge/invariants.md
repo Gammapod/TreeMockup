@@ -34,6 +34,82 @@ sources:
 | B5 | The BUILD-01 arena offers six four-deep sequential upgrade chains, an eight-point budget and free encounter access; explicit trial restart restores encounters/full build HP at the root while retaining deep allocations. | `tests/arena_tests.gd` |
 | E1 | Roost Guardian stays within its spawn tether and follows pressure → locked telegraph → expanding gapped wave → contact-safe recovery; waves sweep player motion, deal at most one hit, and bypass contact-only Phase immunity. | `tests/boss_tests.gd` |
 | E2 | Guardian summons are warned and capped at three; boss death removes its transient summons/wave and completes its authored enemy objective. Fresh trial resets boss state while retaining the build. | `tests/boss_tests.gd` |
+| Q1 | A suite passes only after process termination, zero exit, exactly one valid completion record with assertions and no failures, and no unexpected engine errors. Missing/malformed completion cannot pass. | `tests/test_runner_test.py` |
+| Q2 | Full runs account for every V2 `*_tests.gd` script. Selectors are validated, overlapping selections run once, and timeouts terminate the suite process tree. | `tests/test_runner_test.py` |
+| Q3 | Failures do not stop other selected suites; reports retain per-suite evidence and accurate totals. Failed, incomplete, interrupted, or invalid runs return nonzero. | `tests/test_runner_test.py` |
+
+# Running the contract suites
+
+Requires Python 3.10+ (standard library only) and Godot 4.6. Commands below run
+from the repository root; the runner resolves the Godot project independently of
+the working directory.
+
+```powershell
+# Complete V2 regression run (20 suites).
+python v2/tests/run_suites.py --godot C:\Godot\Godot.exe
+
+# Inventory and focused selections.
+python v2/tests/run_suites.py --list
+python v2/tests/run_suites.py --godot C:\Godot\Godot.exe --area editor
+python v2/tests/run_suites.py --godot C:\Godot\Godot.exe --invariant A3
+python v2/tests/run_suites.py --godot C:\Godot\Godot.exe --suite node_panel
+
+# Runner's own protocol/process/report regression checks; no Godot needed.
+python -m unittest discover -s v2/tests -p test_runner_test.py
+```
+
+`--godot` defaults to the `GODOT` environment variable, then `godot` on PATH.
+`--timeout 60` is the default per-suite limit in seconds; it must be positive.
+The runner executes isolated headless processes sequentially and waits for each.
+Timeouts terminate the process tree. Ctrl+C terminates the active suite and
+reports the unfinished selection as `not_run`.
+
+Repeat or combine `--suite`, `--area`, and `--invariant` to select their **union**,
+deduplicated in manifest order. Omit selectors to run all suites. Areas are
+`progression`, `lifecycle`, `content`, `editor`, `presentation`, and `combat`.
+Tags describe the contracts exercised, not exhaustive coverage or proof that
+every assertion maps individually to that invariant.
+
+## Evidence and failure semantics
+
+Each run writes a unique, ignored `v2/test-results/<UTC timestamp>/` directory.
+Use `--output <directory>` for a fixed destination (files in that destination
+are overwritten). It contains:
+
+- `report.json`, schema version 1: start time, duration, Godot version,
+  configuration/selection, overall status, errors, status totals, and suite results.
+- `<suite>/stdout.log` and `stderr.log`: complete captured output.
+- Suite results: identity, script, area, invariant IDs, status, duration,
+  exit code, total/passed/failed assertions, failure messages, execution errors,
+  and absolute log paths. Unexecuted suites retain identity and `not_run` status;
+  assertion counts are unavailable when the completion protocol fails.
+
+Console output gives one result line per suite, totals, and the report path.
+Statuses distinguish `passed`, `failed` (assertions), `error` (execution/protocol),
+`timeout`, and `not_run`. Unexpected engine diagnostics take precedence over
+assertion failures. A zero exit or engine banner alone is insufficient.
+Run-level configuration errors are reported as `error`. Exit zero means every
+selected suite passed; `--list` is inventory-only and also exits zero on success.
+
+## Maintaining the test boundary
+
+`tests/suites.json` owns the inventory and the area/invariant selection labels;
+the contracts above remain the behavioral specification. Add a manifest entry
+when adding a `tests/*_tests.gd` file. Missing, duplicate, and stale entries fail
+validation before execution, including for focused runs.
+
+Godot suites extend `tests/suite_reporter.gd`, increment `assertion_count` in
+their assertion helper, accumulate failure messages, and call `_complete(code)`
+only after all asynchronous checks and cleanup finish. This emits one
+`V2_TEST_RESULT` JSON record. Assertion failures use `printerr`, leaving engine
+`ERROR:` and `SCRIPT ERROR:` diagnostics distinguishable from assertion failures.
+Keep direct Godot invocation available for debugging, but use this runner's
+report as evidence for regression completion.
+
+For a negative-path test that intentionally triggers an engine error, list its
+**exact diagnostic line** in that suite's optional `expected_diagnostics` array.
+Matching is occurrence-counted: extra or absent expected lines fail the suite.
+Do not suppress broad patterns or add exceptions merely to make a run green.
 
 # Change rule
 

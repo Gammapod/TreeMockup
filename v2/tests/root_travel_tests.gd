@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 const MODEL = preload("res://progression.gd")
 const STORE = preload("res://authoring/content_store.gd")
@@ -56,11 +56,11 @@ func _run() -> void:
 	_expect(not STORE.new().validate(doc).is_empty(), "EDIT2: editing policy requires a boolean")
 	if failures.is_empty():
 		print("All root travel and editing permission contracts passed.")
-		quit(0)
+		_complete(0)
 	else:
 		for failure in failures:
-			push_error(failure)
-		quit(1)
+			printerr("ASSERTION FAILED: " + failure)
+		_complete(1)
 
 func _integration() -> void:
 	var game = load("res://main.tscn").instantiate()
@@ -116,5 +116,6 @@ func _integration() -> void:
 	await process_frame
 
 func _expect(value: bool, message: String) -> void:
+	assertion_count += 1
 	if not value:
 		failures.append(message)

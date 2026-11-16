@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 const STORE = preload("res://authoring/content_store.gd")
 const LAYOUT = preload("res://authoring/door_layout.gd")
@@ -107,9 +107,10 @@ func _run() -> void:
 		print("All instance door tests passed.")
 	else:
 		for failure in failures:
-			push_error(failure)
-	quit(0 if failures.is_empty() else 1)
+			printerr("ASSERTION FAILED: " + failure)
+	_complete(0 if failures.is_empty() else 1)
 
 func _expect(condition: bool, message: String) -> void:
+	assertion_count += 1
 	if not condition:
 		failures.append(message)

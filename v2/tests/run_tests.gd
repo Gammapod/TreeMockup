@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 const CONTENT = preload("res://tests/fixtures/activation_fixture.gd")
 const MODEL = preload("res://progression.gd")
@@ -82,12 +82,13 @@ func _run() -> void:
 	await process_frame
 	if failures.is_empty():
 		print("All V2 progression and room integration tests passed.")
-		quit(0)
+		_complete(0)
 	else:
 		for failure in failures:
-			push_error(failure)
-		quit(1)
+			printerr("ASSERTION FAILED: " + failure)
+		_complete(1)
 
 func _expect(condition: bool, description: String) -> void:
+	assertion_count += 1
 	if not condition:
 		failures.append(description)

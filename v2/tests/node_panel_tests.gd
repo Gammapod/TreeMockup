@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 var failures: Array[String] = []
 var editor
@@ -110,10 +110,10 @@ func _run() -> void:
 	_expect(not editor.document.dungeon.links[0].has("a_door") and panel.canvas.instance_doors[0].automatic, "Undo restores automatic placement in preview")
 	# Pending invalid JSON cannot be overwritten by the form or hidden by tab changes.
 	var before_invalid: Dictionary = editor.document.duplicate(true)
-	editor.inspector_tabs.current_tab = 1
+	editor.inspector_tabs.current_tab = 2
 	editor.inspector.text = "{invalid"
 	editor.inspector_tabs.current_tab = 0
-	_expect(editor.inspector_tabs.current_tab == 1 and editor.inspector.text == "{invalid", "Invalid JSON keeps its source tab and text")
+	_expect(editor.inspector_tabs.current_tab == 2 and editor.inspector.text == "{invalid", "Invalid JSON keeps its source tab and text")
 	editor._edit_node_field("one", "cost", 7)
 	_expect(editor.document == before_invalid and editor.inspector.text == "{invalid", "Invalid pending source blocks property edits")
 	editor._refresh()
@@ -140,8 +140,8 @@ func _run() -> void:
 		print("All node contextual panel tests passed.")
 	else:
 		for failure in failures:
-			push_error(failure)
-	quit(0 if failures.is_empty() else 1)
+			printerr("ASSERTION FAILED: " + failure)
+	_complete(0 if failures.is_empty() else 1)
 
 func _node(id: String) -> Dictionary:
 	for node in editor.document.dungeon.nodes:
@@ -150,5 +150,6 @@ func _node(id: String) -> Dictionary:
 	return {}
 
 func _expect(condition: bool, message: String) -> void:
+	assertion_count += 1
 	if not condition:
 		failures.append(message)

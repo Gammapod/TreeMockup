@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 # B1: Mermaid topology/content and a funded route to Prize.
 # B2: ongoing ANY/ALL requirements, exclusive styles, and refunds.
@@ -104,12 +104,13 @@ func _run() -> void:
 	_finish()
 
 func _expect(condition: bool, message: String) -> void:
+	assertion_count += 1
 	if not condition: failures.append(message)
 
 func _finish() -> void:
 	if failures.is_empty():
 		print("All branching design tests passed.")
-		quit(0)
+		_complete(0)
 	else:
-		for failure in failures: push_error(failure)
-		quit(1)
+		for failure in failures: printerr("ASSERTION FAILED: " + failure)
+		_complete(1)

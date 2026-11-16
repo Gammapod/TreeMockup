@@ -195,6 +195,16 @@ Map coordinates determine automatic door directions in V2, while manual override
 
 ## Verification
 
+Use the structured runner for authoritative full-suite results:
+
+```powershell
+python v2/tests/run_suites.py --godot C:\Godot\Godot.exe
+```
+
+See [runner instructions and verification contracts](docs/knowledge/invariants.md#running-the-contract-suites)
+for area/invariant selection, timeouts, JSON reports, and runner self-tests.
+The individual commands below remain useful for debugging.
+
 ```powershell
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/run_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/content_tests.gd

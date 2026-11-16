@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 # BUILD-01: multiplicative, reversible tradeoffs; captured actions; HP never heals.
 # A1: new modifiers compile and invalid multipliers are rejected.
@@ -133,14 +133,15 @@ func _dash_distance(caps: Dictionary) -> void:
 	await process_frame
 
 func _expect(condition: bool, message: String) -> void:
+	assertion_count += 1
 	if not condition:
 		failures.append(message)
 
 func _finish() -> void:
 	if failures.is_empty():
 		print("All BUILD-01 ability tests passed.")
-		quit(0)
+		_complete(0)
 	else:
 		for failure in failures:
-			push_error(failure)
-		quit(1)
+			printerr("ASSERTION FAILED: " + failure)
+		_complete(1)

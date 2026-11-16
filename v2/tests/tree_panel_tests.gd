@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 # UI-BOUNDARY: panel consumes snapshots and emits intent without mutating run state.
 var failures: Array[String] = []
@@ -9,7 +9,7 @@ func _init() -> void:
 func _run() -> void:
 	if not FileAccess.file_exists("res://gameplay_tree.gd"):
 		push_error("UI-BOUNDARY: standalone snapshot-driven tree panel is missing")
-		quit(1)
+		_complete(1)
 		return
 	var panel = load("res://gameplay_tree.gd").new()
 	root.add_child(panel)
@@ -36,12 +36,13 @@ func _run() -> void:
 	await process_frame
 	if failures.is_empty():
 		print("All tree panel boundary tests passed.")
-		quit(0)
+		_complete(0)
 	else:
 		for failure in failures:
-			push_error(failure)
-		quit(1)
+			printerr("ASSERTION FAILED: " + failure)
+		_complete(1)
 
 func _expect(condition: bool, message: String) -> void:
+	assertion_count += 1
 	if not condition:
 		failures.append(message)

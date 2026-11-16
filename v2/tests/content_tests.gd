@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/suite_reporter.gd"
 
 var failures: Array[String] = []
 
@@ -9,7 +9,7 @@ func _run() -> void:
 	var script = load("res://authoring/content_store.gd")
 	if script == null:
 		push_error("C1-C6: portable content store is not implemented")
-		quit(1)
+		_complete(1)
 		return
 	var store = script.new()
 	var doc: Dictionary = store.new_project()
@@ -104,12 +104,13 @@ func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	if failures.is_empty():
 		print("All portable content contract tests passed.")
-		quit(0)
+		_complete(0)
 	else:
 		for failure in failures:
-			push_error(failure)
-		quit(1)
+			printerr("ASSERTION FAILED: " + failure)
+		_complete(1)
 
 func _expect(condition: bool, message: String) -> void:
+	assertion_count += 1
 	if not condition:
 		failures.append(message)
