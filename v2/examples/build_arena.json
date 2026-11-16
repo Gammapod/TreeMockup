@@ -15,8 +15,9 @@
         {"id": "quick_step_a", "position": [735, 440]},
         {"id": "hp_a", "position": [550, 555]},
         {"id": "phase", "position": [650, 85]},
-        {"id": "crowd", "position": [180, 85]},
-        {"id": "durable", "position": [400, 85]}
+        {"id": "crowd", "position": [140, 85]},
+        {"id": "durable", "position": [300, 85]},
+        {"id": "boss", "position": [460, 85]}
       ],
       "objects": []
     },
@@ -43,6 +44,14 @@
       "clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": []},
       "objects": [
         {"id": "large_bat", "kind": "enemy", "position": [400, 240], "properties": {"hp": 24, "speed": 90, "radius": 28}}
+      ]
+    },
+    {
+      "id": "boss_trial", "name": "Roost Guardian", "size": [800, 600], "spawn": [400, 520],
+      "ports": [{"id": "south", "position": [400, 555]}],
+      "clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": []},
+      "objects": [
+        {"id": "guardian", "kind": "enemy", "position": [400, 320], "properties": {"behavior": "roost_guardian", "hp": 120, "speed": 60, "radius": 38}}
       ]
     }
   ],
@@ -74,9 +83,10 @@
       {"id": "hp_b", "name": "Max HP 2", "template": "upgrade", "cost": 1, "requires_all": ["hp_a"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [320, 480]},
       {"id": "hp_c", "name": "Max HP 3", "template": "upgrade", "cost": 1, "requires_all": ["hp_b"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [480, 720]},
       {"id": "hp_d", "name": "Max HP 4", "template": "upgrade", "cost": 1, "requires_all": ["hp_c"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [640, 960]},
-      {"id": "phase", "name": "Phase Dash", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"dash_style": "phase"}, "map_position": [240, -260]},
-      {"id": "crowd", "name": "Crowd Trial", "template": "crowd_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [-240, -260]},
-      {"id": "durable", "name": "Durable Trial", "template": "durable_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [0, -260]}
+      {"id": "phase", "name": "Phase Dash", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"dash_style": "phase"}, "map_position": [360, -260]},
+      {"id": "crowd", "name": "Crowd Trial", "template": "crowd_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [-360, -260]},
+      {"id": "durable", "name": "Durable Trial", "template": "durable_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [-120, -260]},
+      {"id": "boss", "name": "Boss Trial", "template": "boss_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [120, -260]}
     ],
     "links": [
       {"id": "thrust_a", "a": "start", "b": "thrust_a", "a_port": "thrust_a", "b_port": "east", "activate_from": ["start", "thrust_a"]},
@@ -105,12 +115,14 @@
       {"id": "hp_d", "a": "hp_c", "b": "hp_d", "a_port": "south", "b_port": "north", "activate_from": ["hp_c"]},
       {"id": "phase", "a": "start", "b": "phase", "a_port": "phase", "b_port": "south", "activate_from": ["start", "phase"]},
       {"id": "crowd", "a": "start", "b": "crowd", "a_port": "crowd", "b_port": "south", "activate_from": ["start", "crowd"]},
-      {"id": "durable", "a": "start", "b": "durable", "a_port": "durable", "b_port": "south", "activate_from": ["start", "durable"]}
+      {"id": "durable", "a": "start", "b": "durable", "a_port": "durable", "b_port": "south", "activate_from": ["start", "durable"]},
+      {"id": "boss", "a": "start", "b": "boss", "a_port": "boss", "b_port": "south", "activate_from": ["start", "boss"]}
     ],
     "interactions": []
   },
   "extensions": {
     "experiment": "BUILD-01",
+    "boss_experiment": "BOSS-01",
     "playtest": "Eight points; six four-node chains: Thrust, Sweep, Quick Cut, Long Dash, Quick Step, Max HP. Each node costs one and later nodes require the previous node. Sword and Dash are granted at the Workshop. Phase Dash is a separate one-point choice. Walk down branches to allocate deeper stacks; warp to Workshop to refund whole branches or enter free trials. Restart trial retains all allocations and initializes full health including HP upgrades. Arena base sword: reach 92, arc 1.2 radians, damage 8, interval 0.64 seconds. Four Sweeps reach 348 degrees and four Quick Cuts reach 0.2025 seconds without saturation. Crowd bats have 4 HP; durable bat has 24 HP."
   }
 }

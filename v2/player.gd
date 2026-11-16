@@ -87,8 +87,8 @@ func start_dash() -> bool:
 func movement_speed(sprint_held: bool) -> float:
 	return capabilities.get("move_speed", 220.0) * (2.0 if sprint_held and capabilities.get("sprint", false) else 1.0)
 
-func hurt() -> bool:
-	if invulnerability > 0.0 or (dash_time > 0.0 and dash_phase):
+func hurt(contact: bool = true) -> bool:
+	if invulnerability > 0.0 or (contact and dash_time > 0.0 and dash_phase):
 		return false
 	hp = maxi(0, hp - 1)
 	invulnerability = 0.8

@@ -23,7 +23,7 @@ Phase Dash is a separate one-point node. Activate a branch's first node, walk
 into it, and activate the next; each deeper node requires its predecessor.
 Use **Travel to root** to return to Workshop. Refunding the first node there
 refunds its entire branch; refund a later node from its predecessor to trim it.
-Select a free Crowd Trial or Durable Trial node, activate it, and walk through
+Select a free Crowd Trial, Durable Trial, or Boss Trial node, activate it, and walk through
 its north doorway. Use Fit graph for the full tree, or zoom/pan to inspect a branch.
 **Restart trial (keep build)** resets enemies, clear state, position and HP
 without changing allocations, including deep branches. Fresh trial health
@@ -39,9 +39,31 @@ the durable bat has 24 HP, requiring 3/4/6 hits respectively.
 
 Thrust, Sweep, Quick Cut, Long Dash, Quick Step and Phase Dash are supported
 through the [numeric modifier vocabulary](docs/knowledge/content.md).
-The expanded arena supports focused or mixed builds; the boss follows player
-feedback. HP upgrades raise maximum HP without healing;
+The expanded arena supports focused or mixed builds. HP upgrades raise maximum HP without healing;
 Flippers remain binary. See [BUILD-01](docs/knowledge/experiments.md#build-01--stackable-ability-tradeoffs-2026-11-15).
+
+### BOSS-01: Roost Guardian trial
+
+From Workshop, activate **Boss Trial** (zero points) and enter its north doorway
+between Durable Trial and Phase Dash. The boss is damageable throughout:
+
+1. **Pressure, 3s:** two short advances, never farther than 60 units from spawn.
+2. **Yellow telegraph, 1.5s:** boss stops; green shading and dashed lines mark a
+   fixed 90° safe gap.
+3. **Red shockwave, ~2.9s:** a 20-unit ring expands across the room at 180
+   units/second. Walk into the gap; dash helps reposition but does not skip
+   collision. Phase Dash blocks enemy contact, **not** this wave.
+4. **Teal recovery, 1.5s:** boss stays still with contact damage disabled.
+
+Every second pressure cycle marks bat spawn locations for 0.8s, then replenishes
+up to three 4-HP bats. The boss starts with 120 HP; its defeat removes summons
+and clears the trial. These are initial encounter tuning values.
+
+**Restart trial (keep build)** resets boss HP, position, cycle, summons and
+clear state, restores full build health, and returns you to Workshop. Normal
+retreat/root travel follows existing room persistence rules and does not heal.
+Try different allocations after observing the cycle; BOSS-01 awaits player
+evaluation. The workshop now has 29 nodes, still separate from the planned dungeon.
 
 ### Controls and original branching scenario
 
@@ -83,7 +105,7 @@ The editors intentionally use JSON inspectors for detailed rules rather than pol
 Open `v2/examples/*.json` from the editor:
 
 - `branching.json`: the full Mermaid branching design, including practice rooms, sword/dash/HP choices, two-key ability rooms, alternate landing prerequisites and the shared Prize.
-- `build_arena.json`: BUILD-01 hub, six four-deep upgrade chains, separate Phase Dash, eight-point budget, crowd and durable-target trials.
+- `build_arena.json`: BUILD-01 hub, six four-deep upgrade chains, separate Phase Dash, eight-point budget, crowd/durable trials and the BOSS-01 Roost Guardian.
 - `water_flippers.json`: the old water/flippers topology with an actual water barrier and a prize chest. Activate Flippers from Start to cross the barrier in Water.
 - `switch_wall.json`: the old switch/wall topology, capacity pickups, and a sword-operated switch that changes a wall in another room. Its state persists while the target room is unloaded or inactive.
 - `combat.json`: the old combat topology, capacity progression, bats and gold rewards adapted to node allocation.
@@ -117,6 +139,7 @@ These use V2's room-activation rules. Health is configurable per scenario; the o
 - `gameplay_tree.gd`: selected-node controls and presentation from copied run snapshots; emits action intents to the coordinator. It has no progression model reference or transaction authority.
 - `gameplay_map.gd`: graph rendering, selection and pan/zoom; independent of progression transactions.
 - `room.gd`: transient room gameplay, physics geometry, encounters and portals. Emits reward/transition intents; receives capabilities and persistent room data. Does not inspect the progression graph.
+- `roost_guardian.gd`: loaded-room boss cycle, tethered movement, wave collision and telegraphs; room owns health, summons and clear events.
 - `player.gd`: physics motor, dash, timed directional attack and damage cooldown. Attack parameters are captured at action start.
 
 The room editor authors reusable templates with stable object IDs and named ports. The tree editor authors instances and cross-room bindings. Bindings use `(node_id, object_id, event/action)` addresses resolved by the run coordinator, including when the target scene is unloaded. Shared template instances have independent pickups, enemies and switch/wall states.
@@ -140,6 +163,7 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/branching_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/build_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/arena_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/boss_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/shell_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_preview_tests.gd
@@ -154,4 +178,4 @@ Run from the repository root (use `--path .` if already in `v2`). Tests cover al
 
 ## Experiment roadmap
 
-See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 is complete and accepted. Next: define and evaluate a small boss encounter, then design the 14–18-node dungeon.
+See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 is complete and accepted. BOSS-01 is ready for evaluation; the 14–18-node dungeon follows boss feedback.

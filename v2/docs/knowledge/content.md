@@ -60,6 +60,7 @@ room: {...}}` and rejects duplicate template IDs.
 | --- | --- |
 | Objects | `obstacle`, `water`, `wall`, `switch`, `enemy`, `pickup`, `chest`, `token` |
 | Abilities | `sword`, `dash`, `flippers` |
+| Enemy behaviors | `chase` (default), `roost_guardian` |
 | Numeric modifiers | Move speed; sword reach, arc, damage, interval; dash speed, distance, recharge; max HP (see below) |
 | Behavior modifiers | Sword `big`/`fast`; dash `phase`/`run` |
 | Clear conditions | All enemies defeated, named switch hit, all tokens collected |
@@ -108,3 +109,23 @@ styles remain usable by existing fixtures; Phase Dash now uses BUILD-01 tuning.
 The runtime includes the source bundle ID as `scenario_id`. The coordinator
 uses `build_arena` to expose an explicit fresh-trial reset; it does not change
 ordinary dungeon travel/healing rules.
+
+## BOSS-01 enemy behavior
+
+Author the guardian as an ordinary `enemy` object with
+`properties.behavior: "roost_guardian"`; unknown behaviors reject playtest.
+The arena supplies `hp: 120`, `speed: 60`, `radius: 38`, and position `[400,320]`.
+Ordinary enemies default to `chase`. No new schema version is needed.
+Guardian radius must remain below its 560-unit wave extent so the expansion
+phase has a positive duration; the adapter rejects invalid values.
+
+The guardian's cycle/tether/wave/summon timings are currently a single behavior
+preset in `roost_guardian.gd`, not a general boss scripting format. The boss
+uses the authored enemy HP, radius and movement speed. Its authored dry, open
+arena supports the fixed summon points and full-room 560-unit wave radius.
+
+Summoned bats are transient runtime enemies owned by that guardian. They do
+not create authored objectives or persistent defeated IDs. The authored
+`all_enemies_defeated` condition sees the guardian; killing it removes its
+summons before emitting its normal defeat event. Leaving/re-entering follows
+ordinary room persistence; explicit trial restart creates a fresh encounter.

@@ -39,10 +39,15 @@ func compile(document: Dictionary) -> Dictionary:
 					var hp: Variant = object.properties.get("hp", 2)
 					var speed: Variant = object.properties.get("speed", 95.0)
 					var radius: Variant = object.properties.get("radius", 14.0)
+					var behavior: Variant = object.properties.get("behavior", "chase")
+					if behavior not in ["chase", "roost_guardian"]:
+						errors.append("Unsupported enemy behavior: " + str(behavior))
 					if not _number(hp) or hp <= 0 or floor(hp) != hp or not _number(speed) or speed < 0 or not _number(radius) or radius <= 0:
 						errors.append("Invalid enemy hp/speed: " + object.id)
+					elif behavior == "roost_guardian" and radius >= 560:
+						errors.append("Guardian radius must be smaller than the 560-unit shockwave extent: " + object.id)
 					else:
-						template.enemies.append({"id": object.id, "position": position, "hp": int(hp), "speed": float(speed), "radius": float(radius)})
+						template.enemies.append({"id": object.id, "position": position, "hp": int(hp), "speed": float(speed), "radius": float(radius), "behavior": behavior})
 				"pickup", "chest":
 					var kind: String = str(object.properties.get("kind", "gold"))
 					if kind not in ["capacity", "gold"]:

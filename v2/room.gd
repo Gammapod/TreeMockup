@@ -7,6 +7,7 @@ signal switch_toggled(object_id: String)
 signal objective_event(event: String, object_id: String)
 
 const PLAYER = preload("res://player.gd")
+const GUARDIAN = preload("res://roost_guardian.gd")
 const PORTS := {"north": Vector2(400, 85), "south": Vector2(400, 555), "west": Vector2(65, 320), "east": Vector2(735, 320)}
 const ROOM_BOUNDS := Rect2(35, 55, 730, 530)
 const WALL_THICKNESS := 15.0
@@ -26,6 +27,8 @@ var barriers: Dictionary = {}
 var tokens: Array = []
 var boundary_walls: Array = []
 var portal_armed: Dictionary = {}
+var bosses: Dictionary = {}
+var summon_serial := 0
 
 func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dictionary, entry: String, caps: Dictionary, hp: int, cleared: bool = false) -> void:
 	template = data
@@ -54,18 +57,46 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 		var id: String = enemy.id if enemy is Dictionary else str(i)
 		if defeated.has(id):
 			continue
-		var body := CharacterBody2D.new()
-		body.position = enemy.position if enemy is Dictionary else enemy
-		body.collision_layer = 4
-		body.collision_mask = 1
-		var shape := CollisionShape2D.new()
-		var circle := CircleShape2D.new()
-		circle.radius = enemy.get("radius", 14.0) if enemy is Dictionary else 14.0
-		shape.shape = circle
-		body.add_child(shape)
-		add_child(body)
-		enemies.append({"id": id, "body": body, "hp": enemy.get("hp", 2) if enemy is Dictionary else 2, "speed": enemy.get("speed", 95.0) if enemy is Dictionary else 95.0, "radius": circle.radius})
+		var record := _spawn_enemy(enemy if enemy is Dictionary else {"id": id, "position": enemy})
+		if record.behavior == "roost_guardian":
+			var boss = GUARDIAN.new()
+			boss.configure(record, player.position)
+			boss.wave_hit.connect(_wave_hit)
+			boss.summon_requested.connect(func(positions: Array): _summon_bats(id, positions))
+			add_child(boss)
+			bosses[id] = boss
 	apply_object_states({})
+
+func _spawn_enemy(definition: Dictionary, summoner: String = "") -> Dictionary:
+	var body := CharacterBody2D.new()
+	body.position = definition.position
+	body.collision_layer = 4
+	body.collision_mask = 1
+	var shape := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = definition.get("radius", 14.0)
+	shape.shape = circle
+	body.add_child(shape)
+	add_child(body)
+	var record := {"id": definition.id, "body": body, "hp": float(definition.get("hp", 2)), "speed": definition.get("speed", 95.0), "radius": circle.radius, "behavior": definition.get("behavior", "chase"), "summoner": summoner}
+	enemies.append(record)
+	return record
+
+func _summon_bats(owner_id: String, positions: Array) -> void:
+	if not bosses.has(owner_id):
+		return
+	for point in positions:
+		if _living_summons(owner_id) >= 3:
+			break
+		summon_serial += 1
+		_spawn_enemy({"id": owner_id + "/summon/" + str(summon_serial), "position": point, "hp": 4, "speed": 65}, owner_id)
+
+func _living_summons(owner_id: String) -> int:
+	return enemies.filter(func(enemy): return enemy.summoner == owner_id).size()
+
+func _wave_hit() -> void:
+	if player.hurt(false) and player.hp == 0:
+		player_defeated.emit()
 
 func set_portals(links: Array) -> void:
 	portals = links
@@ -172,12 +203,20 @@ func apply_object_states(states: Dictionary) -> void:
 			barriers[object.id].collision_layer = 0 if passable else 1
 	queue_redraw()
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if player == null:
 		return
+	for id in bosses:
+		bosses[id].advance(delta, player.position, _living_summons(id))
+	if player.hp <= 0:
+		return
 	for enemy in enemies:
-		enemy.body.velocity = enemy.body.position.direction_to(player.position) * enemy.speed
-		enemy.body.move_and_slide()
+		if bosses.has(enemy.id):
+			if not bosses[enemy.id].contact_dangerous():
+				continue
+		else:
+			enemy.body.velocity = enemy.body.position.direction_to(player.position) * enemy.speed
+			enemy.body.move_and_slide()
 		if enemy.body.position.distance_to(player.position) < enemy.radius + 13 and player.hurt() and player.hp == 0:
 			player_defeated.emit()
 			return
@@ -214,8 +253,10 @@ func _attack(origin: Vector2, facing: Vector2, reach: float, damage: float, arc:
 	for object in objects:
 		if object.kind == "switch" and _in_attack(origin, facing, object.position, reach, arc):
 			switch_toggled.emit(object.id)
-	for i in range(enemies.size() - 1, -1, -1):
-		var enemy: Dictionary = enemies[i]
+	# Death can remove a boss's summons too; iterate a stable snapshot.
+	for enemy in enemies.duplicate():
+		if not enemy in enemies:
+			continue
 		if not _overlaps_attack(enemy.body.position - origin, facing, reach, arc, enemy.radius):
 			continue
 		var ray := PhysicsRayQueryParameters2D.create(to_global(origin), enemy.body.global_position, 1)
@@ -223,10 +264,21 @@ func _attack(origin: Vector2, facing: Vector2, reach: float, damage: float, arc:
 			continue
 		enemy.hp -= damage
 		if enemy.hp <= 0:
-			defeated[enemy.id] = true
-			enemy.body.queue_free()
-			enemies.remove_at(i)
-			objective_event.emit("enemy_defeated", enemy.id)
+			_defeat_enemy(enemy)
+
+func _defeat_enemy(enemy: Dictionary) -> void:
+	enemies.erase(enemy)
+	enemy.body.queue_free()
+	if bosses.has(enemy.id):
+		bosses[enemy.id].queue_free()
+		bosses.erase(enemy.id)
+		for add in enemies.duplicate():
+			if add.summoner == enemy.id:
+				add.body.queue_free()
+				enemies.erase(add)
+	if enemy.summoner.is_empty():
+		defeated[enemy.id] = true
+		objective_event.emit("enemy_defeated", enemy.id)
 
 static func _overlaps_attack(offset: Vector2, facing: Vector2, reach: float, arc: float, radius: float = 0.0) -> bool:
 	var angle := facing.angle_to(offset)
@@ -270,6 +322,8 @@ func _draw() -> void:
 		else:
 			draw_circle(pickup.position, 10, Color("88cbff") if pickup.kind == "capacity" else Color("ffd569"))
 	for enemy in enemies:
+		if bosses.has(enemy.id):
+			continue
 		draw_circle(enemy.body.position, enemy.radius, Color("c580df"))
 		draw_string(ThemeDB.fallback_font, enemy.body.position + Vector2(-10, 5), "%.2f" % enemy.hp, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	for token in tokens:

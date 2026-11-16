@@ -28,7 +28,7 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [archived hardening record](archive/cleared-rooms-closeout.md#baseline-hardening).
 4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline. CLEAR-03 through CLEAR-06 remain potential future experiments.
 5. **BUILD-01 — Completed, baseline accepted.** Stackable sword/dash modifiers, max-HP-only upgrades, and the expanded eight-point workshop are retained. See the [architectural closeout](archive/build-01-closeout.md).
-6. **Next design step:** choose the smallest boss encounter that tests the accepted builds; its scope is not yet selected. EDIT-01 remains an authoring candidate.
+6. **BOSS-01 — Ready to playtest:** free Roost Guardian trial in the build workshop; tethered movement, telegraphed gapped shockwave, recovery and capped bat summons. Evaluate build reconsideration before the larger dungeon. EDIT-01 remains an authoring candidate.
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.

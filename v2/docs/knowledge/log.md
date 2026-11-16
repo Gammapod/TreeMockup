@@ -1,6 +1,9 @@
 # V2 Knowledge Update Log
 
 ## 2026-11-15
+* **BOSS-01 ready for evaluation**: Added the room-local guardian behavior and
+  free Boss Trial. Content/architecture document transient summons and
+  contact-vs-wave damage; E1/E2 link to encounter tests. BUILD-01 stays accepted.
 * **BUILD-01 accepted**: Closed the expanded stackable-ability workshop.
   Consolidated current vocabulary in `content.md`, acceptance in
   `experiments.md`, and review history in

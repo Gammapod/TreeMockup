@@ -29,6 +29,8 @@ sources:
 | B4 | BUILD-01 numeric modifiers multiply and refunds restore stats; fractional damage, sector geometry, real attack interval and dash distance/recharge match the derived build. Actions capture their parameters. | `tests/build_tests.gd` |
 | H1 | Max-HP allocations never heal; removal clamps current HP and reactivation cannot restore it. Fresh-run/retry initialization is separate. | `tests/build_tests.gd`, `tests/branching_tests.gd` |
 | B5 | The BUILD-01 arena offers six four-deep sequential upgrade chains, an eight-point budget and free encounter access; explicit trial restart restores encounters/full build HP at the root while retaining deep allocations. | `tests/arena_tests.gd` |
+| E1 | Roost Guardian stays within its spawn tether and follows pressure → locked telegraph → expanding gapped wave → contact-safe recovery; waves sweep player motion, deal at most one hit, and bypass contact-only Phase immunity. | `tests/boss_tests.gd` |
+| E2 | Guardian summons are warned and capped at three; boss death removes its transient summons/wave and completes its authored enemy objective. Fresh trial resets boss state while retaining the build. | `tests/boss_tests.gd` |
 
 # Change rule
 

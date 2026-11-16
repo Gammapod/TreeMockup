@@ -22,7 +22,7 @@ func _run() -> void:
 		_finish()
 		return
 	var branches := ["thrust", "sweep", "quick_cut", "long_dash", "quick_step", "hp"]
-	_expect(compiled.data.nodes.size() == 28, "Six four-node chains, root, Phase and two trials")
+	_expect(compiled.data.nodes.size() == 29, "Six four-node chains, root, Phase and three trials")
 	_expect(compiled.data.initial_capacity == 8, "Eight-point testing budget")
 	if not compiled.data.nodes.has("hp_d"):
 		_finish()
@@ -41,7 +41,7 @@ func _run() -> void:
 					parent = id
 			_expect(model.available_points() == 0, "Two full chains consume eight points")
 			_expect(not model.activate("phase", "start").ok, "Additional ability requires a tradeoff")
-			for id in ["crowd", "durable"]:
+			for id in ["crowd", "durable", "boss"]:
 				_expect(model.activate(id, "start").ok and model.can_travel("start", id), "Encounter access costs no upgrade budget")
 			var refund: Dictionary = model.deactivate(branches[i] + "_a", "start")
 			_expect(refund.ok and refund.affected.size() == 4 and model.available_points() == 4, "Root refund cascades through entire branch")

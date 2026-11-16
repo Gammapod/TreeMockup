@@ -198,6 +198,8 @@ func _refresh() -> void:
 	shell.arena_button.visible = not arena
 	if arena and current == data.root:
 		status.text += "\n8 points · 4 upgrades per branch. Walk deeper to stack; warp here to refund. Free trials: north doors."
+	elif arena and current == "boss":
+		status.text += "\nFollow the green gap. Phase blocks contact, not waves. Teal boss: contact is safe."
 	room.queue_redraw()
 
 func _ability_stats(caps: Dictionary) -> String:

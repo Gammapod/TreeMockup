@@ -48,6 +48,8 @@ sources:
 | **Phase Dash** | A dash behavior granting enemy-contact immunity while retaining 65% of normal distance. |
 | **Max-HP upgrade** | Raises health capacity without healing; removal clamps current HP. |
 | **Trial restart** | Arena-only fresh attempt: retains allocations, restores encounters and full build HP, and returns to Workshop. |
+| **Roost Guardian** | Tethered boss with a pressure/telegraph/gapped-wave/recovery cycle and capped bat summons. |
+| **Shockwave gap** | Safe wedge locked at telegraph start; Phase Dash does not grant wave immunity. |
 | **Root travel** | Map travel from any active room to another cleared, active root, preserving build and HP. |
 | **Editing lock** | Optional uncleared-room policy that blocks activation and deactivation while occupied. |
 

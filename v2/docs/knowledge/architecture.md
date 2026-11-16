@@ -26,6 +26,7 @@ skill tree. It separates portable authored content from one transient run.
 | `progression.gd` | Activation, refunds/cascades, roots, clear/objective state, rewards, travel/edit permissions, derived capabilities | Input, physics, rendering, scene lifetime |
 | `main.gd` | Run lifecycle, room replacement, persistent per-node encounter/object state, event forwarding | Reimplementing progression legality or view state |
 | `room.gd` / `player.gd` | Loaded-room physics, encounters, local interaction, event intent | Progression graph inspection or transaction authority |
+| `roost_guardian.gd` | Loaded-room boss timing, tethered movement, telegraphs and swept wave geometry | Allocation graph, persistent clears, enemy HP mutation or run restart |
 | `gameplay_tree.gd` | Copied snapshots, selection, presentation, action intents | A progression reference or mutations |
 | `gameplay_map.gd` | Graph drawing, hit-testing, camera | Gameplay mutations |
 | `gameplay_shell.gd` | Screen layout and gameplay-key forwarding | Room-world coordinates or game rules |
@@ -56,6 +57,11 @@ skill tree. It separates portable authored content from one transient run.
    full build health. This is a test-trial lifecycle, not a general run-save
    format or a change to root travel. See the
    [BUILD-01 review](../archive/build-01-closeout.md).
+8. **Boss behavior remains room-local.** The guardian controller emits wave-hit
+   and summon intents. Room owns enemy records, damage, transient summons and
+   defeat events; progression owns authored clear objectives. `player.hurt`
+   distinguishes enemy contact from wave damage so Phase immunity does not
+   silently apply to every hazard.
 
 # Change guide
 
