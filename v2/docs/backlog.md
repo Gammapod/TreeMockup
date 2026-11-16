@@ -4,7 +4,7 @@
 
 **Find which game elements work well with “the dungeon is also a skill tree.”** V2 is a featureful testbed, not a production-game milestone list.
 
-This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01 and CLEAR-01/02/07/08/09/10/11 are **Completed** as accepted baselines, with contracts linked below. Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
+This is a backlog of proposals, not accepted gameplay rules. Items start **Backlog**; UI-01/UI-02, CLEAR-01/02/07/08/09/10/11 and BUILD-01 are **Completed** as accepted baselines. See the [experiment record](knowledge/experiments.md). Priority is provisional; choose one experiment at a time and revise the order based on what the last experiment taught us.
 
 Prefer work that:
 
@@ -26,12 +26,15 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 1. **UI-01: interactive dungeon/skill-tree map — Completed.** Baseline functionality accepted; UX polish deferred.
 2. **CLEAR-01/02/07/08/09/10/11 — Completed, baseline accepted:** clear conditions/effects, permanent roots, optional occupied-uncleared editing locks and root travel. `examples/cleared_rooms.json` remains the demonstration fixture.
 3. **Baseline hardening completed:** deferred transitions are isolated to their originating room/run, editor pause survives arrivals, and initial-health validation accounts for every immediate root. All 12 headless suites pass; see the [archived hardening record](archive/cleared-rooms-closeout.md#baseline-hardening).
-4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline; **EDIT-01** is the next planned experiment. CLEAR-03 through CLEAR-06 remain potential future experiments, not remaining work required to complete clearing.
+4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline. CLEAR-03 through CLEAR-06 remain potential future experiments.
+5. **BUILD-01 — Completed, baseline accepted.** Stackable sword/dash modifiers, max-HP-only upgrades, and the expanded eight-point workshop are retained. See the [architectural closeout](archive/build-01-closeout.md).
+6. **Next design step:** choose the smallest boss encounter that tests the accepted builds; its scope is not yet selected. EDIT-01 remains an authoring candidate.
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
 
-**UI-02 (walk-through doors)** is accepted. Keep the existing branching scenario and the six-node clearing lab as regression baselines. **EDIT-01** is next.
+Keep the branching scenario, clearing lab and BUILD-01 workshop as regression
+baselines. Boss evaluation precedes the planned 14–18-node dungeon.
 
 ## Gameplay presentation and traversal
 

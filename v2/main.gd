@@ -111,10 +111,7 @@ func _finish_transition(generation: int, kind: String, destination: String, entr
 		return
 	if kind == "trial":
 		var selected: Array = progression.active.keys()
-		_play_document(data)
-		for id in selected:
-			if id != data.root:
-				progression.activate(id, data.root)
+		_start_run(data, selected)
 		message = "Fresh trial: build retained; health, enemies and clear state reset."
 		_refresh()
 		return
@@ -200,7 +197,7 @@ func _refresh() -> void:
 	shell.retry_button.visible = arena
 	shell.arena_button.visible = not arena
 	if arena and current == data.root:
-		status.text += "\nChoose up to 2 upgrades. Activate a free trial, then use its north door. Restart trial resets HP/enemies, keeps build."
+		status.text += "\n8 points · 4 upgrades per branch. Walk deeper to stack; warp here to refund. Free trials: north doors."
 	room.queue_redraw()
 
 func _ability_stats(caps: Dictionary) -> String:
@@ -248,7 +245,12 @@ func _close_studio() -> void:
 	shell.show()
 
 func _play_document(compiled: Dictionary) -> void:
-	# Playtest starts a fresh run, never mutating the editor's source document.
+	_start_run(compiled)
+	# Only an explicit Playtest/launch intent exits authoring.
+	_close_studio()
+
+func _start_run(compiled: Dictionary, retained_build: Array = []) -> void:
+	# Fresh runtime state never mutates source content or editor visibility.
 	room.get_parent().remove_child(room)
 	room.queue_free()
 	room = null
@@ -257,6 +259,13 @@ func _play_document(compiled: Dictionary) -> void:
 	data = compiled
 	tree_ui.configure(data)
 	progression = PROGRESSION.new(data)
+	# Replay the arena's allocation order from active neighboring nodes. Restore
+	# deep branches before initializing fresh-trial health from the final build.
+	for id in retained_build:
+		if progression.active.has(id):
+			continue
+		for source in progression.neighbors(id):
+			if progression.activate(id, source).ok:
+				break
 	message = "Playtesting authored content. F2 returns to the editors."
 	_enter_room(data.root, "", progression.capabilities().max_hp)
-	_close_studio()

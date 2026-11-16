@@ -43,6 +43,11 @@ sources:
 | **Dash** | Shift-triggered movement burst, granted by an active node. |
 | **Flippers** | Ability that bypasses water collision. |
 | **Modifier** | Numeric or behavior adjustment aggregated from active nodes; behavior styles require their base ability. |
+| **Reach / arc** | Sword's forward extent and angular coverage; independent numeric stats. |
+| **Attack interval** | Time between starting successive attacks, bounded by action duration. |
+| **Phase Dash** | A dash behavior granting enemy-contact immunity while retaining 65% of normal distance. |
+| **Max-HP upgrade** | Raises health capacity without healing; removal clamps current HP. |
+| **Trial restart** | Arena-only fresh attempt: retains allocations, restores encounters and full build HP, and returns to Workshop. |
 | **Root travel** | Map travel from any active room to another cleared, active root, preserving build and HP. |
 | **Editing lock** | Optional uncleared-room policy that blocks activation and deactivation while occupied. |
 

@@ -6,6 +6,9 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 
 ### BUILD-01: stackable ability arena
 
+**Completed and accepted as a baseline.**
+See the [architectural closeout](docs/archive/build-01-closeout.md).
+
 Click **BUILD-01 arena** in the header, or run:
 
 ```powershell
@@ -13,21 +16,31 @@ Click **BUILD-01 arena** in the header, or run:
 ```
 
 The same content is editable via F2 → Open → `examples/build_arena.json`.
-In the safe Workshop, allocate up to two points among two Thrust and two Sweep
-nodes. Select a free Crowd Trial or Durable Trial node, activate it, and walk
-through its north doorway. Return to Workshop to refund/reallocate.
+The Workshop grants Sword and Dash, with **eight allocation points**.
+Six straight branches each contain **four sequential one-point upgrades**:
+Thrust, Sweep, Quick Cut, Long Dash, Quick Step, and Max HP (+1 per node).
+Phase Dash is a separate one-point node. Activate a branch's first node, walk
+into it, and activate the next; each deeper node requires its predecessor.
+Use **Travel to root** to return to Workshop. Refunding the first node there
+refunds its entire branch; refund a later node from its predecessor to trim it.
+Select a free Crowd Trial or Durable Trial node, activate it, and walk through
+its north doorway. Use Fit graph for the full tree, or zoom/pan to inspect a branch.
 **Restart trial (keep build)** resets enemies, clear state, position and HP
-without changing allocations. Normal root travel does not heal.
+without changing allocations, including deep branches. Fresh trial health
+includes allocated HP upgrades; allocating those upgrades or normal root travel
+does not heal.
 
 The footer shows final sword stats; the translucent sector previews the actual
 attack footprint. Selected-node details show each modifier's benefit and cost.
-Base damage is 8; one/two Sweeps deal 6/4.5. The five weak bats have 4 HP each;
+Arena base slash: reach 92, arc 68.8°, damage 8, interval 0.64s. Four Sweeps
+reach 348.1°; four Quick Cuts reach a 0.2025s interval, so all four copies give
+benefits before the runtime limits. One/two Sweeps deal 6/4.5. The five weak bats have 4 HP each;
 the durable bat has 24 HP, requiring 3/4/6 hits respectively.
 
 Thrust, Sweep, Quick Cut, Long Dash, Quick Step and Phase Dash are supported
 through the [numeric modifier vocabulary](docs/knowledge/content.md).
-This first arena deliberately exposes only Thrust/Sweep; further configurations
-and the boss follow player feedback. HP upgrades raise maximum HP without healing;
+The expanded arena supports focused or mixed builds; the boss follows player
+feedback. HP upgrades raise maximum HP without healing;
 Flippers remain binary. See [BUILD-01](docs/knowledge/experiments.md#build-01--stackable-ability-tradeoffs-2026-11-15).
 
 ### Controls and original branching scenario
@@ -70,7 +83,7 @@ The editors intentionally use JSON inspectors for detailed rules rather than pol
 Open `v2/examples/*.json` from the editor:
 
 - `branching.json`: the full Mermaid branching design, including practice rooms, sword/dash/HP choices, two-key ability rooms, alternate landing prerequisites and the shared Prize.
-- `build_arena.json`: BUILD-01 safe allocation hub, four stackable upgrades, two-point budget, crowd and durable-target trials.
+- `build_arena.json`: BUILD-01 hub, six four-deep upgrade chains, separate Phase Dash, eight-point budget, crowd and durable-target trials.
 - `water_flippers.json`: the old water/flippers topology with an actual water barrier and a prize chest. Activate Flippers from Start to cross the barrier in Water.
 - `switch_wall.json`: the old switch/wall topology, capacity pickups, and a sword-operated switch that changes a wall in another room. Its state persists while the target room is unloaded or inactive.
 - `combat.json`: the old combat topology, capacity progression, bats and gold rewards adapted to node allocation.
@@ -141,4 +154,4 @@ Run from the repository root (use `--path .` if already in `v2`). Tests cover al
 
 ## Experiment roadmap
 
-See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines and the required log format. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 is implemented and ready for player evaluation: arena feedback → boss encounter → 14–18-node dungeon.
+See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 is complete and accepted. Next: define and evaluate a small boss encounter, then design the 14–18-node dungeon.

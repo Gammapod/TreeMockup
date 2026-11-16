@@ -32,6 +32,10 @@ sources:
   by movement (including dash); unavailable links remain physically blocked and
   visibly distinct. Paired-port arrivals are held until the player moves away,
   preventing immediate bounce-back. `E` remains for deliberate interactions.
+* BUILD-01 exposes final sword/dash stats and selected-node benefits/costs.
+  The player's sector previews attack reach/arc and uses captured parameters
+  during an attack. Its launch/restart controls send coordinator intents;
+  restart obeys the same editor-pause and stale-transition boundaries as travel.
 
 # Boundary
 

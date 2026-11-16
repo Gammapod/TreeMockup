@@ -17,6 +17,7 @@ implementation detail.
 * [Clear-state contract](clear-state.md) - Objectives, effects, roots, travel, and editing permissions.
 * [UI contract](ui.md) - Map/shell behavior and presentation boundaries.
 * [Branching scenario](branching-scenario.md) - Default regression scenario and design mapping.
+* [BUILD-01 workshop](../../README.md#build-01-stackable-ability-arena) - Accepted stackable-build arena and play instructions.
 * [Experiment record](experiments.md) - Current baselines, open questions, and the only log format for new gameplay experiments.
 
 ## Recording policy

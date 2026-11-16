@@ -76,7 +76,7 @@ Multipliers must be finite and positive; additive `max_hp_bonus` and
 runtime. All additive sword damage is applied before damage multipliers, so
 node order cannot change the result.
 
-| Candidate | Node `modifiers` |
+| Upgrade | Node `modifiers` |
 | --- | --- |
 | Thrust | `{"sword_range_multiplier":1.3,"sword_arc_multiplier":0.7}` |
 | Sweep | `{"sword_arc_multiplier":1.5,"sword_damage_multiplier":0.75}` |
@@ -87,7 +87,9 @@ node order cannot change the result.
 | HP | `{"max_hp_bonus":1}` — maximum only, never healing |
 
 Base sword: reach 92 world units, arc 1.8 radians (~103°), damage 1, interval
-0.32 seconds. `build_arena.json` adds 7 base damage for readable hit thresholds.
+0.32 seconds. `build_arena.json` adds 7 base damage, multiplies arc by 2/3 and
+interval by 2: damage 8, arc 1.2 radians, interval 0.64s. This gives all four
+Sweep/Quick Cut copies meaningful benefits before reaching runtime limits.
 Base dash: speed 650 units/second, duration 0.16 seconds (104 units), recharge
 0.65 seconds measured from dash start. Distance modifiers change duration, not
 speed. Numeric modifiers multiply across active nodes; refund recomputes them.
@@ -96,7 +98,7 @@ Arc saturates at 360°. The single-strike attack has fixed 0.14-second startup
 and a 0.16-second action duration; attack interval cannot undercut that duration.
 Legacy multi-strike styles extend the duration by 0.08 seconds per extra strike.
 Dash recharge cannot be shorter than its duration. These bounds matter for
-authored stacks beyond the experiment's two-copy limit.
+authored stacks beyond the experiment's four-copy branches.
 
 Attack direction/reach/arc/damage and dash direction/speed/duration/contact
 immunity are captured at action start. Walls still occlude sword hits and block

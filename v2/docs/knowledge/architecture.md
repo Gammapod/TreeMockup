@@ -43,9 +43,19 @@ skill tree. It separates portable authored content from one transient run.
    rewards, clear state, or switch state.
 4. **Content is immutable during a run.** Playtesting compiles a fresh
    document and starts a fresh runtime; editor source is retained separately.
-5. **Transitions share one guarded path.** Door travel, root travel, and
-   defeat invalidate stale deferred work by room generation and revalidate
-   before scene replacement.
+5. **Transitions share one guarded path.** Door travel, root travel, defeat
+   and arena trial restart use room generation to reject stale deferred work.
+   Fresh-run initialization preserves editor visibility/pause; only explicit
+   Playtest/launch intent exits authoring.
+6. **Derived builds and action snapshots are distinct.** Progression composes
+   active modifiers; the player captures action parameters at action start.
+   Room combat consumes those parameters rather than recomputing the build.
+   Max-HP allocation clamps current health but never heals.
+7. **Arena retry is scoped to its fixture.** The coordinator restores the
+   reward-free arena's allocations through model activation before initializing
+   full build health. This is a test-trial lifecycle, not a general run-save
+   format or a change to root travel. See the
+   [BUILD-01 review](../archive/build-01-closeout.md).
 
 # Change guide
 

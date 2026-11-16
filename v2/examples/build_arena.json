@@ -2,24 +2,27 @@
   "format": "room-tree",
   "version": 1,
   "id": "build_arena",
-  "name": "BUILD-01 — Thrust and Sweep",
+  "name": "BUILD-01 — Stackable Build Workshop",
   "rooms": [
     {
       "id": "workshop", "name": "Safe Workshop", "size": [800, 600], "spawn": [400, 390],
       "clear": {"conditions": [], "effects": [{"kind": "become_root"}]},
       "ports": [
         {"id": "thrust_a", "position": [65, 220]},
-        {"id": "thrust_b", "position": [65, 440]},
-        {"id": "sweep_a", "position": [735, 220]},
-        {"id": "sweep_b", "position": [735, 440]},
-        {"id": "crowd", "position": [250, 85]},
-        {"id": "durable", "position": [550, 85]}
+        {"id": "sweep_a", "position": [65, 440]},
+        {"id": "quick_cut_a", "position": [250, 555]},
+        {"id": "long_dash_a", "position": [735, 220]},
+        {"id": "quick_step_a", "position": [735, 440]},
+        {"id": "hp_a", "position": [550, 555]},
+        {"id": "phase", "position": [650, 85]},
+        {"id": "crowd", "position": [180, 85]},
+        {"id": "durable", "position": [400, 85]}
       ],
       "objects": []
     },
     {
       "id": "upgrade", "name": "Upgrade Practice", "size": [800, 600],
-      "ports": [{"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
+      "ports": [{"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}, {"id": "north", "position": [400, 85]}, {"id": "south", "position": [400, 555]}],
       "objects": []
     },
     {
@@ -44,21 +47,63 @@
     }
   ],
   "dungeon": {
-    "root": "start", "initial_capacity": 2, "base_hp": 8,
+    "root": "start", "initial_capacity": 8, "base_hp": 8,
     "nodes": [
-      {"id": "start", "name": "Workshop", "template": "workshop", "cost": 0, "requires_all": [], "requires_any": [], "abilities": ["sword"], "modifiers": {"sword_damage_bonus": 7}, "map_position": [400, 420]},
-      {"id": "thrust_a", "name": "Thrust A", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [70, 320]},
-      {"id": "thrust_b", "name": "Thrust B", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [70, 520]},
-      {"id": "sweep_a", "name": "Sweep A", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [730, 320]},
-      {"id": "sweep_b", "name": "Sweep B", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [730, 520]},
-      {"id": "crowd", "name": "Crowd Trial", "template": "crowd_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [275, 320]},
-      {"id": "durable", "name": "Durable Trial", "template": "durable_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [525, 320]}
+      {"id": "start", "name": "Workshop", "template": "workshop", "cost": 0, "requires_all": [], "requires_any": [], "abilities": ["sword", "dash"], "modifiers": {"sword_damage_bonus": 7, "sword_arc_multiplier": 0.6666666666666666, "sword_cooldown_multiplier": 2.0}, "map_position": [0, 0]},
+      {"id": "thrust_a", "name": "Thrust 1", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [-360, -100]},
+      {"id": "thrust_b", "name": "Thrust 2", "template": "upgrade", "cost": 1, "requires_all": ["thrust_a"], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [-720, -200]},
+      {"id": "thrust_c", "name": "Thrust 3", "template": "upgrade", "cost": 1, "requires_all": ["thrust_b"], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [-1080, -300]},
+      {"id": "thrust_d", "name": "Thrust 4", "template": "upgrade", "cost": 1, "requires_all": ["thrust_c"], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [-1440, -400]},
+      {"id": "sweep_a", "name": "Sweep 1", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [-360, 100]},
+      {"id": "sweep_b", "name": "Sweep 2", "template": "upgrade", "cost": 1, "requires_all": ["sweep_a"], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [-720, 200]},
+      {"id": "sweep_c", "name": "Sweep 3", "template": "upgrade", "cost": 1, "requires_all": ["sweep_b"], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [-1080, 300]},
+      {"id": "sweep_d", "name": "Sweep 4", "template": "upgrade", "cost": 1, "requires_all": ["sweep_c"], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [-1440, 400]},
+      {"id": "quick_cut_a", "name": "Quick Cut 1", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_cooldown_multiplier": 0.75, "sword_range_multiplier": 0.8}, "map_position": [-160, 240]},
+      {"id": "quick_cut_b", "name": "Quick Cut 2", "template": "upgrade", "cost": 1, "requires_all": ["quick_cut_a"], "requires_any": [], "abilities": [], "modifiers": {"sword_cooldown_multiplier": 0.75, "sword_range_multiplier": 0.8}, "map_position": [-320, 480]},
+      {"id": "quick_cut_c", "name": "Quick Cut 3", "template": "upgrade", "cost": 1, "requires_all": ["quick_cut_b"], "requires_any": [], "abilities": [], "modifiers": {"sword_cooldown_multiplier": 0.75, "sword_range_multiplier": 0.8}, "map_position": [-480, 720]},
+      {"id": "quick_cut_d", "name": "Quick Cut 4", "template": "upgrade", "cost": 1, "requires_all": ["quick_cut_c"], "requires_any": [], "abilities": [], "modifiers": {"sword_cooldown_multiplier": 0.75, "sword_range_multiplier": 0.8}, "map_position": [-640, 960]},
+      {"id": "long_dash_a", "name": "Long Dash 1", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 1.4, "dash_cooldown_multiplier": 1.4}, "map_position": [360, -100]},
+      {"id": "long_dash_b", "name": "Long Dash 2", "template": "upgrade", "cost": 1, "requires_all": ["long_dash_a"], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 1.4, "dash_cooldown_multiplier": 1.4}, "map_position": [720, -200]},
+      {"id": "long_dash_c", "name": "Long Dash 3", "template": "upgrade", "cost": 1, "requires_all": ["long_dash_b"], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 1.4, "dash_cooldown_multiplier": 1.4}, "map_position": [1080, -300]},
+      {"id": "long_dash_d", "name": "Long Dash 4", "template": "upgrade", "cost": 1, "requires_all": ["long_dash_c"], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 1.4, "dash_cooldown_multiplier": 1.4}, "map_position": [1440, -400]},
+      {"id": "quick_step_a", "name": "Quick Step 1", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 0.75, "dash_cooldown_multiplier": 0.7}, "map_position": [360, 100]},
+      {"id": "quick_step_b", "name": "Quick Step 2", "template": "upgrade", "cost": 1, "requires_all": ["quick_step_a"], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 0.75, "dash_cooldown_multiplier": 0.7}, "map_position": [720, 200]},
+      {"id": "quick_step_c", "name": "Quick Step 3", "template": "upgrade", "cost": 1, "requires_all": ["quick_step_b"], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 0.75, "dash_cooldown_multiplier": 0.7}, "map_position": [1080, 300]},
+      {"id": "quick_step_d", "name": "Quick Step 4", "template": "upgrade", "cost": 1, "requires_all": ["quick_step_c"], "requires_any": [], "abilities": [], "modifiers": {"dash_distance_multiplier": 0.75, "dash_cooldown_multiplier": 0.7}, "map_position": [1440, 400]},
+      {"id": "hp_a", "name": "Max HP 1", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [160, 240]},
+      {"id": "hp_b", "name": "Max HP 2", "template": "upgrade", "cost": 1, "requires_all": ["hp_a"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [320, 480]},
+      {"id": "hp_c", "name": "Max HP 3", "template": "upgrade", "cost": 1, "requires_all": ["hp_b"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [480, 720]},
+      {"id": "hp_d", "name": "Max HP 4", "template": "upgrade", "cost": 1, "requires_all": ["hp_c"], "requires_any": [], "abilities": [], "modifiers": {"max_hp_bonus": 1}, "map_position": [640, 960]},
+      {"id": "phase", "name": "Phase Dash", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"dash_style": "phase"}, "map_position": [240, -260]},
+      {"id": "crowd", "name": "Crowd Trial", "template": "crowd_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [-240, -260]},
+      {"id": "durable", "name": "Durable Trial", "template": "durable_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [0, -260]}
     ],
     "links": [
       {"id": "thrust_a", "a": "start", "b": "thrust_a", "a_port": "thrust_a", "b_port": "east", "activate_from": ["start", "thrust_a"]},
-      {"id": "thrust_b", "a": "start", "b": "thrust_b", "a_port": "thrust_b", "b_port": "east", "activate_from": ["start", "thrust_b"]},
-      {"id": "sweep_a", "a": "start", "b": "sweep_a", "a_port": "sweep_a", "b_port": "west", "activate_from": ["start", "sweep_a"]},
-      {"id": "sweep_b", "a": "start", "b": "sweep_b", "a_port": "sweep_b", "b_port": "west", "activate_from": ["start", "sweep_b"]},
+      {"id": "thrust_b", "a": "thrust_a", "b": "thrust_b", "a_port": "west", "b_port": "east", "activate_from": ["thrust_a"]},
+      {"id": "thrust_c", "a": "thrust_b", "b": "thrust_c", "a_port": "west", "b_port": "east", "activate_from": ["thrust_b"]},
+      {"id": "thrust_d", "a": "thrust_c", "b": "thrust_d", "a_port": "west", "b_port": "east", "activate_from": ["thrust_c"]},
+      {"id": "sweep_a", "a": "start", "b": "sweep_a", "a_port": "sweep_a", "b_port": "east", "activate_from": ["start", "sweep_a"]},
+      {"id": "sweep_b", "a": "sweep_a", "b": "sweep_b", "a_port": "west", "b_port": "east", "activate_from": ["sweep_a"]},
+      {"id": "sweep_c", "a": "sweep_b", "b": "sweep_c", "a_port": "west", "b_port": "east", "activate_from": ["sweep_b"]},
+      {"id": "sweep_d", "a": "sweep_c", "b": "sweep_d", "a_port": "west", "b_port": "east", "activate_from": ["sweep_c"]},
+      {"id": "quick_cut_a", "a": "start", "b": "quick_cut_a", "a_port": "quick_cut_a", "b_port": "north", "activate_from": ["start", "quick_cut_a"]},
+      {"id": "quick_cut_b", "a": "quick_cut_a", "b": "quick_cut_b", "a_port": "south", "b_port": "north", "activate_from": ["quick_cut_a"]},
+      {"id": "quick_cut_c", "a": "quick_cut_b", "b": "quick_cut_c", "a_port": "south", "b_port": "north", "activate_from": ["quick_cut_b"]},
+      {"id": "quick_cut_d", "a": "quick_cut_c", "b": "quick_cut_d", "a_port": "south", "b_port": "north", "activate_from": ["quick_cut_c"]},
+      {"id": "long_dash_a", "a": "start", "b": "long_dash_a", "a_port": "long_dash_a", "b_port": "west", "activate_from": ["start", "long_dash_a"]},
+      {"id": "long_dash_b", "a": "long_dash_a", "b": "long_dash_b", "a_port": "east", "b_port": "west", "activate_from": ["long_dash_a"]},
+      {"id": "long_dash_c", "a": "long_dash_b", "b": "long_dash_c", "a_port": "east", "b_port": "west", "activate_from": ["long_dash_b"]},
+      {"id": "long_dash_d", "a": "long_dash_c", "b": "long_dash_d", "a_port": "east", "b_port": "west", "activate_from": ["long_dash_c"]},
+      {"id": "quick_step_a", "a": "start", "b": "quick_step_a", "a_port": "quick_step_a", "b_port": "west", "activate_from": ["start", "quick_step_a"]},
+      {"id": "quick_step_b", "a": "quick_step_a", "b": "quick_step_b", "a_port": "east", "b_port": "west", "activate_from": ["quick_step_a"]},
+      {"id": "quick_step_c", "a": "quick_step_b", "b": "quick_step_c", "a_port": "east", "b_port": "west", "activate_from": ["quick_step_b"]},
+      {"id": "quick_step_d", "a": "quick_step_c", "b": "quick_step_d", "a_port": "east", "b_port": "west", "activate_from": ["quick_step_c"]},
+      {"id": "hp_a", "a": "start", "b": "hp_a", "a_port": "hp_a", "b_port": "north", "activate_from": ["start", "hp_a"]},
+      {"id": "hp_b", "a": "hp_a", "b": "hp_b", "a_port": "south", "b_port": "north", "activate_from": ["hp_a"]},
+      {"id": "hp_c", "a": "hp_b", "b": "hp_c", "a_port": "south", "b_port": "north", "activate_from": ["hp_b"]},
+      {"id": "hp_d", "a": "hp_c", "b": "hp_d", "a_port": "south", "b_port": "north", "activate_from": ["hp_c"]},
+      {"id": "phase", "a": "start", "b": "phase", "a_port": "phase", "b_port": "south", "activate_from": ["start", "phase"]},
       {"id": "crowd", "a": "start", "b": "crowd", "a_port": "crowd", "b_port": "south", "activate_from": ["start", "crowd"]},
       {"id": "durable", "a": "start", "b": "durable", "a_port": "durable", "b_port": "south", "activate_from": ["start", "durable"]}
     ],
@@ -66,6 +111,6 @@
   },
   "extensions": {
     "experiment": "BUILD-01",
-    "playtest": "Allocate zero, one, or two upgrades in the Workshop. Activate either free trial room and walk through its north door. Base damage 8; double Sweep damage 4.5. Crowd bats have 4 HP; durable target has 24 HP (3/4/6 hits for zero/one/two Sweeps). Restart trial retains allocations but resets enemies, clear state, health and position. Return to Workshop for refunds."
+    "playtest": "Eight points; six four-node chains: Thrust, Sweep, Quick Cut, Long Dash, Quick Step, Max HP. Each node costs one and later nodes require the previous node. Sword and Dash are granted at the Workshop. Phase Dash is a separate one-point choice. Walk down branches to allocate deeper stacks; warp to Workshop to refund whole branches or enter free trials. Restart trial retains all allocations and initializes full health including HP upgrades. Arena base sword: reach 92, arc 1.2 radians, damage 8, interval 0.64 seconds. Four Sweeps reach 348 degrees and four Quick Cuts reach 0.2025 seconds without saturation. Crowd bats have 4 HP; durable bat has 24 HP."
   }
 }
