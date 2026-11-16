@@ -215,7 +215,10 @@ func preview_root_travel(destination: String, current: String) -> Dictionary:
 
 func capabilities() -> Dictionary:
 	var abilities: Dictionary = {}
-	var stats := {"move_speed": 220.0, "sword_range": 92.0, "sword_damage": 1, "dash_speed": 650.0, "max_hp": int(definition.get("base_hp", 5)), "sword_strikes": 1, "sword_cooldown": 0.32, "dash_duration": 0.16, "dash_phase": false, "sprint": false}
+	var stats := {"move_speed": 220.0, "sword_range": 92.0, "sword_arc": 1.8, "sword_damage": 1.0, "dash_speed": 650.0, "max_hp": int(definition.get("base_hp", 5)), "sword_strikes": 1, "sword_cooldown": 0.32, "dash_duration": 0.16, "dash_cooldown": 0.65, "dash_phase": false, "sprint": false}
+	var damage_multiplier := 1.0
+	var attack_interval_multiplier := 1.0
+	var dash_distance_multiplier := 1.0
 	var sword_style := ""
 	var dash_style := ""
 	# Authored node order makes conflicting experimental styles deterministic.
@@ -227,8 +230,13 @@ func capabilities() -> Dictionary:
 		var modifiers: Dictionary = definition.nodes[id].get("modifiers", {})
 		stats.move_speed *= modifiers.get("move_speed_multiplier", 1.0)
 		stats.sword_range *= modifiers.get("sword_range_multiplier", 1.0)
+		stats.sword_arc *= modifiers.get("sword_arc_multiplier", 1.0)
 		stats.sword_damage += int(modifiers.get("sword_damage_bonus", 0))
+		damage_multiplier *= modifiers.get("sword_damage_multiplier", 1.0)
+		attack_interval_multiplier *= modifiers.get("sword_cooldown_multiplier", 1.0)
 		stats.dash_speed *= modifiers.get("dash_speed_multiplier", 1.0)
+		dash_distance_multiplier *= modifiers.get("dash_distance_multiplier", 1.0)
+		stats.dash_cooldown *= modifiers.get("dash_cooldown_multiplier", 1.0)
 		stats.max_hp += int(modifiers.get("max_hp_bonus", 0))
 		sword_style = modifiers.get("sword_style", sword_style)
 		dash_style = modifiers.get("dash_style", dash_style)
@@ -242,10 +250,17 @@ func capabilities() -> Dictionary:
 			stats.sword_cooldown = 0.48
 	if abilities.has("dash"):
 		if dash_style == "phase":
-			stats.dash_duration *= 0.5
+			stats.dash_duration *= 0.65
 			stats.dash_phase = true
 		elif dash_style == "run":
 			stats.sprint = true
+	stats.sword_damage *= damage_multiplier
+	stats.sword_arc = minf(TAU, stats.sword_arc)
+	# Startup/hit window stays fixed; intervals cannot undercut an action.
+	stats.sword_cooldown = maxf(0.16 + 0.08 * (stats.sword_strikes - 1), stats.sword_cooldown * attack_interval_multiplier)
+	stats.dash_duration *= dash_distance_multiplier
+	stats.dash_distance = stats.dash_speed * stats.dash_duration
+	stats.dash_cooldown = maxf(stats.dash_duration, stats.dash_cooldown)
 	stats.abilities = abilities
 	return stats
 

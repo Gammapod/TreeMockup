@@ -4,6 +4,34 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 
 ## Playable experiment
 
+### BUILD-01: stackable ability arena
+
+Click **BUILD-01 arena** in the header, or run:
+
+```powershell
+& 'C:\Godot\Godot.exe' --path v2 -- --arena
+```
+
+The same content is editable via F2 → Open → `examples/build_arena.json`.
+In the safe Workshop, allocate up to two points among two Thrust and two Sweep
+nodes. Select a free Crowd Trial or Durable Trial node, activate it, and walk
+through its north doorway. Return to Workshop to refund/reallocate.
+**Restart trial (keep build)** resets enemies, clear state, position and HP
+without changing allocations. Normal root travel does not heal.
+
+The footer shows final sword stats; the translucent sector previews the actual
+attack footprint. Selected-node details show each modifier's benefit and cost.
+Base damage is 8; one/two Sweeps deal 6/4.5. The five weak bats have 4 HP each;
+the durable bat has 24 HP, requiring 3/4/6 hits respectively.
+
+Thrust, Sweep, Quick Cut, Long Dash, Quick Step and Phase Dash are supported
+through the [numeric modifier vocabulary](docs/knowledge/content.md).
+This first arena deliberately exposes only Thrust/Sweep; further configurations
+and the boss follow player feedback. HP upgrades raise maximum HP without healing;
+Flippers remain binary. See [BUILD-01](docs/knowledge/experiments.md#build-01--stackable-ability-tradeoffs-2026-11-15).
+
+### Controls and original branching scenario
+
 - WASD moves through open green doorways; E opens nearby chests and remains for deliberate object interactions.
 - The map shows authored node positions, travel links (solid), prerequisite arrows (dashed), and a yellow **YOU** marker. Click a node to select it, use the wheel to zoom, right/middle-drag to pan, and **Fit graph** to reset the view.
 - Nodes show **✓ active**, **+ available to activate**, or **× blocked**, with allocation costs in their centers. Select any node to see its state and use **Activate / Deactivate** below the map. Unavailable actions explain why. Active markers describe allocation, not permission to deactivate. Selection (white ring) does not move the player or change the build.
@@ -11,7 +39,7 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 - Entering a room centers it on the map and fits its directly linked neighbors, including inactive rooms, without changing selection. Pan/zoom remains manual until the next entry; **Fit graph** shows the whole graph.
 - Drag the divider between room and map to adjust their space. The window can be resized (minimum 960×640); **F11** or the header button switches fullscreen/windowed. The room scales proportionally with letterboxing, keeping its 800×600 gameplay coordinates. Resizing the map refits the current neighborhood, or the whole graph after manual navigation.
 - Space performs a timed directional sword attack when Sword is active.
-- Shift dashes when Boots is active. Hit Dash halves its distance and bypasses enemy contact damage; Run replaces it with double-speed movement while Shift is held. Walls still block movement.
+- Shift dashes when Boots is active. Phase/Hit Dash retains 65% distance and bypasses enemy contact damage; Run replaces it with double-speed movement while Shift is held. Walls still block movement.
 - Blue pickups permanently increase allocation capacity; yellow pickups grant gold.
 - Pink diamond tokens are room-local objectives and respawn on re-entry only while uncleared. Cleared rooms contain no tokens. Map badges **C** (cleared) and **R** (root) are separate from activation. Select a room to inspect its clear conditions/effects.
 - Select a cleared, active root and press **Travel to root** to reach its spawn from anywhere, even across disconnected branches. Travel preserves HP and your build.
@@ -21,7 +49,7 @@ Open **this directory's `project.godot`** in Godot 4.6 and run. This is a separa
 
 The default scenario follows [branching-dungeon.mmd](examples/scenario-designs/branching-dungeon.mmd): activate Sword or Boots with your initial point, collect both keys, choose a style, reach its landing and collect another key. Explore the other branch, then activate Prize with both landings active. There are 14 nodes and 18 connections; all six keys fund the seven active non-root rooms on the final route. Practice rooms are optional allocations. Each branch's three styles are mutually exclusive.
 
-Big Swing grants 1.5× reach with a two-second attack cooldown; Fast Swing performs three half-range strikes. The HP+ choices grant five current/max HP, and the practice rooms grant one. Starting Room and Prize each grant one; this scenario starts with one HP. Defeated enemies stay defeated while their room remains active; keys remain collected permanently. See the [branching scenario record](docs/knowledge/branching-scenario.md) for the design mapping and test trace.
+Big Swing grants 1.5× reach with a two-second attack cooldown; Fast Swing performs three half-range strikes. The HP+ choices grant five max HP, and the practice rooms grant one. Starting Room and Prize each grant one; this scenario starts with one HP. Increasing maximum HP does not heal. Defeated enemies stay defeated while their room remains active; keys remain collected permanently. See the [branching scenario record](docs/knowledge/branching-scenario.md) for the design mapping and test trace.
 
 Press **F2** to open the content editors. The current run pauses while editing.
 
@@ -42,6 +70,7 @@ The editors intentionally use JSON inspectors for detailed rules rather than pol
 Open `v2/examples/*.json` from the editor:
 
 - `branching.json`: the full Mermaid branching design, including practice rooms, sword/dash/HP choices, two-key ability rooms, alternate landing prerequisites and the shared Prize.
+- `build_arena.json`: BUILD-01 safe allocation hub, four stackable upgrades, two-point budget, crowd and durable-target trials.
 - `water_flippers.json`: the old water/flippers topology with an actual water barrier and a prize chest. Activate Flippers from Start to cross the barrier in Water.
 - `switch_wall.json`: the old switch/wall topology, capacity pickups, and a sword-operated switch that changes a wall in another room. Its state persists while the target room is unloaded or inactive.
 - `combat.json`: the old combat topology, capacity progression, bats and gold rewards adapted to node allocation.
@@ -84,7 +113,7 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 ### Explicit prototype policies
 
 - Encounters: surviving enemies reset on departure; defeated enemies stay defeated while the node remains active. Deactivation resets its encounter unless a cleared room has the no-respawn effect. Permanent pickups remain collected. Switch-hit objectives latch for the run; token objective progress resets on departure.
-- Health: five base HP by default; `dungeon.base_hp` can override this. Active nodes add `max_hp_bonus`. Increases grant the same amount of current HP, decreases clamp it, and room transitions never heal. Reactivating a health node grants its increase again, matching the graph's explicit current/max-HP rule.
+- Health: five base HP by default; `dungeon.base_hp` can override this. Active nodes add `max_hp_bonus`. Increases never heal; decreases clamp current HP. Room transitions and refund/reactivation do not heal. Fresh runs, defeat returns, and explicit arena trial restarts initialize full health.
 - Room activation is local to the current room, not proximity to a particular door. Remote activation is not implemented; add it later as an interaction permission rather than bypassing prerequisite/resource validation.
 - The demo has sword, dash and an ALL merge. ANY merges and exclusive groups are exercised by model tests. Water, flippers, remote switches/walls, chests and numeric ability modifiers are supported. Content save/load is separate from run save/load, which is still future work.
 - Current capabilities use minimal numeric fields plus ability IDs; behavior variants should become separate implementations as they are explored.
@@ -96,6 +125,8 @@ Map coordinates are advisory and distinct from room-local geometry. No spatial p
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/content_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/editor_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/branching_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/build_tests.gd
+& 'C:\Godot\Godot.exe' --headless --path v2 --script tests/arena_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/shell_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_tests.gd
 & 'C:\Godot\Godot.exe' --headless --path v2 --script tests/map_preview_tests.gd
@@ -110,4 +141,4 @@ Run from the repository root (use `--path .` if already in `v2`). Tests cover al
 
 ## Experiment roadmap
 
-See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines and the required log format. The [V2 experiment backlog](docs/backlog.md) holds prioritized gameplay, UI, authoring, primitive and layout ideas. Its guiding goal is to learn what supports **“the dungeon is also a skill tree.”** UI-01 and the clearing functionality are accepted baselines. The [clear-state contract](docs/knowledge/clear-state.md) holds current rules; its walkthrough, architectural review and hardening trace are [archived](docs/archive/cleared-rooms-closeout.md). CLEAR-03 through CLEAR-06 are potential future experiments; the next experiment has not been selected.
+See the [V2 knowledge bundle](docs/knowledge/index.md) for the compact handoff record and [experiment record](docs/knowledge/experiments.md) for accepted baselines and the required log format. The [V2 experiment backlog](docs/backlog.md) holds candidate ideas. The guiding goal is **“the dungeon is also a skill tree.”** BUILD-01 is implemented and ready for player evaluation: arena feedback → boss encounter → 14–18-node dungeon.

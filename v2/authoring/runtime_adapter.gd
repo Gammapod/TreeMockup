@@ -8,6 +8,7 @@ func compile(document: Dictionary) -> Dictionary:
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
 	var data: Dictionary = document.dungeon.duplicate(true)
+	data.scenario_id = document.id
 	var base_hp: Variant = data.get("base_hp", 5)
 	if not _number(base_hp) or base_hp < 0 or floor(base_hp) != base_hp:
 		errors.append("base_hp must be a nonnegative integer")
@@ -72,12 +73,14 @@ func compile(document: Dictionary) -> Dictionary:
 				var allowed: Array = ["big", "fast"] if modifier == "sword_style" else ["phase", "run"]
 				if node.modifiers[modifier] not in allowed:
 					errors.append("Unsupported %s: %s" % [modifier, node.modifiers[modifier]])
-			elif modifier not in ["move_speed_multiplier", "sword_range_multiplier", "sword_damage_bonus", "dash_speed_multiplier", "max_hp_bonus"]:
+			elif modifier not in ["move_speed_multiplier", "sword_range_multiplier", "sword_arc_multiplier", "sword_damage_multiplier", "sword_cooldown_multiplier", "sword_damage_bonus", "dash_speed_multiplier", "dash_distance_multiplier", "dash_cooldown_multiplier", "max_hp_bonus"]:
 				errors.append("Unsupported modifier: " + modifier)
 			elif not _number(node.modifiers[modifier]) or node.modifiers[modifier] < 0:
 				errors.append("Modifier must be a nonnegative number: " + modifier)
 			elif modifier in ["max_hp_bonus", "sword_damage_bonus"] and floor(node.modifiers[modifier]) != node.modifiers[modifier]:
 				errors.append("Modifier must be an integer: " + modifier)
+			elif modifier.ends_with("_multiplier") and node.modifiers[modifier] <= 0:
+				errors.append("Multiplier must be positive: " + modifier)
 		data.nodes[node.id] = result
 	# Compatibility for pre-clear V1 bundles: translate the old implicit start
 	# root into the same effect used by authored rooms, isolated from reused templates.

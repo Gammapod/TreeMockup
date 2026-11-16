@@ -7,6 +7,8 @@ var split: HSplitContainer
 var map_region: VBoxContainer
 var hud: Label
 var status: Label
+var arena_button: Button
+var retry_button: Button
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -30,6 +32,16 @@ func _ready() -> void:
 	fullscreen.focus_mode = Control.FOCUS_NONE
 	fullscreen.pressed.connect(toggle_fullscreen)
 	header.add_child(fullscreen)
+	arena_button = Button.new()
+	arena_button.text = "BUILD-01 arena"
+	arena_button.focus_mode = Control.FOCUS_NONE
+	header.add_child(arena_button)
+	retry_button = Button.new()
+	retry_button.text = "Restart trial (keep build)"
+	retry_button.tooltip_text = "Fresh trial: return to Workshop, restore HP and enemies, retain allocations."
+	retry_button.focus_mode = Control.FOCUS_NONE
+	retry_button.hide()
+	header.add_child(retry_button)
 	split = HSplitContainer.new()
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split.add_theme_constant_override("separation", 12)

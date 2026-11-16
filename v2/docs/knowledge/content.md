@@ -60,7 +60,7 @@ room: {...}}` and rejects duplicate template IDs.
 | --- | --- |
 | Objects | `obstacle`, `water`, `wall`, `switch`, `enemy`, `pickup`, `chest`, `token` |
 | Abilities | `sword`, `dash`, `flippers` |
-| Numeric modifiers | Move speed, sword range/damage, dash speed, max HP |
+| Numeric modifiers | Move speed; sword reach, arc, damage, interval; dash speed, distance, recharge; max HP (see below) |
 | Behavior modifiers | Sword `big`/`fast`; dash `phase`/`run` |
 | Clear conditions | All enemies defeated, named switch hit, all tokens collected |
 | Clear effects | Reveal pickup, prevent enemy respawn, become root |
@@ -68,3 +68,41 @@ room: {...}}` and rejects duplicate template IDs.
 
 The [JSON Schema](../content.schema.json) is structural only. The store and
 adapter perform the semantic checks above.
+
+## BUILD-01 modifier authoring
+
+Multipliers must be finite and positive; additive `max_hp_bonus` and
+`sword_damage_bonus` remain nonnegative integers. Damage is fractional at
+runtime. All additive sword damage is applied before damage multipliers, so
+node order cannot change the result.
+
+| Candidate | Node `modifiers` |
+| --- | --- |
+| Thrust | `{"sword_range_multiplier":1.3,"sword_arc_multiplier":0.7}` |
+| Sweep | `{"sword_arc_multiplier":1.5,"sword_damage_multiplier":0.75}` |
+| Quick Cut | `{"sword_cooldown_multiplier":0.75,"sword_range_multiplier":0.8}` |
+| Long Dash | `{"dash_distance_multiplier":1.4,"dash_cooldown_multiplier":1.4}` |
+| Quick Step | `{"dash_distance_multiplier":0.75,"dash_cooldown_multiplier":0.7}` |
+| Phase Dash | `{"dash_style":"phase"}` — contact immunity, distance ×0.65 |
+| HP | `{"max_hp_bonus":1}` — maximum only, never healing |
+
+Base sword: reach 92 world units, arc 1.8 radians (~103°), damage 1, interval
+0.32 seconds. `build_arena.json` adds 7 base damage for readable hit thresholds.
+Base dash: speed 650 units/second, duration 0.16 seconds (104 units), recharge
+0.65 seconds measured from dash start. Distance modifiers change duration, not
+speed. Numeric modifiers multiply across active nodes; refund recomputes them.
+
+Arc saturates at 360°. The single-strike attack has fixed 0.14-second startup
+and a 0.16-second action duration; attack interval cannot undercut that duration.
+Legacy multi-strike styles extend the duration by 0.08 seconds per extra strike.
+Dash recharge cannot be shorter than its duration. These bounds matter for
+authored stacks beyond the experiment's two-copy limit.
+
+Attack direction/reach/arc/damage and dash direction/speed/duration/contact
+immunity are captured at action start. Walls still occlude sword hits and block
+dashes. Flippers alone bypass water collision. Legacy big/fast sword and run
+styles remain usable by existing fixtures; Phase Dash now uses BUILD-01 tuning.
+
+The runtime includes the source bundle ID as `scenario_id`. The coordinator
+uses `build_arena` to expose an explicit fresh-trial reset; it does not change
+ordinary dungeon travel/healing rules.

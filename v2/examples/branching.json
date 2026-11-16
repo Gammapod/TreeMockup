@@ -115,6 +115,6 @@
     "design_source": "scenario-designs/branching-dungeon.mmd",
     "glossary_source": "scenario-designs/shared_elements_glossary.yaml",
     "diagram_node_aliases": {"sword_room": "sword", "boots_room": "boots", "final_branch": "prize"},
-    "notes": "Neutral edges allow local activation either way; directed style edges require their parent continuously. Landings accept any one style; Prize requires both landings. Style choices are exclusive within each branch. Hit Dash uses the glossary's big-dash effect: half distance and immunity to enemy contact during the dash. Health nodes grant current/max HP on activation."
+    "notes": "Neutral edges allow local activation either way; directed style edges require their parent continuously. Landings accept any one style; Prize requires both landings. Style choices are exclusive within each branch. BUILD-01 updates Hit Dash to 65% distance with immunity to enemy contact during the dash. Health nodes increase maximum HP without healing; removal clamps current HP."
   }
 }

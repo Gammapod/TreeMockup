@@ -1,0 +1,71 @@
+{
+  "format": "room-tree",
+  "version": 1,
+  "id": "build_arena",
+  "name": "BUILD-01 — Thrust and Sweep",
+  "rooms": [
+    {
+      "id": "workshop", "name": "Safe Workshop", "size": [800, 600], "spawn": [400, 390],
+      "clear": {"conditions": [], "effects": [{"kind": "become_root"}]},
+      "ports": [
+        {"id": "thrust_a", "position": [65, 220]},
+        {"id": "thrust_b", "position": [65, 440]},
+        {"id": "sweep_a", "position": [735, 220]},
+        {"id": "sweep_b", "position": [735, 440]},
+        {"id": "crowd", "position": [250, 85]},
+        {"id": "durable", "position": [550, 85]}
+      ],
+      "objects": []
+    },
+    {
+      "id": "upgrade", "name": "Upgrade Practice", "size": [800, 600],
+      "ports": [{"id": "west", "position": [65, 320]}, {"id": "east", "position": [735, 320]}],
+      "objects": []
+    },
+    {
+      "id": "crowd_trial", "name": "Crowd Trial", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}],
+      "clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": []},
+      "objects": [
+        {"id": "bat_0", "kind": "enemy", "position": [220, 300], "properties": {"hp": 4, "speed": 65, "radius": 14}},
+        {"id": "bat_1", "kind": "enemy", "position": [310, 230], "properties": {"hp": 4, "speed": 65, "radius": 14}},
+        {"id": "bat_2", "kind": "enemy", "position": [400, 210], "properties": {"hp": 4, "speed": 65, "radius": 14}},
+        {"id": "bat_3", "kind": "enemy", "position": [490, 230], "properties": {"hp": 4, "speed": 65, "radius": 14}},
+        {"id": "bat_4", "kind": "enemy", "position": [580, 300], "properties": {"hp": 4, "speed": 65, "radius": 14}}
+      ]
+    },
+    {
+      "id": "durable_trial", "name": "Durable Target Trial", "size": [800, 600],
+      "ports": [{"id": "south", "position": [400, 555]}],
+      "clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": []},
+      "objects": [
+        {"id": "large_bat", "kind": "enemy", "position": [400, 240], "properties": {"hp": 24, "speed": 90, "radius": 28}}
+      ]
+    }
+  ],
+  "dungeon": {
+    "root": "start", "initial_capacity": 2, "base_hp": 8,
+    "nodes": [
+      {"id": "start", "name": "Workshop", "template": "workshop", "cost": 0, "requires_all": [], "requires_any": [], "abilities": ["sword"], "modifiers": {"sword_damage_bonus": 7}, "map_position": [400, 420]},
+      {"id": "thrust_a", "name": "Thrust A", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [70, 320]},
+      {"id": "thrust_b", "name": "Thrust B", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_range_multiplier": 1.3, "sword_arc_multiplier": 0.7}, "map_position": [70, 520]},
+      {"id": "sweep_a", "name": "Sweep A", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [730, 320]},
+      {"id": "sweep_b", "name": "Sweep B", "template": "upgrade", "cost": 1, "requires_all": [], "requires_any": [], "abilities": [], "modifiers": {"sword_arc_multiplier": 1.5, "sword_damage_multiplier": 0.75}, "map_position": [730, 520]},
+      {"id": "crowd", "name": "Crowd Trial", "template": "crowd_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [275, 320]},
+      {"id": "durable", "name": "Durable Trial", "template": "durable_trial", "cost": 0, "requires_all": [], "requires_any": [], "abilities": [], "map_position": [525, 320]}
+    ],
+    "links": [
+      {"id": "thrust_a", "a": "start", "b": "thrust_a", "a_port": "thrust_a", "b_port": "east", "activate_from": ["start", "thrust_a"]},
+      {"id": "thrust_b", "a": "start", "b": "thrust_b", "a_port": "thrust_b", "b_port": "east", "activate_from": ["start", "thrust_b"]},
+      {"id": "sweep_a", "a": "start", "b": "sweep_a", "a_port": "sweep_a", "b_port": "west", "activate_from": ["start", "sweep_a"]},
+      {"id": "sweep_b", "a": "start", "b": "sweep_b", "a_port": "sweep_b", "b_port": "west", "activate_from": ["start", "sweep_b"]},
+      {"id": "crowd", "a": "start", "b": "crowd", "a_port": "crowd", "b_port": "south", "activate_from": ["start", "crowd"]},
+      {"id": "durable", "a": "start", "b": "durable", "a_port": "durable", "b_port": "south", "activate_from": ["start", "durable"]}
+    ],
+    "interactions": []
+  },
+  "extensions": {
+    "experiment": "BUILD-01",
+    "playtest": "Allocate zero, one, or two upgrades in the Workshop. Activate either free trial room and walk through its north door. Base damage 8; double Sweep damage 4.5. Crowd bats have 4 HP; durable target has 24 HP (3/4/6 hits for zero/one/two Sweeps). Restart trial retains allocations but resets enemies, clear state, health and position. Return to Workshop for refunds."
+  }
+}

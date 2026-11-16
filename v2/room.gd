@@ -39,7 +39,7 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 			pickups.append(pickup.duplicate())
 	player = PLAYER.new()
 	player.position = ports.get(entry, data.get("spawn", Vector2(400, 400)))
-	player.set_capabilities(caps, false)
+	player.set_capabilities(caps)
 	player.hp = mini(hp, player.max_hp)
 	player.attack.connect(_attack)
 	add_child(player)
@@ -210,14 +210,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				reward_collected.emit(id)
 				return
 
-func _attack(origin: Vector2, facing: Vector2, reach: float, damage: int) -> void:
+func _attack(origin: Vector2, facing: Vector2, reach: float, damage: float, arc: float = 1.8) -> void:
 	for object in objects:
-		if object.kind == "switch" and _in_attack(origin, facing, object.position, reach):
+		if object.kind == "switch" and _in_attack(origin, facing, object.position, reach, arc):
 			switch_toggled.emit(object.id)
 	for i in range(enemies.size() - 1, -1, -1):
 		var enemy: Dictionary = enemies[i]
-		var offset: Vector2 = enemy.body.position - origin
-		if offset.length() > reach + enemy.radius or (offset.length() > 1 and facing.dot(offset.normalized()) < cos(0.9)):
+		if not _overlaps_attack(enemy.body.position - origin, facing, reach, arc, enemy.radius):
 			continue
 		var ray := PhysicsRayQueryParameters2D.create(to_global(origin), enemy.body.global_position, 1)
 		if not get_world_2d().direct_space_state.intersect_ray(ray).is_empty():
@@ -229,9 +228,15 @@ func _attack(origin: Vector2, facing: Vector2, reach: float, damage: int) -> voi
 			enemies.remove_at(i)
 			objective_event.emit("enemy_defeated", enemy.id)
 
-func _in_attack(origin: Vector2, facing: Vector2, target: Vector2, reach: float) -> bool:
+static func _overlaps_attack(offset: Vector2, facing: Vector2, reach: float, arc: float, radius: float = 0.0) -> bool:
+	var angle := facing.angle_to(offset)
+	var direction := facing.rotated(clampf(angle, -arc * 0.5, arc * 0.5))
+	var nearest := direction * clampf(offset.dot(direction), 0.0, reach)
+	return offset.distance_to(nearest) <= radius + 0.001
+
+func _in_attack(origin: Vector2, facing: Vector2, target: Vector2, reach: float, arc: float = 1.8) -> bool:
 	var offset := target - origin
-	if offset.length() > reach or (offset.length() > 1 and facing.dot(offset.normalized()) < cos(0.9)):
+	if not _overlaps_attack(offset, facing, reach, arc):
 		return false
 	var ray := PhysicsRayQueryParameters2D.create(to_global(origin), to_global(target), 1)
 	return get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
@@ -266,7 +271,7 @@ func _draw() -> void:
 			draw_circle(pickup.position, 10, Color("88cbff") if pickup.kind == "capacity" else Color("ffd569"))
 	for enemy in enemies:
 		draw_circle(enemy.body.position, enemy.radius, Color("c580df"))
-		draw_string(ThemeDB.fallback_font, enemy.body.position + Vector2(-4, 5), str(enemy.hp), HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
+		draw_string(ThemeDB.fallback_font, enemy.body.position + Vector2(-10, 5), "%.2f" % enemy.hp, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	for token in tokens:
 		var p: Vector2 = token.position
 		draw_colored_polygon(PackedVector2Array([p + Vector2(0, -12), p + Vector2(9, 0), p + Vector2(0, 12), p + Vector2(-9, 0)]), Color("ff95df"))

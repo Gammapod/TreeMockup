@@ -121,6 +121,26 @@ func select_node(id: String) -> void:
 	if id == snapshot.current and preview.reason not in ["root", "tree_editing_locked"] and not preview.ok:
 		reason_text = "You cannot deactivate the room you occupy."
 	selection.text = "%s • Cost: %d\n%s%s" % [node.name, node.cost, state_text, " • You are here" if id == snapshot.current else ""]
+	for ability in node.get("abilities", []):
+		selection.text += "\nGrants: " + ability.capitalize()
+	var modifier_names := {
+		"sword_range_multiplier": "Reach", "sword_arc_multiplier": "Arc",
+		"sword_damage_multiplier": "Damage", "sword_cooldown_multiplier": "Attack interval",
+		"dash_distance_multiplier": "Dash distance", "dash_cooldown_multiplier": "Dash recharge",
+		"move_speed_multiplier": "Move speed", "dash_speed_multiplier": "Dash speed"
+	}
+	for key in node.get("modifiers", {}):
+		var value: Variant = node.modifiers[key]
+		if modifier_names.has(key):
+			selection.text += "\n%s ×%.2f (%+.0f%%)" % [modifier_names[key], value, (float(value) - 1.0) * 100]
+		elif key == "max_hp_bonus":
+			selection.text += "\nMax HP +%d (does not heal)" % value
+		elif key == "sword_damage_bonus":
+			selection.text += "\nBase damage +%d" % value
+		elif key == "dash_style" and value == "phase":
+			selection.text += "\nEnemy-contact immunity during dash; distance ×0.65"
+		else:
+			selection.text += "\n%s: %s" % [key.replace("_", " ").capitalize(), str(value)]
 	selection.text += "\n" + ("Cleared" if snapshot.get("cleared", {}).has(id) else "Uncleared")
 	var is_root: bool = snapshot.get("roots", {}).has(id)
 	if is_root:

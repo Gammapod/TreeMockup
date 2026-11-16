@@ -22,9 +22,13 @@ var tree_ui
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color("121b28"))
 	data = CONTENT.create() if data_override.is_empty() else data_override
+	if data_override.is_empty() and "--arena" in OS.get_cmdline_user_args():
+		data = CONTENT.create("res://examples/build_arena.json")
 	progression = PROGRESSION.new(data)
 	shell = preload("res://gameplay_shell.gd").new()
 	add_child(shell)
+	shell.arena_button.pressed.connect(func(): _play_document(CONTENT.create("res://examples/build_arena.json")))
+	shell.retry_button.pressed.connect(_request_trial_restart)
 	hud = shell.hud
 	status = shell.status
 	tree_ui = preload("res://gameplay_tree.gd").new()
@@ -105,6 +109,15 @@ func _finish_transition(generation: int, kind: String, destination: String, entr
 	if kind == "defeat":
 		_enter_room(data.root, "", progression.capabilities().max_hp)
 		return
+	if kind == "trial":
+		var selected: Array = progression.active.keys()
+		_play_document(data)
+		for id in selected:
+			if id != data.root:
+				progression.activate(id, data.root)
+		message = "Fresh trial: build retained; health, enemies and clear state reset."
+		_refresh()
+		return
 	if room.player.hp <= 0:
 		_defeat()
 		return
@@ -181,8 +194,28 @@ func _refresh() -> void:
 		previews[id] = progression.preview_deactivation(id, current) if is_active else progression.preview_activation(id, current)
 		travel_previews[id] = progression.preview_root_travel(id, current)
 	tree_ui.refresh({"current": current, "active": progression.active, "cleared": progression.cleared, "roots": progression.roots, "can_edit_tree": progression.can_edit_tree(current), "travel_previews": travel_previews, "available_points": progression.available_points(), "previews": previews})
-	status.text = message + "\n\nActive abilities: " + ", ".join(progression.capabilities().abilities.keys())
+	var caps: Dictionary = progression.capabilities()
+	status.text = message + "\n" + _ability_stats(caps)
+	var arena: bool = data.get("scenario_id", "") == "build_arena"
+	shell.retry_button.visible = arena
+	shell.arena_button.visible = not arena
+	if arena and current == data.root:
+		status.text += "\nChoose up to 2 upgrades. Activate a free trial, then use its north door. Restart trial resets HP/enemies, keeps build."
 	room.queue_redraw()
+
+func _ability_stats(caps: Dictionary) -> String:
+	var lines: PackedStringArray = []
+	if caps.abilities.has("sword"):
+		lines.append("Sword · Reach %.1f · Arc %.1f° · Damage %.2f · Interval %.3fs" % [caps.sword_range, rad_to_deg(caps.sword_arc), caps.sword_damage, caps.sword_cooldown])
+	if caps.abilities.has("dash"):
+		lines.append("Dash · Distance %.1f · Recharge %.3fs%s" % [caps.dash_distance, caps.dash_cooldown, " · Contact immunity" if caps.dash_phase else (" · Run replaces dash" if caps.sprint else "")])
+	if caps.abilities.has("flippers"):
+		lines.append("Flippers · Water traversal")
+	return "\n".join(lines) if not lines.is_empty() else "No active abilities."
+
+func _request_trial_restart() -> void:
+	if data.get("scenario_id", "") == "build_arena" and not transition_pending and (studio == null or not studio.visible):
+		_queue_transition("trial", data.root)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_F11:
@@ -207,8 +240,9 @@ func _open_studio() -> void:
 	shell.hide()
 
 func _close_studio() -> void:
-	studio.hide()
-	studio.process_mode = Node.PROCESS_MODE_DISABLED
+	if studio != null:
+		studio.hide()
+		studio.process_mode = Node.PROCESS_MODE_DISABLED
 	room.process_mode = Node.PROCESS_MODE_INHERIT
 	room.show()
 	shell.show()

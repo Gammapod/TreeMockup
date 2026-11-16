@@ -29,10 +29,11 @@ allocation point, and one cost per non-root room.
 * Sword and Boots each supply two permanent capacity pickups; each landing
   supplies one. All six keys fund the final seven active non-root rooms.
 * Big Sword: 1.5× reach and two-second cooldown. Fast Sword: three half-range
-  strikes. Phase Dash: half distance and contact immunity. Run: held sprint.
+  strikes. Phase Dash: 65% distance and contact immunity (BUILD-01 tuning).
+  Run: held sprint.
 * Base HP is zero; Starting Room grants one HP. Practice rooms and Prize grant
-  one, HP+ rooms grant five. Allocation changes current/max HP by the authored
-  modifier rule.
+  one, HP+ rooms grant five. Allocation raises maximum HP without healing;
+  removal clamps current HP. This supersedes the earlier activation-healing rule.
 
 # Evidence
 
