@@ -29,7 +29,7 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline. CLEAR-03 through CLEAR-06 remain potential future experiments.
 5. **BUILD-01 — Completed, baseline accepted.** Stackable sword/dash modifiers, max-HP-only upgrades, and the expanded eight-point workshop are retained. See the [architectural closeout](archive/build-01-closeout.md).
 6. **BOSS-01 — Completed, capstone accepted (2026-11-16):** free Roost Guardian trial retained as the encounter to design the dungeon around. Tweaking/polish is deferred. See the [architectural closeout](archive/boss-01-closeout.md).
-7. **Current focus:** editor UX exploration, with the door selector accepted and canvas/history ready for playtest. Contextual panels follow. The interconnected 14–18-node dungeon remains the next gameplay design target.
+7. **Current focus:** design the interconnected 14–18-node dungeon. Editor work is complete for now; see the accepted EDITOR-01 closeout below. The user has begun the dungeon in `examples/Test_Dungeon.json`.
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
@@ -56,6 +56,40 @@ Carry forward the user's desired moments:
 Plan build funding and persistent-state transitions alongside physical routes.
 The 29-node workshop remains a testing fixture, not the target dungeon layout.
 Presentation legibility and boss tuning follow the dungeon design and feedback.
+
+### Dungeon-enabling candidates
+
+These are proposals for the interconnected dungeon, not accepted rules. Select
+and evaluate small slices separately; preserve existing regression scenarios.
+`examples/Test_Dungeon.json` is exploratory material, and
+`examples/scenario-designs/Test_Dungeon.mmd` sketches the proposed opening.
+
+- **LOOT-01 — HP pickups:** Place healing in Key Storage so a player starting
+  at 1 HP can recover after its max-HP upgrade. Define healing amount, whether a
+  full-health pickup is consumed, persistence and re-entry behavior, and
+  interaction with changes to max HP. Max-HP allocation itself still does not
+  heal.
+- **LOOT-04 — Random enemy health drops:** Test health drops from defeated
+  enemies. Decide drop probability, reproducibility, pickup lifetime, and
+  behavior on re-entry, respawn and repeated kills; check for farming and
+  unreliable recovery. Depends on a defined HP pickup.
+- **HAZ-04 — Enemy movement and locomotion:** Explore skeletons moving
+  semi-randomly along cardinal directions and snakes moving along one axis
+  and bouncing off obstacles. Proposed collision policy: flying bats and
+  Guardian pass over water but not walls; walking enemies pass through neither.
+  Specify behavior when Flippers are allocated or refunded, and validate
+  Guardian arena assumptions separately. Future hazards and locomotion types
+  need their own explicit interaction rules.
+- **Sword/terrain interaction — design question:** Room 7 proposes a trapped
+  enemy reachable with either a long sword or Flippers. Current hit checks
+  without Flippers are blocked by water; decide whether to change that rule or
+  use different geometry before treating this as a supported solution.
+
+Existing `reveal_pickup` supports clear-revealed capacity or gold pickups and
+chests; no new capacity-reveal mechanic is currently identified. Existing
+switch-to-wall bindings toggle the wall, which is acceptable for the shortcut.
+A permanent non-toggleable switch is a separate possible future element, not a
+requirement for this opening.
 
 ## Gameplay presentation and traversal
 
@@ -255,6 +289,7 @@ Avoid building the whole catalogue first. Each primitive should enable a choice 
 | LOOT-01 | P2 | **Hearts:** one collectible restoring HP up to the current maximum. | Can encounter rewards provide recovery without relying on reallocating HP rooms? | Existing health; decide whether a full-health pickup is consumed. |
 | LOOT-02 | P2 | **MP restoration:** one pickup restoring MP up to its maximum. | Does recovery placement make magic allocation and route choice interesting? | STAT-05. |
 | LOOT-03 | P2 | **Temporary powerups:** one timed effect, such as speed, layered over the active build. | Does temporary power complement the skill tree or obscure which rooms grant the player's abilities? | Capability composition and an explicit expiry/stacking rule; test one effect. |
+| LOOT-04 | P2 | **Enemy health drops:** one random drop from a defeated enemy. | Does recovery support exploration without making repeated encounters a farming loop? | LOOT-01; define randomness and drop lifecycle. |
 
 ## Dungeon layout and geometry
 

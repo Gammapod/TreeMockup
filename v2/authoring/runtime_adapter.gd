@@ -51,7 +51,7 @@ func compile(document: Dictionary) -> Dictionary:
 						template.enemies.append({"id": object.id, "position": position, "hp": int(hp), "speed": float(speed), "radius": float(radius), "behavior": behavior})
 				"pickup", "chest":
 					var kind: String = str(object.properties.get("kind", "gold"))
-					if kind not in ["capacity", "gold"]:
+					if kind not in ["capacity", "gold", "health"]:
 						errors.append("Unsupported pickup kind: " + kind)
 					var value: Variant = object.properties.get("value", 1)
 					if not _number(value) or value <= 0 or floor(value) != value:

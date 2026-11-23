@@ -23,10 +23,11 @@ sources:
 | Stackable ability tradeoffs (BUILD-01) | `examples/build_arena.json` | Completed; user accepted the expanded workshop as a baseline. |
 | Roost Guardian capstone (BOSS-01) | Boss Trial in `examples/build_arena.json` | Completed; accepted for larger-dungeon design, tuning/polish deferred. |
 
-**Next design target:** the interconnected 14–18-node dungeon, using the
-accepted abilities and boss capstone. Concrete layout and implementation scope
-remain to be designed.
-Other candidates, including EDIT-01, live in the [backlog](../backlog.md).
+**Current design target:** the interconnected 14–18-node dungeon, using the
+accepted abilities and boss capstone. The user has begun work in
+`examples/Test_Dungeon.json`; its goals and remaining design are to be discussed.
+Editor work is complete for now; other candidates live in the
+[backlog](../backlog.md).
 
 # Recording an experiment
 

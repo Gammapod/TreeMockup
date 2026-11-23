@@ -130,7 +130,11 @@ func _finish_transition(generation: int, kind: String, destination: String, entr
 	_enter_room(destination, entry, room.player.hp)
 
 func _collect(object_id: String) -> void:
-	if progression.collect(current, object_id):
+	if progression.collect(current, object_id, room.player.hp, room.player.max_hp):
+		for pickup in data.templates[data.nodes[current].template].pickups:
+			if pickup.id == object_id and pickup.kind == "health":
+				room.player.hp = mini(room.player.max_hp, room.player.hp + pickup.value)
+				break
 		message = "Collected %s. This reward persists through deactivation." % object_id
 		_refresh()
 

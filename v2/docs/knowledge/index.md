@@ -20,6 +20,7 @@ implementation detail.
 * [BUILD-01 workshop](../../README.md#build-01-stackable-ability-arena) - Accepted stackable-build arena and play instructions.
 * [BOSS-01 capstone](../../README.md#boss-01-roost-guardian-trial) - Accepted encounter to design the larger dungeon around; tuning/polish remains open.
 * [Experiment record](experiments.md) - Current baselines, open questions, and the only log format for new gameplay experiments.
+* [Level design guide](level-design.md) - Evolving dungeon/skill-tree design strategies and grounded lessons.
 * [EDITOR-01 authoring baseline](../archive/editor-01-closeout.md) - Accepted
   direct-manipulation/editor-panel baseline and deferred authoring scope.
 

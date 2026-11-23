@@ -264,7 +264,7 @@ func capabilities() -> Dictionary:
 	stats.abilities = abilities
 	return stats
 
-func collect(node_id: String, object_id: String) -> bool:
+func collect(node_id: String, object_id: String, hp: int = -1, max_hp: int = -1) -> bool:
 	if not active.has(node_id) or not pickup_visible(node_id, object_id):
 		return false
 	var key := node_id + "/" + object_id
@@ -273,10 +273,12 @@ func collect(node_id: String, object_id: String) -> bool:
 	var template: Dictionary = definition.templates[definition.nodes[node_id].template]
 	for pickup in template.pickups:
 		if pickup.id == object_id:
+			if pickup.kind == "health" and (hp <= 0 or hp >= max_hp):
+				return false
 			collected[key] = true
 			if pickup.kind == "capacity":
 				capacity += pickup.get("value", 1)
-			else:
+			elif pickup.kind == "gold":
 				gold += pickup.get("value", 1)
 			return true
 	return false

@@ -1,0 +1,393 @@
+{
+	"format": "room-tree",
+	"version": 2.0,
+	"id": "tutorial_candidate",
+	"name": "Dungeon Opening — Tutorial Candidate",
+	"rooms": [
+		{
+			"id": "start_room",
+			"name": "Start",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "wall_1",
+					"kind": "wall",
+					"position": [
+						150.0,
+						140.0
+					],
+					"properties": {
+
+					},
+					"size": [
+						50.0,
+						50.0
+					]
+				},
+				{
+					"id": "wall_2",
+					"kind": "wall",
+					"position": [
+						600.0,
+						140.0
+					],
+					"properties": {
+
+					},
+					"size": [
+						50.0,
+						50.0
+					]
+				},
+				{
+					"id": "wall_3",
+					"kind": "wall",
+					"position": [
+						150.0,
+						460.0
+					],
+					"properties": {
+
+					},
+					"size": [
+						50.0,
+						50.0
+					]
+				},
+				{
+					"id": "wall_4",
+					"kind": "wall",
+					"position": [
+						600.0,
+						460.0
+					],
+					"properties": {
+
+					},
+					"size": [
+						50.0,
+						50.0
+					]
+				}
+			],
+			"clear": {
+				"conditions": [],
+				"effects": [
+					{
+						"kind": "become_root"
+					}
+				]
+			}
+		},
+		{
+			"id": "storage_room",
+			"name": "Key Storage",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						300.0,
+						250.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "medicine",
+					"kind": "pickup",
+					"position": [
+						300.0,
+						380.0
+					],
+					"properties": {
+						"kind": "health",
+						"value": 4.0
+					}
+				},
+				{
+					"id": "switch_1",
+					"kind": "switch",
+					"position": [
+						570.0,
+						260.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "wall_1",
+					"kind": "wall",
+					"position": [
+						690.0,
+						250.0
+					],
+					"size": [
+						60.0,
+						140.0
+					],
+					"properties": {
+
+					}
+				}
+			]
+		},
+		{
+			"id": "sword_room",
+			"name": "Sword Trial",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "bat_1",
+					"kind": "enemy",
+					"position": [
+						470.0,
+						235.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "bat_2",
+					"kind": "enemy",
+					"position": [
+						520.0,
+						390.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						300.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_enemies_defeated"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "capacity"
+					},
+					{
+						"kind": "prevent_enemy_respawn"
+					}
+				]
+			}
+		},
+		{
+			"id": "branch_room",
+			"name": "Beyond the Trial",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": []
+		}
+	],
+	"dungeon": {
+		"root": "start",
+		"initial_capacity": 1.0,
+		"base_hp": 1.0,
+		"nodes": [
+			{
+				"id": "start",
+				"name": "Start",
+				"template": "start_room",
+				"cost": 0.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					100.0,
+					200.0
+				]
+			},
+			{
+				"id": "key_store",
+				"name": "Key Storage — Health",
+				"template": "storage_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"modifiers": {
+					"max_hp_bonus": 4.0
+				},
+				"map_position": [
+					200.0,
+					200.0
+				]
+			},
+			{
+				"id": "sword",
+				"name": "Sword",
+				"template": "sword_room",
+				"cost": 1.0,
+				"requires_all": [
+					"key_store"
+				],
+				"requires_any": [],
+				"abilities": [
+					"sword"
+				],
+				"map_position": [
+					300.0,
+					200.0
+				]
+			},
+			{
+				"id": "dash",
+				"name": "Dash — Trial End",
+				"template": "branch_room",
+				"cost": 1.0,
+				"requires_all": [
+					"sword"
+				],
+				"requires_any": [],
+				"abilities": [
+					"dash"
+				],
+				"map_position": [
+					400.0,
+					100.0
+				]
+			},
+			{
+				"id": "flippers",
+				"name": "Flippers — Trial End",
+				"template": "branch_room",
+				"cost": 1.0,
+				"requires_all": [
+					"sword"
+				],
+				"requires_any": [],
+				"abilities": [
+					"flippers"
+				],
+				"map_position": [
+					400.0,
+					300.0
+				]
+			}
+		],
+		"links": [
+			{
+				"id": "start_storage",
+				"a": "start",
+				"b": "key_store",
+				"activate_from": [
+					"start",
+					"key_store"
+				],
+				"b_door": {
+					"wall": "west",
+					"offset": 0.5
+				}
+			},
+			{
+				"id": "storage_sword",
+				"a": "key_store",
+				"b": "sword",
+				"activate_from": [
+					"key_store",
+					"sword"
+				],
+				"a_door": {
+					"wall": "east",
+					"offset": 0.5
+				},
+				"b_door": {
+					"wall": "west",
+					"offset": 0.5
+				}
+			},
+			{
+				"id": "sword_dash",
+				"a": "sword",
+				"b": "dash",
+				"activate_from": [
+					"sword",
+					"dash"
+				],
+				"a_door": {
+					"wall": "north",
+					"offset": 0.5
+				},
+				"b_door": {
+					"wall": "south",
+					"offset": 0.5
+				}
+			},
+			{
+				"id": "sword_flippers",
+				"a": "sword",
+				"b": "flippers",
+				"activate_from": [
+					"sword",
+					"flippers"
+				],
+				"a_door": {
+					"wall": "east",
+					"offset": 0.5
+				},
+				"b_door": {
+					"wall": "west",
+					"offset": 0.5
+				}
+			}
+		],
+		"interactions": [
+			{
+				"id": "storage_switch",
+				"source": {
+					"node": "key_store",
+					"object": "switch_1",
+					"event": "toggled"
+				},
+				"target": {
+					"node": "key_store",
+					"object": "wall_1",
+					"action": "set_open"
+				}
+			}
+		]
+	},
+	"extensions": {
+		"design_source": "scenario-designs/Test_Dungeon.mmd",
+		"notes": "Experimental opening. Dash and Flippers rooms are provisional endpoints, not the finished dungeon."
+	}
+}

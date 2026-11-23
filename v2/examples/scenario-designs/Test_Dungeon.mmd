@@ -1,0 +1,88 @@
+flowchart BT
+subgraph intro [Tutorial]
+%% Major idea: Intro section to teach the player about activation, capacity upgrades, and the sword ability
+
+    start["start"]
+    %% Contents: Player spawns with 1 capacity and 1 HP.
+    %% Golden path: player sees there is a door, but it is closed. Player experiments with UI until they manage to activate the key_store node
+    %% Player learns: "Activation of a node = unlocking the door"
+    key_store["Key Storage"]
+    %% Ability: +4 HP
+    %% Contents: 1 capacity upgrade. 4 health pickups. Switch_1: removes Wall_1. Door towards sword_room blocked by Wall_1.
+    %% Golden path: Player picks up the capacity upgrade, allowing them to activate sword_room. Player can then hit the switch to go into sword_room.
+    %% Player learns: "Activation of a node = gaining an ability"
+    %% Player learns: "The sword ability can be used to hit switches"
+    start --- key_store
+end
+key_store --- sword_room
+sword_room --- boots_room
+
+subgraph sword-branch [Sword]
+%% Major idea: Player learns combat basics. Tree allows player to choose a Spear mod, a Heavy mod, or Neither. Strength increase works in conjunction with any choice. Clearing weapons_landing is necessary for reaching miniboss.
+
+    sword_room["Sword"]
+    %% Ability: Sword
+    %% Contents: 2-3 bats.
+    %% Clear condition: defeat all enemies
+    %% On clear: capacity upgrade appears
+    %% Golden path: Player defeats the enemies and sees that an upgrade appears. The player must make their first choice and explore the rest of the dungeon.
+    %% Player learns: "Defeating all enemies can make collectibles appear"
+    %% Player learns: "Not all paths can remain open at once"
+    weapons_1["Spear Mod"]
+    %% Ability: modifications that make the sword significantly narrower and longer range.
+    %% Contents, clear conditions, rewards: TBD
+    weapons_2["Heavy Mod"]
+    %% Ability: modifications that make the sword moderately wider and longer range, moderately more powerful, and significantly slower. Player rooted during sword cooldown, inturruptible by dash.
+    %% Contents, clear conditions, rewards: TBD
+    weapons_landing["Health Mod"]
+    %% Ability: +5 HP increase
+    %% Contents, clear conditions, rewards: TBD
+    weapons_bonus["Strength Up"]
+    %% Ability: moderate attack power increase
+    %% Contents, clear conditions, rewards: TBD
+end
+sword_room --- weapons_1 --- weapons_landing
+sword_room --- weapons_2 --- weapons_landing
+weapons_1 x-.-x weapons_2 %% mutually exclusive nodes
+sword_room --- weapons_landing
+weapons_landing --- weapons_bonus
+
+subgraph boots-branch [Boots]
+%% Major idea: Player learns movement/exploration basics. Player must go through boots_1 or boots_2 before clearing boots_room. Clearing boots_room is necessary for reaching miniboss.
+
+    boots_room["Boots"]
+    %% Ability: Dash
+    %% Contents: Open area that allows access to boots_1, boots_2, and miniboss doors. wall_1 initially blocks access to boots_landing door and switch_1. switch_1 opens wall_1. Tokens scattered through the room, with at least one behind wall_1.
+    %% Clear condition: collect all tokens
+    %% Clear reward: TBD
+    %% Golden path: player initially sees the switch and cannot access it. Player must explore boots_1 or boots_2 first, then re-enter from the boots_landing door before the room can be cleared.  
+    boots_1["Phase Dash"]
+    %% Ability: Phase Dash (dash can go through obstacles and enemies without taking damage). Player rooted during dash cooldown.
+    %% Contents, clear conditions, rewards: TBD
+    boots_2["Quick Step"]
+    %% Ability: modifications that make the dash go farther and have a shorter cooldown
+    %% Contents, clear conditions, rewards: TBD
+    boots_landing["Health Mod"]
+    %% Ability: +5 HP increase
+    %% Contents, clear conditions, rewards: TBD
+    boots_bonus["Speed Up"]
+    %% Ability: moderate movement speed increase
+    %% Contents, clear conditions, rewards: TBD
+    boots_flippers["Flippers"]
+    %% Ability: flippers
+    %% Contents, clear conditions, rewards: TBD
+    boots_room --- boots_1 --- boots_landing
+    boots_room --- boots_2 --- boots_landing
+    boots_1 x-.-x boots_2 %% mutually exclusive nodes
+
+    boots_room --- boots_landing    
+    boots_landing --- boots_bonus
+    boots_landing --- boots_flippers
+end
+weapons_landing --> miniboss %% prerequisite. weapons_landing must be both cleared and active.
+boots_room --> miniboss %% prerequisite. boots_room must be both cleared and active.
+miniboss
+%% Ability: TBD
+%% Contents: miniboss (behaviors TBD)
+%% Clear codition: defeat miniboss
+%% Clear reward: new root node, fast travel-able.

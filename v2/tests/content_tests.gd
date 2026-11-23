@@ -101,6 +101,13 @@ func _run() -> void:
 	_expect(game.room.barriers.water_strip.collision_layer == 0, "Cross-branch flippers capability removes water collision")
 	game.queue_free()
 	await process_frame
+	await _health_pickup_contract(store, adapter)
+	var room_script = load("res://room.gd")
+	_expect(room_script.has_method("pickup_visual_style"), "H3: room exposes a distinct health pickup/chest visual style")
+	if room_script.has_method("pickup_visual_style"):
+		var loose: Dictionary = room_script.pickup_visual_style({"kind": "health", "value": 4, "chest": false})
+		var chest: Dictionary = room_script.pickup_visual_style({"kind": "health", "value": 4, "chest": true})
+		_expect(loose.get("symbol") == "cross" and chest.get("symbol") == "cross" and loose.get("value") == 4 and chest.get("value") == 4, "H3: health pickup and chest expose a cross and authored value")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	if failures.is_empty():
 		print("All portable content contract tests passed.")
@@ -114,3 +121,44 @@ func _expect(condition: bool, message: String) -> void:
 	assertion_count += 1
 	if not condition:
 		failures.append(message)
+
+func _health_pickup_contract(store, adapter) -> void:
+	var doc: Dictionary = store.new_project()
+	doc.dungeon.base_hp = 1
+	doc.rooms[0].objects.append({"id": "medicine", "kind": "pickup", "position": [400, 400], "properties": {"kind": "health", "value": 3}})
+	var compiled: Dictionary = adapter.compile(doc)
+	_expect(compiled.ok, "H2: authored positive health pickup compiles")
+	var bad: Dictionary = doc.duplicate(true)
+	bad.rooms[0].objects[0].properties.value = 0
+	_expect(not adapter.compile(bad).ok, "H2: zero healing is rejected")
+	bad.rooms[0].objects[0].properties.value = 1.5
+	_expect(not adapter.compile(bad).ok, "H2: fractional healing is rejected")
+	if not compiled.ok:
+		return
+	var game = load("res://main.tscn").instantiate()
+	game.data_override = compiled.data
+	root.add_child(game)
+	await process_frame
+	game.room.player.position = Vector2(400, 400)
+	game.room._physics_process(0.0)
+	_expect(not game.progression.collected.has("start/medicine"), "H2: full-health contact does not consume pickup")
+	game.data.nodes.start.modifiers = {"max_hp_bonus": 4}
+	game._refresh()
+	_expect(game.room.player.hp == 1 and game.room.player.max_hp == 5, "H2: maximum increase does not heal")
+	game.room._physics_process(0.0)
+	_expect(game.room.player.hp == 4 and game.progression.collected.has("start/medicine"), "H2: pickup heals fixed amount and persists")
+	game._enter_room("start", "", 4)
+	_expect(game.room.pickups.is_empty(), "H2: collected pickup stays absent on reentry")
+	game._start_run(compiled.data)
+	_expect(not game.progression.collected.has("start/medicine"), "H2: fresh run resets collection")
+	game.room.player.hp = 4
+	game.room.player.position = Vector2(400, 400)
+	game.room._physics_process(0.0)
+	_expect(game.room.player.hp == 5, "H2: healing is capped at maximum HP")
+	var second: Dictionary = compiled.data.nodes.start.duplicate(true)
+	compiled.data.nodes.other = second
+	game.progression.active.other = true
+	_expect(game.progression.collect("other", "medicine", 1, 5), "H2: reused template has independent node/object collection")
+	_expect(game.progression.gold == 0, "H2: healing does not grant gold")
+	game.queue_free()
+	await process_frame

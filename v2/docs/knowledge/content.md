@@ -75,6 +75,25 @@ room: {...}}` and rejects duplicate template IDs.
 | Clear effects | Reveal pickup, prevent enemy respawn, become root |
 | Interaction | Switch `toggled` → wall `set_open` |
 
+### Health pickups
+
+Both bundle versions support the following room object (coordinates are local):
+
+```json
+{"id":"medicine","kind":"pickup","position":[400,400],"properties":{"kind":"health","value":3}}
+```
+
+`properties.value` is a finite positive integer, defaulting to 1, and is
+validated by the runtime adapter; the store and structural schema preserve
+unknown vocabulary. `chest` with the same properties is also supported and
+uses the ordinary E-key chest interaction. A visible pickup heals a living
+player by that fixed amount, capped at current maximum HP. It is not collected
+at full HP; it remains available for a later visit or interaction. Clear
+`reveal_pickup` rules apply normally. Collection is once per node/object for
+the run, survives room departure, deactivation and defeat, and resets on a
+fresh run. It grants neither gold nor capacity. There are no random drops.
+Increasing maximum HP remains non-healing.
+
 The [JSON Schema](../content.schema.json) is structural only. The store and
 adapter perform the semantic checks above.
 

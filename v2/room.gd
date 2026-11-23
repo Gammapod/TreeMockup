@@ -221,7 +221,7 @@ func _physics_process(delta: float) -> void:
 			player_defeated.emit()
 			return
 	for i in range(pickups.size() - 1, -1, -1):
-		if not pickups[i].get("chest", false) and player.position.distance_to(pickups[i].position) < 27:
+		if not pickups[i].get("chest", false) and (pickups[i].kind != "health" or player.hp < player.max_hp) and player.position.distance_to(pickups[i].position) < 27:
 			var id: String = pickups[i].id
 			pickups.remove_at(i)
 			reward_collected.emit(id)
@@ -243,7 +243,7 @@ func _physics_process(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_E:
 		for i in range(pickups.size() - 1, -1, -1):
-			if pickups[i].get("chest", false) and player.position.distance_to(pickups[i].position) < 50:
+			if pickups[i].get("chest", false) and (pickups[i].kind != "health" or player.hp < player.max_hp) and player.position.distance_to(pickups[i].position) < 50:
 				var id: String = pickups[i].id
 				pickups.remove_at(i)
 				reward_collected.emit(id)
@@ -293,6 +293,9 @@ func _in_attack(origin: Vector2, facing: Vector2, target: Vector2, reach: float,
 	var ray := PhysicsRayQueryParameters2D.create(to_global(origin), to_global(target), 1)
 	return get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
 
+static func pickup_visual_style(pickup: Dictionary) -> Dictionary:
+	return {"symbol": "cross" if pickup.kind == "health" else "", "value": pickup.get("value", 1)}
+
 func _draw() -> void:
 	draw_rect(Rect2(35, 55, 730, 530), Color("283646"))
 	for rect in obstacles:
@@ -320,7 +323,12 @@ func _draw() -> void:
 		if pickup.get("chest", false):
 			draw_rect(Rect2(pickup.position - Vector2(15, 12), Vector2(30, 24)), Color("ffd569"))
 		else:
-			draw_circle(pickup.position, 10, Color("88cbff") if pickup.kind == "capacity" else Color("ffd569"))
+			draw_circle(pickup.position, 10, Color("e45369") if pickup.kind == "health" else (Color("88cbff") if pickup.kind == "capacity" else Color("ffd569")))
+		var style := pickup_visual_style(pickup)
+		if style.symbol == "cross":
+			draw_rect(Rect2(pickup.position + Vector2(-3, -8), Vector2(6, 16)), Color.WHITE)
+			draw_rect(Rect2(pickup.position + Vector2(-8, -3), Vector2(16, 6)), Color.WHITE)
+			draw_string(ThemeDB.fallback_font, pickup.position + Vector2(12, -10), "+" + str(style.value), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
 	for enemy in enemies:
 		if bosses.has(enemy.id):
 			continue
