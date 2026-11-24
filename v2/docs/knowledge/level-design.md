@@ -65,6 +65,12 @@ and [UI](ui.md) contracts describe accepted behavior; the
 * Introduce a system with a visible purpose, let the player act, then show its
   consequence. The proposed opening starts with capacity to allocate before
   introducing a capacity pickup.
+* For an ability tutorial, offer a safe opportunity to notice its effect, then
+  a challenge that makes its benefit and tradeoff relevant. Make limitations
+  visible and provide an alternative route out; encounter tuning needs playtest.
+* Use sightlines and return routes to let players recognize a familiar space
+  from another side. An opened shortcut can make the result of exploration
+  legible without relying on an explanation.
 * Use memorable room geometry to support combat, navigation and orientation.
   A shortcut can depend on an ability or on a switch changing the world; the
   existing switch-to-wall interaction toggles rather than permanently opens.
@@ -74,6 +80,9 @@ and [UI](ui.md) contracts describe accepted behavior; the
 * Place healing deliberately. Max-HP upgrades do not heal, so increasing max HP
   is not by itself preparation for combat. Check recovery after refunds,
   defeat, and collecting one-use healing.
+* Gold can mark a provisional reward location while the capacity budget is
+  unresolved. Record funding-critical capacity separately and revisit each
+  placeholder after tracing the assembled dungeon.
 
 ## Targets for the interconnected prototype
 
@@ -94,6 +103,10 @@ tradeoff. These are goals, not claims that the current candidate achieves them.
   real dungeon. Its detailed teaching, combat balance and recovery remain open
   playtest questions; see
   [`tutorial-slice.md`](../../examples/scenario-designs/tutorial-slice.md).
+* **Phase Dash lab:** The user said teleporting worked as intended both with
+  and without rooted recharge. Timing could be faster but is acceptable for
+  now; its usefulness in dungeon encounters remains to be evaluated. See the
+  [experiment record](experiments.md#unified-abilities--phase-dash-lab-2026-11-23).
 
 Add lessons only when grounded in observed feedback or evaluated experiments;
 distinguish player observations from technical checks and unevaluated ideas.

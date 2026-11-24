@@ -2,6 +2,9 @@
 
 Status: **Completed and accepted.** The author accepted every planned editor UX
 slice. The concise closeout is [EDITOR-01](archive/editor-01-closeout.md).
+This document records the earlier exploration; the current unified capability
+model selector and grouped contribution editor are described in the
+[UI contract](knowledge/ui.md#node-editor-checkpoint).
 
 ## Direction
 

@@ -141,6 +141,8 @@ func _ready() -> void:
 	inspector_tabs.add_child(node_panel)
 	inspector_tabs.set_tab_title(0, "Properties")
 	node_panel.field_requested.connect(_edit_node_field)
+	node_panel.model_requested.connect(_set_capability_model)
+	node_panel.contribution_requested.connect(_edit_contribution)
 	node_panel.template_edit_requested.connect(_edit_node_template)
 	node_panel.template_duplicate_requested.connect(_duplicate_node_template)
 	node_panel.doors_requested.connect(_edit_doors)
@@ -269,6 +271,7 @@ func _update_context() -> void:
 		inspector_tabs.current_tab = 0 if mode == "tree" else (1 if mode == "room" else 2)
 		panel_mode = mode
 	changing_tabs = false
+	node_panel.metadata = store.capability_metadata()
 	node_panel.configure(document, selected_node if mode == "tree" else "")
 	var room_id: String = document.rooms[room_index].id if mode == "room" and not document.rooms.is_empty() else ""
 	room_panel.configure(document, room_id, room_selections.get(room_id, ""))
@@ -405,6 +408,88 @@ func _edit_node_field(id: String, field: String, value: Variant) -> void:
 		var before := _snapshot()
 		document = candidate
 		_record("Edit node " + field, before)
+		_refresh()
+		return
+
+func _set_capability_model(model: String) -> void:
+	if not _apply():
+		_update_context()
+		return
+	if mode != "tree" or model not in store.capability_metadata().models:
+		return
+	if document.dungeon.get("capability_model", "legacy") == model:
+		_update_context()
+		return
+	var candidate := document.duplicate(true)
+	candidate.dungeon.capability_model = model
+	var errors: Array[String] = store.validate(candidate)
+	if not errors.is_empty():
+		_message("Model change rejected; source unchanged: " + "; ".join(errors))
+		_update_context()
+		return
+	var before := _snapshot()
+	document = candidate
+	_record("Change capability model", before)
+	_refresh()
+
+func _edit_contribution(id: String, contribution_id: String, entry: Variant, expected_existing: Variant = null, expected_entry: Variant = null, expected_slot: Variant = null) -> void:
+	if not _apply() or mode != "tree" or selected_node != id or document.dungeon.get("capability_model", "legacy") != "unified_1":
+		return
+	var candidate := document.duplicate(true)
+	for node in candidate.dungeon.nodes:
+		if node.id != id:
+			continue
+		var entries: Array = node.get("contributions", []).duplicate(true)
+		if expected_slot != null:
+			var actual: Array = entries.filter(func(item):
+				return item.get("kind", "") == expected_slot.kind and item.get(expected_slot.kind, "") == expected_slot.key and (expected_slot.kind != "stat" or item.get("op", "") == expected_slot.op))
+			if actual != expected_slot.entries:
+				_message("Contribution changed since selection; source unchanged.")
+				if is_instance_valid(node_panel.table_feedback):
+					node_panel.table_feedback.text = "Contribution changed since selection; source unchanged."
+				return
+		var index := -1
+		for i in range(entries.size()):
+			if entries[i].get("id", "") == contribution_id:
+				index = i
+				break
+		if expected_existing != null and bool(expected_existing) != (index >= 0):
+			_message("Contribution changed since selection; source unchanged.")
+			if is_instance_valid(node_panel.table_feedback):
+				node_panel.table_feedback.text = "Contribution changed since selection; source unchanged."
+			return
+		if index >= 0 and expected_entry != null and entries[index] != expected_entry:
+			_message("Contribution changed since selection; source unchanged.")
+			if is_instance_valid(node_panel.table_feedback):
+				node_panel.table_feedback.text = "Contribution changed since selection; source unchanged."
+			return
+		if entry == null:
+			if index < 0:
+				return
+			entries.remove_at(index)
+		else:
+			if not entry is Dictionary or entry.get("id", "") != contribution_id:
+				return
+			if index < 0:
+				entries.append(entry.duplicate(true))
+			else:
+				var existing: Dictionary = entries[index]
+				if entry.get("kind") != existing.get("kind") or entry.get(existing.get("kind", "")) != existing.get(existing.get("kind", "")):
+					_message("Contribution type changed since selection; source unchanged.")
+					return
+				if existing.get("kind") == "stat":
+					existing.op = entry.get("op")
+					existing.value = entry.get("value")
+		node.contributions = entries
+		var errors: Array[String] = store.validate(candidate)
+		if not errors.is_empty():
+			_message("Contribution %s rejected; source unchanged: %s" % [contribution_id, "; ".join(errors)])
+			if is_instance_valid(node_panel.table_feedback):
+				node_panel.table_feedback.text = "Contribution %s: %s" % [contribution_id, "; ".join(errors)]
+			return
+		var before := _snapshot()
+		document = candidate
+		_record("Edit contribution " + contribution_id, before)
 		_refresh()
 		return
 

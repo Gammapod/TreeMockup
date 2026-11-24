@@ -26,15 +26,9 @@ permissions:
   - { action: edit, resource: "v2/authoring/runtime_adapter.gd", effect: deny }
   - { action: read, resource: "v2/authoring/door_layout.gd", effect: deny }
   - { action: edit, resource: "v2/authoring/door_layout.gd", effect: deny }
+  - { action: read, resource: "v2/test-results*", effect: allow }
   - { action: read, resource: "v2/tests*", effect: allow }
-  - { action: edit, resource: "v2/tests/editor*", effect: allow }
-  - { action: edit, resource: "v2/tests/node_panel*", effect: allow }
-  - { action: edit, resource: "v2/tests/room_panel*", effect: allow }
-  - { action: edit, resource: "v2/tests/binding_editor*", effect: allow }
-  - { action: edit, resource: "v2/tests/tree_panel*", effect: allow }
-  - { action: edit, resource: "v2/tests/map*", effect: allow }
-  - { action: edit, resource: "v2/tests/shell_tests*", effect: allow }
-  - { action: edit, resource: "v2/tests/frontend*", effect: allow }
+  - { action: edit, resource: "v2/tests/frontend/*", effect: allow }
   - { action: shell, resource: 'python v2/tests/run_suites.py*', effect: allow }
 ---
 
@@ -58,7 +52,9 @@ Work from Gameplay-Owner's goal and Engine-Owner's supplied contract. If needed 
 
 Runtime drawing still embedded in `main.gd`, `room.gd`, `player.gd` and `roost_guardian.gd` remains Engine-owned. Supply the desired presentation behavior and request an engine integration or a separately owned presentation component. Do not duplicate combat timing or geometry to work around this boundary.
 
-Use exploratory-development for unaccepted UX experiments and TDD for stable interaction/boundary contracts. Own UI/editor tests; request registration and central invariant-trace updates from Engine through Gameplay. Test presentation and intent behavior, not a duplicate implementation of engine rules.
+Use exploratory-development for unaccepted UX experiments and TDD for stable interaction/boundary contracts. Own UI/editor tests and their `v2/tests/frontend/suites.json` registration; request shared runner, fixture and central invariant-trace changes from Engine through Gameplay. Test presentation and intent behavior, not a duplicate implementation of engine rules.
+
+Use the repository-root structured runner: `python v2/tests/run_suites.py --godot C:\Godot\Godot.exe --owner frontend` and add `--suite <suite-id>` for a focused run. A full run without `--owner` verifies both owners; coordinate cross-boundary changes accordingly.
 
 Headless tests do not establish visual quality. Supply a short user playtest checklist for rendered behavior and report what was actually observed separately from what remains unverified. Return UX changes, checks, contract needs and remaining player-facing uncertainty to Gameplay.
 

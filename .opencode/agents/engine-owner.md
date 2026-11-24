@@ -23,15 +23,9 @@ permissions:
   - { action: edit, resource: "v2/authoring/content_store.gd", effect: allow }
   - { action: edit, resource: "v2/authoring/runtime_adapter.gd", effect: allow }
   - { action: edit, resource: "v2/authoring/door_layout.gd", effect: allow }
+  - { action: read, resource: "v2/test-results*", effect: allow }
   - { action: read, resource: "v2/tests*", effect: allow }
   - { action: edit, resource: "v2/tests*", effect: allow }
-  - { action: edit, resource: "v2/tests/editor*", effect: deny }
-  - { action: edit, resource: "v2/tests/node_panel*", effect: deny }
-  - { action: edit, resource: "v2/tests/room_panel*", effect: deny }
-  - { action: edit, resource: "v2/tests/binding_editor*", effect: deny }
-  - { action: edit, resource: "v2/tests/tree_panel*", effect: deny }
-  - { action: edit, resource: "v2/tests/map*", effect: deny }
-  - { action: edit, resource: "v2/tests/shell_tests*", effect: deny }
   - { action: edit, resource: "v2/tests/frontend*", effect: deny }
   - { action: shell, resource: 'python v2/tests/run_suites.py*', effect: allow }
 ---
@@ -48,7 +42,7 @@ Own progression legality, transactions and cascade previews; runtime movement, c
 
 `main.gd`, `room.gd`, `player.gd` and `roost_guardian.gd` are temporarily engine-owned mixed files. Coordinate presentation changes with Frontend through Gameplay-Owner. Expose authoritative state/geometry and explicit intents rather than asking Frontend to duplicate rules. New runtime modules may go under `v2/runtime/`; this permission does not require a speculative reorganization.
 
-Gameplay owns shipped scenario content. Frontend owns editor source transactions, history, panels and gameplay views; those transactions must use shared validation. You own test infrastructure and the central invariant/test inventory, including registering Frontend's suites and contract traces. Reading integration tests is permitted to understand consumer expectations; changing frontend-owned tests is not.
+Gameplay owns shipped scenario content. Frontend owns editor source transactions, history, panels and gameplay views; those transactions must use shared validation. You own shared test infrastructure, the Engine suite manifest and central invariant traces. Frontend owns its suite manifest and tests. Reading integration tests is permitted to understand consumer expectations; changing frontend-owned tests is not. Coordinate shared fixture changes with Frontend.
 
 ## Required TDD
 
@@ -61,9 +55,9 @@ Load the `tdd` skill before implementation. For every stable behavior change:
    broader suites.
 5. Update the contract and trace when semantics change.
 
-Organize `invariants.md` and `tests/suites.json` by architectural responsibility. Keep observable behavior distinct from internal architectural requirements. Do not duplicate engine legality tests in UI tests. If semantics remain undecided, return a concrete design question to Gameplay before implementing.
+Organize `invariants.md` and `tests/engine/suites.json` by architectural responsibility. Keep observable behavior distinct from internal architectural requirements. Do not duplicate engine legality tests in UI tests. If semantics remain undecided, return a concrete design question to Gameplay before implementing.
 
-Use the repository-root structured runner: `python v2/tests/run_suites.py --godot C:\Godot\Godot.exe --suite <suite-id>` and the same command without `--suite` for the full run. Inspect runner results; do not claim a pass from an exit code or from tests you could not execute.
+Use the repository-root structured runner: `python v2/tests/run_suites.py --godot C:\Godot\Godot.exe --owner engine` and add `--suite <suite-id>` for a focused run. Omit `--owner` for the full cross-owner run. Inspect runner results; do not claim a pass from an exit code or from tests you could not execute.
 
 ## Handoff and access
 

@@ -26,8 +26,8 @@ sources:
 **Current design target:** the interconnected 14–18-node dungeon, using the
 accepted abilities and boss capstone. The user has begun work in
 `examples/Test_Dungeon.json`; its goals and remaining design are to be discussed.
-Editor work is complete for now; other candidates live in the
-[backlog](../backlog.md).
+The grouped unified contribution editor is implemented; other candidates live
+in the [backlog](../backlog.md).
 
 # Recording an experiment
 
@@ -50,12 +50,28 @@ in the README, future ideas in the backlog, and review/red-green history in
 archived closeouts. Do not retain implementation diaries or duplicate tuning
 tables here.
 
+## Unified abilities — Phase Dash lab (2026-11-23)
+* **Status**: evaluated; further dungeon testing remains open.
+* **Question**: Does a teleport-like dash, with optional rooted recharge, match the intended movement tradeoff?
+* **Slice**: `examples/phase_dash_lab.json` compares normal Dash, Phase teleport and water passage using the unified contribution model.
+* **Observation**: The user reported that Phase Dash behaved exactly as intended, both with and without rooted recharge. They suggested timing could be a little faster but is fine for now.
+* **Decision**: keep the Phase direction for continued dungeon development; leave timing adjustment for later testing. See `examples/scenario-designs/unified-abilities-proposal.md`.
+* **Next**: use the unified contribution editor for dungeon design and evaluate Phase in actual branch encounters.
+
+## Unified contribution editor (2026-11-23)
+* **Status**: implemented; grouped table positively reviewed, collapse controls implemented.
+* **Question**: Can authors express unified qualities and stat contributions without editing source JSON for routine changes?
+* **Slice**: Node properties group Player, Sword and Dash contributions in a table with collapsible sections, while preserving an individual-entry/JSON path for ambiguous or fractional entries.
+* **Observation**: The user said the table was good and requested collapsible sections; no separate visual assessment of those controls is recorded.
+* **Decision**: keep the functional milestone; see the [UI contract](ui.md).
+* **Next**: apply it to the prototype dungeon; evaluate remaining authoring friction as it arises.
+
 ## UI-02 — walk-through border doors (2026-11-15)
 * **Status**: completed (accepted).
 * **Question**: Does continuous doorway movement make visiting and revisiting build branches feel more natural?
 * **Slice**: `examples/branching.json`; linked ports open the room border and crossing an active opening transitions to its paired entrance.
 * **Observation**: The user found walk-through doors more intuitive than deliberate door interaction.
-* **Decision**: keep; see the [UI contract](ui.md) and `tests/shell_tests.gd`.
+* **Decision**: keep; see the [UI contract](ui.md) and `tests/frontend/shell_tests.gd`.
 * **Next**: authoring improvements remained candidates; BUILD-01 subsequently became the gameplay focus.
 
 ## BUILD-01 — stackable ability tradeoffs (2026-11-15)

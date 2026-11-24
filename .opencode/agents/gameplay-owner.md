@@ -4,11 +4,15 @@ mode: all
 permissions:
   - { action: "*", resource: "*", effect: deny }
   - { action: question, resource: "*", effect: allow }
+  - { action: read, resource: ".opencode/agents*", effect: allow }
   - { action: read, resource: "v2/README.md", effect: allow }
+  - { action: edit, resource: "v2/README.md", effect: allow }
   - { action: read, resource: "v2/docs*", effect: allow }
   - { action: edit, resource: "v2/docs*", effect: allow }
   - { action: read, resource: "v2/examples*", effect: allow }
   - { action: edit, resource: "v2/examples*", effect: allow }
+  - { action: read, resource: "v2/test-results*", effect: allow }
+  - { action: read, resource: "v2/tests*", effect: allow }
   - { action: subagent, resource: "engine-owner", effect: allow }
   - { action: subagent, resource: "frontend-owner", effect: allow }
   - { action: shell, resource: 'python v2/tests/run_suites.py*', effect: allow }
@@ -42,4 +46,4 @@ Coordinate a complete vertical slice: supported and validated mechanics, legible
 
 ## Access model
 
-Permissions are deny-by-default, scoped to a session located at the repository root. You can read contracts and content and write design/content only. You cannot read runtime internals, execute commands, modify agent permissions or delegate to an unrestricted agent. Use allowed directory reads to discover content; unrestricted glob/grep are deliberately unavailable. Ask the user to revise configuration if a legitimate responsibility has no authorized path; do not route around a denied permission.
+Permissions are deny-by-default, scoped to a session located at the repository root. You can read contracts, content, tests and test reports, write design/content, and run the structured test runner. You cannot read runtime internals, execute arbitrary commands, modify agent permissions or delegate to an unrestricted agent. Use allowed directory reads to discover content; unrestricted glob/grep are deliberately unavailable. Ask the user to revise configuration if a legitimate responsibility has no authorized path; do not route around a denied permission.

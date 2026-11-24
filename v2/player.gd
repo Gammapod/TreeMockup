@@ -1,6 +1,11 @@
 extends CharacterBody2D
 
 signal attack(origin: Vector2, facing: Vector2, reach: float, damage: float, arc: float)
+signal phase_arrival_requested(attempt: Dictionary)
+signal unified_restriction_changed(state: Dictionary)
+signal unified_dash_started(attempt: Dictionary)
+
+const UNIFIED_ACTIONS = preload("res://runtime/unified_actions.gd")
 
 var capabilities: Dictionary = {"abilities": {}, "move_speed": 220.0, "dash_speed": 650.0}
 var facing := Vector2.RIGHT
@@ -17,12 +22,20 @@ var attack_elapsed := 0.0
 var strikes_emitted := 0
 var dash_phase := false
 var dash_speed := 650.0
+var unified_actions
 
 func set_capabilities(snapshot: Dictionary) -> void:
-	var next_max: int = snapshot.get("max_hp", 5)
+	var unified: bool = snapshot.get("model") == "unified_1"
+	var next_max: int = int(snapshot.stats.max_hp.effective) if unified else snapshot.get("max_hp", 5)
 	max_hp = next_max
 	hp = mini(hp, max_hp)
 	capabilities = snapshot
+	if unified and unified_actions == null:
+		unified_actions = UNIFIED_ACTIONS.new()
+		unified_actions.attack_due.connect(_unified_attack_due)
+		unified_actions.dash_started.connect(_unified_dash_started)
+		unified_actions.phase_arrival_requested.connect(func(attempt): phase_arrival_requested.emit(attempt.duplicate(true)))
+		unified_actions.restriction_changed.connect(func(state): unified_restriction_changed.emit(state.duplicate(true)))
 
 func _ready() -> void:
 	collision_layer = 2
@@ -34,6 +47,10 @@ func _ready() -> void:
 	add_child(shape)
 
 func _physics_process(delta: float) -> void:
+	if capabilities.get("model") == "unified_1":
+		var input_direction := Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W))).normalized()
+		advance_unified(delta, input_direction)
+		return
 	invulnerability = maxf(0.0, invulnerability - delta)
 	dash_cooldown = maxf(0.0, dash_cooldown - delta)
 	advance_attack(delta)
@@ -55,6 +72,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		start_dash()
 
 func start_attack() -> bool:
+	if capabilities.get("model") == "unified_1":
+		return unified_actions.start_sword(capabilities, facing)
 	if not capabilities.abilities.has("sword") or attack_cooldown > 0.00001 or attack_time > 0.00001:
 		return false
 	attack_snapshot = {"facing": facing, "reach": capabilities.sword_range, "arc": capabilities.get("sword_arc", 1.8), "damage": capabilities.sword_damage, "strikes": capabilities.get("sword_strikes", 1)}
@@ -75,6 +94,8 @@ func advance_attack(delta: float) -> void:
 		attack.emit(position, attack_snapshot.facing, attack_snapshot.reach, attack_snapshot.damage, attack_snapshot.arc)
 
 func start_dash() -> bool:
+	if capabilities.get("model") == "unified_1":
+		return unified_actions.start_dash(capabilities, facing, position)
 	if not capabilities.abilities.has("dash") or capabilities.get("sprint", false) or dash_cooldown > 0.0 or dash_time > 0.0:
 		return false
 	dash_direction = facing
@@ -85,17 +106,62 @@ func start_dash() -> bool:
 	return true
 
 func movement_speed(sprint_held: bool) -> float:
+	if capabilities.get("model") == "unified_1":
+		return capabilities.stats.move_speed.effective
 	return capabilities.get("move_speed", 220.0) * (2.0 if sprint_held and capabilities.get("sprint", false) else 1.0)
 
 func hurt(contact: bool = true) -> bool:
+	if capabilities.get("model") == "unified_1" and unified_actions.phase_absent():
+		return false
+	if capabilities.get("model") == "unified_1":
+		if invulnerability > 0.0:
+			return false
+		hp = maxi(0, hp - 1)
+		invulnerability = 0.8
+		return true
 	if invulnerability > 0.0 or (contact and dash_time > 0.0 and dash_phase):
 		return false
 	hp = maxi(0, hp - 1)
 	invulnerability = 0.8
 	return true
 
+func _unified_attack_due(snapshot: Dictionary) -> void:
+	if hp > 0 and is_inside_tree():
+		attack.emit(position, snapshot.facing, snapshot.reach, snapshot.damage, snapshot.arc)
+
+func _unified_dash_started(attempt: Dictionary) -> void:
+	dash_direction = attempt.direction
+	dash_time = attempt.duration
+	dash_speed = attempt.distance / attempt.duration
+	dash_phase = attempt.phase
+	unified_dash_started.emit(attempt.duplicate(true))
+
+func cancel_pending_phase() -> void:
+	if unified_actions != null and unified_actions.cancel_phase():
+		dash_time = 0.0
+		dash_phase = false
+		queue_redraw()
+
+func advance_unified(delta: float, direction: Vector2) -> void:
+	if delta <= 0.0:
+		return
+	invulnerability = maxf(0.0, invulnerability - delta)
+	if direction != Vector2.ZERO and dash_time <= 0.0:
+		facing = direction.normalized()
+	if dash_time > 0.0:
+		velocity = Vector2.ZERO if dash_phase else dash_direction * dash_speed * minf(delta, dash_time) / delta
+	else:
+		velocity = Vector2.ZERO if unified_actions.restrictions().blocked else direction * movement_speed(false)
+	move_and_slide()
+	dash_time = maxf(0.0, dash_time - delta)
+	unified_actions.advance(delta)
+	queue_redraw()
+
 func _draw() -> void:
-	if capabilities.abilities.has("sword"):
+	var unified: bool = capabilities.get("model") == "unified_1"
+	if unified and unified_actions.phase_absent():
+		return
+	if not unified and capabilities.abilities.has("sword"):
 		var active := attack_time > 0.0
 		var angle: float = attack_snapshot.facing.angle() if active else facing.angle()
 		var reach: float = attack_snapshot.reach if active else capabilities.get("sword_range", 92.0)

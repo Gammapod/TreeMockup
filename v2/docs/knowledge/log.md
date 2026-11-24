@@ -1,5 +1,17 @@
 # V2 Knowledge Update Log
 
+## 2026-11-23
+* **Unified abilities and editor checkpoint:** The
+  [content contract](content.md#unified-contributions) and
+  [architecture](architecture.md) describe the implemented contribution model
+  and Phase lifecycle; the [UI contract](ui.md) covers build previews, Phase
+  feedback and grouped contribution authoring. The
+  [experiment record](experiments.md#unified-abilities--phase-dash-lab-2026-11-23)
+  distinguishes positive user feedback from unresolved dungeon testing.
+* **Test ownership:** Engine and Frontend maintain separate suite manifests;
+  the [invariant index](invariants.md#running-the-contract-suites) documents
+  independent owner runs and the combined regression run.
+
 ## 2026-11-16
 * **Instance doors accepted**: V2 tree links own door placements; a shared
   resolver keeps editor preview and runtime geometry aligned. Manual overrides,

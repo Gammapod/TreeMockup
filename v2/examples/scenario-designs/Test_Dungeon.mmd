@@ -48,32 +48,36 @@ sword_room --- weapons_landing
 weapons_landing --- weapons_bonus
 
 subgraph boots-branch [Boots]
-%% Major idea: Player learns movement/exploration basics. Player must go through boots_1 or boots_2 before clearing boots_room. Clearing boots_room is necessary for reaching miniboss.
+%% Major idea: Player learns movement/exploration basics. Player must choose boots_1 or boots_2 before clearing boots_room. Clearing boots_room is necessary for reaching miniboss.
+%% Funding hypothesis: Player enters boots_room with 0 unspent capacity. Assume boots_1, boots_2, and boots_landing each cost 1; validate these costs and the full allocation/refund route.
 
     boots_room["Boots"]
     %% Ability: Dash
-    %% Contents: Open area that allows access to boots_1, boots_2, and miniboss doors. wall_1 initially blocks access to boots_landing door and switch_1. switch_1 opens wall_1. Tokens scattered through the room, with at least one behind wall_1.
+    %% Contents: Open area for safely trying Dash, with access to boots_1, boots_2, and miniboss doors. wall_1 initially blocks access to boots_landing door and switch_1. Make the blocked route visible. switch_1 opens wall_1. Tokens scattered through the room, with at least one behind wall_1. One capacity upgrade is accessible before the room is cleared, potentially in a chest or side area.
     %% Clear condition: collect all tokens
-    %% Clear reward: TBD
-    %% Golden path: player initially sees the switch and cannot access it. Player must explore boots_1 or boots_2 first, then re-enter from the boots_landing door before the room can be cleared.  
+    %% Clear reward: Gold placeholder; revisit as capacity after the overall budget is traced.
+    %% Golden path: player initially sees the switch and cannot access it. The first capacity upgrade funds either boots_1 or boots_2. Quick Step takes the route through boots_landing and re-enters from that door; Phase Dash may instead cross a narrow wall as an alternate solution.
+    %% Tokens reset on departure while uncleared, so make the final collection route clear and avoid punishing early exploration. Check switch toggling and safe exits.
     boots_1["Phase Dash"]
     %% Ability: Phase Dash (dash can go through obstacles and enemies without taking damage). Player rooted during dash cooldown.
-    %% Contents, clear conditions, rewards: TBD
+    %% Contents: a narrow obstacle with a safe landing demonstrates phasing; a thicker obstacle or invalid destination can communicate its limit, with a walkable alternative. A later encounter may explore landing position and rooted recovery once contact and timing rules are settled. Clear condition: TBD. On clear: reveal 1 capacity upgrade to fund boots_landing.
+    %% Phase Dash may cross the boots_room wall, so clearing boots_room need not require visiting boots_landing.
     boots_2["Quick Step"]
     %% Ability: modifications that make the dash go farther and have a shorter cooldown
-    %% Contents, clear conditions, rewards: TBD
+    %% Contents: open lanes or a central obstacle and enemies encourage repeated repositioning, making dash distance and shorter cooldown apparent without requiring phasing. Clear condition: TBD. On clear: reveal 1 capacity upgrade to fund boots_landing.
     boots_landing["Health Mod"]
     %% Ability: +5 HP increase
-    %% Contents, clear conditions, rewards: TBD
+    %% Contents: make the door to the far side of boots_room's wall easy to find, so returning and opening the shortcut is legible. A modest challenge should work for either dash option. Separate healing could complement the max-HP upgrade. Clear condition: TBD. Reward: Gold placeholder; revisit after budgeting.
     boots_bonus["Speed Up"]
     %% Ability: moderate movement speed increase
-    %% Contents, clear conditions, rewards: TBD
+    %% Contents: an obstacle or encounter where ordinary movement and positioning between dashes help, regardless of which dash option is active. Clear condition: TBD. Reward: Gold placeholder; revisit after budgeting.
     boots_flippers["Flippers"]
     %% Ability: flippers
-    %% Contents, clear conditions, rewards: TBD
+    %% Contents: visible water and a worthwhile destination beyond it. Wide water could demonstrate the difference between Flippers and Phase Dash's limited crossing range. Clear condition: TBD. Reward: Gold placeholder; revisit after budgeting.
     boots_room --- boots_1 --- boots_landing
     boots_room --- boots_2 --- boots_landing
     boots_1 x-.-x boots_2 %% mutually exclusive nodes
+    %% The two route rewards are separate and both may eventually be collected by refunding and revisiting the other route. Include both in the global budget.
 
     boots_room --- boots_landing    
     boots_landing --- boots_bonus

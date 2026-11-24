@@ -1,0 +1,13 @@
+[
+  {"id":"editor","script":"tests/frontend/editor_tests.gd","area":"editor","invariants":["A1","L1"]},
+  {"id":"editor_canvas","script":"tests/frontend/editor_canvas_tests.gd","area":"editor","invariants":["A3"]},
+  {"id":"node_panel","script":"tests/frontend/node_panel_tests.gd","area":"editor","invariants":["A3","A6"]},
+  {"id":"room_panel","script":"tests/frontend/room_panel_tests.gd","area":"editor","invariants":["A3"]},
+  {"id":"binding_editor","script":"tests/frontend/binding_editor_tests.gd","area":"editor","invariants":["A3","A4"]},
+  {"id":"tree_panel","script":"tests/frontend/tree_panel_tests.gd","area":"presentation","invariants":["U1","U2"]},
+  {"id":"phase_feedback","script":"tests/frontend/phase_feedback_tests.gd","area":"presentation","invariants":["U1","U3"]},
+  {"id":"map","script":"tests/frontend/map_tests.gd","area":"presentation","invariants":["U1"]},
+  {"id":"map_camera","script":"tests/frontend/map_camera_tests.gd","area":"presentation","invariants":["U1"]},
+  {"id":"map_preview","script":"tests/frontend/map_preview_tests.gd","area":"presentation","invariants":["P2"]},
+  {"id":"shell","script":"tests/frontend/shell_tests.gd","area":"presentation","invariants":["R1"]}
+]

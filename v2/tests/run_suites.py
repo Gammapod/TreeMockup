@@ -18,7 +18,7 @@ STATUSES = ("passed", "failed", "error", "timeout", "not_run")
 ERROR_LINE = re.compile(r"^\s*(?:SCRIPT ERROR:|ERROR:)", re.MULTILINE)
 
 
-def validate_inventory(suites, root):
+def validate_inventory(suites, root, owner=None):
     ids, scripts = set(), set()
     for suite in suites:
         if (not re.fullmatch(r"[a-z][a-z0-9_]*", suite["id"])
@@ -28,10 +28,33 @@ def validate_inventory(suites, root):
             raise ValueError("Each suite requires an area and invariant trace")
         ids.add(suite["id"])
         scripts.add(suite["script"])
-    actual = {p.relative_to(root).as_posix() for p in (root / "tests").glob("*_tests.gd")}
+    directory = root / "tests" / owner if owner else root / "tests"
+    actual = {p.relative_to(root).as_posix() for p in directory.rglob("*_tests.gd")}
     if actual != scripts:
         raise ValueError(f"Inventory mismatch: unlisted={sorted(actual - scripts)}, "
                          f"missing={sorted(scripts - actual)}")
+
+
+def load_inventory(root, owner=None):
+    owners = (owner,) if owner else ("engine", "frontend")
+    if any(name not in ("engine", "frontend") for name in owners):
+        raise ValueError(f"Unknown owner: {owner}")
+    suites = []
+    for name in owners:
+        entries = json.loads((root / "tests" / name / "suites.json").read_text(encoding="utf-8"))
+        if not isinstance(entries, list):
+            raise ValueError(f"Invalid {name} suite manifest")
+        for suite in entries:
+            path = suite["script"]
+            prefix = f"tests/{name}/"
+            if (not isinstance(path, str) or not path.startswith(prefix)
+                    or any(part in ("", ".", "..") for part in path.split("/"))):
+                raise ValueError(f"Suite path must belong to {name}: {path}")
+        validate_inventory(entries, root, name)
+        suites.extend(entries)
+    if not owner:
+        validate_inventory(suites, root)
+    return suites
 
 
 def select(suites, ids, areas, invariants):
@@ -136,6 +159,7 @@ def main(argv=None):
     parser.add_argument("--suite", action="append", default=[])
     parser.add_argument("--area", action="append", default=[])
     parser.add_argument("--invariant", action="append", default=[])
+    parser.add_argument("--owner", choices=("engine", "frontend"))
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--list", action="store_true")
@@ -147,11 +171,10 @@ def main(argv=None):
               "godot_version": None, "errors": [], "suites": [],
               "configuration": {"godot": args.godot, "timeout": args.timeout,
                                 "suite": args.suite, "area": args.area,
-                                "invariant": args.invariant}}
+                                 "invariant": args.invariant, "owner": args.owner}}
     started = time.monotonic()
     try:
-        suites = json.loads((ROOT / "tests" / "suites.json").read_text())
-        validate_inventory(suites, ROOT)
+        suites = load_inventory(ROOT, args.owner)
         suites = select(suites, args.suite, args.area, args.invariant)
         if args.list:
             for suite in suites:

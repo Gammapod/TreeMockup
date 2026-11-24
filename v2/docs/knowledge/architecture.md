@@ -21,7 +21,7 @@ skill tree. It separates portable authored content from one transient run.
 
 | Owner | Owns | Must not own |
 | --- | --- | --- |
-| `authoring/content_store.gd` | JSON source, validation, lossless unknown fields, atomic saves | Engine/runtime state |
+| `authoring/content_store.gd` | JSON source, validation, copied capability authoring metadata, lossless unknown fields, atomic saves | Engine/runtime state |
 | `authoring/runtime_adapter.gd` | Compiling supported portable content into runtime dictionaries; explicit unsupported-mechanic rejection | Source mutation or silent fallback |
 | `authoring/door_layout.gd` | Shared deterministic instance-door geometry for preview and compilation | Live-run state or source mutation |
 | `authoring/studio.gd` / `edit_history.gd` | Editor source transactions, selection context and bounded undo/redo snapshots | Gameplay mutation or camera navigation as source history |
@@ -30,6 +30,7 @@ skill tree. It separates portable authored content from one transient run.
 | `authoring/binding_editor.gd` | Typed picker/presentation for existing instance switch-to-wall bindings | New interaction semantics or runtime mutation |
 | `authoring/preview.gd` | Canvas drawing, hit-testing, camera and gesture intents | Source document mutation |
 | `progression.gd` | Activation, refunds/cascades, roots, clear/objective state, rewards, travel/edit permissions, derived capabilities | Input, physics, rendering, scene lifetime |
+| `runtime/unified_actions.gd` | Staged unified action timing, captured action intents, restriction snapshots | Geometry, combat damage, room lifecycle or presentation |
 | `main.gd` | Run lifecycle, room replacement, persistent per-node encounter/object state, event forwarding | Reimplementing progression legality or view state |
 | `room.gd` / `player.gd` | Loaded-room physics, encounters, local interaction, event intent | Progression graph inspection or transaction authority |
 | `roost_guardian.gd` | Loaded-room boss timing, tethered movement, telegraphs and swept wave geometry | Allocation graph, persistent clears, enemy HP mutation or run restart |
@@ -84,7 +85,15 @@ skill tree. It separates portable authored content from one transient run.
     history record per gesture; source JSON remains available and invalid
     pending JSON blocks other authoring edits. This prevents contextual UI from
     becoming a competing mutable content model. See the accepted
-    [EDITOR-01 review](../archive/editor-01-closeout.md).
+     [EDITOR-01 review](../archive/editor-01-closeout.md).
+11. **Unified Phase is an intent-to-resolution pipeline.** The action clock
+    captures the build and schedules an arrival; Player forwards the intent,
+    Room resolves it against live geometry and endpoint hazards, and the
+    coordinator forwards only current-generation events. A committed transition
+    cancels a pending arrival without refunding its captured recharge. Normal
+    unified dashes and legacy Phase remain distinct mechanics. See the
+    [runtime contract](content.md#unified-action-boundary) and UAB3–UAB9 in
+    the [invariant index](invariants.md).
 
 # Change guide
 

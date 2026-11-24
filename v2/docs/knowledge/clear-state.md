@@ -7,8 +7,8 @@ status: stable
 generated: { by: "openai/gpt-5.6-terra", at: 2026-11-15T00:00:00Z }
 sources:
   - { resource: ../../progression.gd, title: Progression implementation }
-  - { resource: ../../tests/clear_tests.gd, title: Clear-state test trace }
-  - { resource: ../../tests/root_travel_tests.gd, title: Travel and editing-permission test trace }
+  - { resource: ../../tests/engine/clear_tests.gd, title: Clear-state test trace }
+  - { resource: ../../tests/engine/root_travel_tests.gd, title: Travel and editing-permission test trace }
   - { resource: ../archive/cleared-rooms-closeout.md, title: Archived implementation closeout }
 ---
 
@@ -45,7 +45,7 @@ sources:
 
 # Evidence
 
-`tests/clear_tests.gd` characterizes clear/objective/reward/root behavior.
-`tests/root_travel_tests.gd` characterizes travel eligibility, stale-request
+`tests/engine/clear_tests.gd` characterizes clear/objective/reward/root behavior.
+`tests/engine/root_travel_tests.gd` characterizes travel eligibility, stale-request
 revalidation, HP/build preservation, and the editing lock. See also the
 [invariant index](invariants.md).

@@ -1,6 +1,46 @@
 extends RefCounted
 
 const DOORS = preload("res://authoring/door_layout.gd")
+const UNIFIED_BUILD = preload("res://runtime/unified_build.gd")
+const UNIFIED_STATS := ["move_speed", "sword_range", "sword_arc", "sword_damage", "sword_cooldown", "dash_distance", "dash_recharge", "max_hp"]
+const UNIFIED_QUALITIES := ["sword", "dash", "water_pass", "sword_root", "dash_root", "phase_teleport"]
+
+# Read-only authoring vocabulary. Bounds describe effective values, not valid
+# source operands; the full document validator remains authoritative.
+func capability_metadata() -> Dictionary:
+	var labels := {
+		"move_speed": "Movement speed", "sword_range": "Sword reach",
+		"sword_arc": "Sword arc", "sword_damage": "Sword damage",
+		"sword_cooldown": "Sword cooldown", "dash_distance": "Dash distance",
+		"dash_recharge": "Dash recharge", "max_hp": "Maximum HP"
+	}
+	var units := {
+		"move_speed": "world_units_per_second", "sword_range": "world_units",
+		"sword_arc": "radians", "sword_damage": "damage_per_hit",
+		"sword_cooldown": "seconds", "dash_distance": "world_units",
+		"dash_recharge": "seconds", "max_hp": "hp"
+	}
+	var quality_labels := {
+		"sword": "Sword attack", "dash": "Dash", "water_pass": "Water passage",
+		"sword_root": "Sword cooldown movement restriction",
+		"dash_root": "Dash recharge movement restriction", "phase_teleport": "Phase teleport"
+	}
+	var stats := {}
+	for id in UNIFIED_BUILD.STATS:
+		var item: Dictionary = UNIFIED_BUILD.STATS[id].duplicate(true)
+		item.label = labels[id]
+		item.unit = units[id]
+		item.operations = ["add", "multiply"]
+		item.base_source = "dungeon.base_hp" if id == "max_hp" else "runtime_default"
+		stats[id] = item
+	var qualities := {}
+	for id in UNIFIED_BUILD.QUALITIES:
+		qualities[id] = {"label": quality_labels[id], "requires": UNIFIED_BUILD.QUALITIES[id]}
+	return {
+		"models": ["legacy", "unified_1"], "stats": stats, "qualities": qualities,
+		"numeric_input": {"add": "finite_signed", "multiply": "finite_positive"},
+		"aggregate": {"max_absolute_sum": 1.0e100, "max_log_product": 450.0}
+	}
 
 # Explicit editor upgrade; loading/compiling legacy fixtures stays lossless.
 func migrate(document: Dictionary) -> Dictionary:
@@ -93,6 +133,9 @@ func validate(document: Variant) -> Array[String]:
 		errors.append("dungeon must be an object")
 		return errors
 	var dungeon: Dictionary = document.dungeon
+	var capability_model: Variant = dungeon.get("capability_model", "legacy")
+	if capability_model not in ["legacy", "unified_1"]:
+		errors.append("Unsupported capability_model: " + str(capability_model))
 	var nodes := _index(dungeon.get("nodes"), "nodes", errors)
 	var links := _index(dungeon.get("links"), "links", errors)
 	var interactions := _index(dungeon.get("interactions"), "interactions", errors)
@@ -119,6 +162,14 @@ func validate(document: Variant) -> Array[String]:
 			errors.append("Node %s exclusive_group must be a string" % id)
 		if node.has("modifiers") and not node.modifiers is Dictionary:
 			errors.append("Node %s modifiers must be an object" % id)
+		if capability_model == "unified_1":
+			if node.get("abilities", []) != [] or node.get("modifiers", {}) != {}:
+				errors.append("Node %s cannot mix unified contributions with legacy abilities or modifiers" % id)
+			_validate_contributions(node.get("contributions", []), id, errors)
+		elif node.has("contributions"):
+			errors.append("Node %s contributions require capability_model unified_1" % id)
+	if capability_model == "unified_1":
+		_validate_unified_aggregate(nodes, dungeon.get("base_hp", 5), errors)
 	var used_ports: Dictionary = {}
 	for id in links:
 		var link: Dictionary = links[id]
@@ -172,6 +223,63 @@ func validate(document: Variant) -> Array[String]:
 				errors.append("Prerequisite cycle detected at " + id)
 				break
 	return errors
+
+func _validate_contributions(entries: Variant, node_id: String, errors: Array[String]) -> void:
+	if not entries is Array:
+		errors.append("Node %s contributions must be an array" % node_id)
+		return
+	var seen: Dictionary = {}
+	for entry in entries:
+		if not entry is Dictionary or not _id(entry.get("id")):
+			errors.append("Node %s contribution needs a stable id" % node_id)
+			continue
+		if seen.has(entry.id):
+			errors.append("Node %s has duplicate contribution id %s" % [node_id, entry.id])
+		seen[entry.id] = true
+		match entry.get("kind"):
+			"quality":
+				if entry.get("quality") not in UNIFIED_BUILD.QUALITIES:
+					errors.append("Node %s has unsupported quality %s" % [node_id, str(entry.get("quality"))])
+			"stat":
+				if entry.get("stat") not in UNIFIED_BUILD.STATS:
+					errors.append("Node %s has unsupported stat %s" % [node_id, str(entry.get("stat"))])
+				var operation: Variant = entry.get("op")
+				var value: Variant = entry.get("value")
+				if operation not in ["add", "multiply"] or not _finite_number(value):
+					errors.append("Node %s has invalid stat operation or value" % node_id)
+				elif operation == "multiply" and value <= 0:
+					errors.append("Node %s multiplier must be positive" % node_id)
+			_:
+				errors.append("Node %s has unsupported contribution kind" % node_id)
+
+func _validate_unified_aggregate(nodes: Dictionary, base_hp: Variant, errors: Array[String]) -> void:
+	# Conservative over every subset, even mutually exclusive nodes. Bound both
+	# product overflow and underflow, and the sum of absolute signed additions.
+	var sums := {}
+	var log_products := {}
+	for stat in UNIFIED_BUILD.STATS:
+		sums[stat] = 1000.0
+		log_products[stat] = 0.0
+	if _finite_number(base_hp):
+		sums.max_hp = maxf(1000.0, absf(float(base_hp)))
+	for node in nodes.values():
+		var entries: Variant = node.get("contributions", [])
+		if not entries is Array:
+			continue
+		for entry in entries:
+			if not entry is Dictionary or entry.get("kind") != "stat" or entry.get("stat") not in UNIFIED_BUILD.STATS:
+				continue
+			var value: Variant = entry.get("value")
+			if not _finite_number(value):
+				continue
+			var stat: String = entry.stat
+			if entry.get("op") == "add":
+				sums[stat] += absf(float(value))
+			elif entry.get("op") == "multiply" and value > 0:
+				log_products[stat] += absf(log(float(value)))
+	for stat in UNIFIED_BUILD.STATS:
+		if not is_finite(sums[stat]) or sums[stat] > 1.0e100 or not is_finite(log_products[stat]) or log_products[stat] > 450.0:
+			errors.append("Unified stat %s exceeds safe aggregate contribution bounds" % stat)
 
 func _validate_room(room: Dictionary, errors: Array[String], legacy: bool = true) -> void:
 	var label: String = room.get("id", "room")

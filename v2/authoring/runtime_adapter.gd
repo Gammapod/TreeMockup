@@ -4,7 +4,7 @@ const STORE = preload("res://authoring/content_store.gd")
 const PROGRESSION = preload("res://progression.gd")
 const DOORS = preload("res://authoring/door_layout.gd")
 
-func compile(document: Dictionary) -> Dictionary:
+func compile(document: Dictionary, allow_unified_experiment: bool = false) -> Dictionary:
 	var errors: Array[String] = STORE.new().validate(document)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
@@ -116,8 +116,11 @@ func compile(document: Dictionary) -> Dictionary:
 			errors.append("Permanent root cannot belong to an exclusive group: " + id)
 		if id == data.root and (not becomes_root or not rule.get("conditions", []).is_empty()):
 			errors.append("Starting room must be default-cleared with a become_root effect")
-	if errors.is_empty() and PROGRESSION.new(data).capabilities().max_hp < 1:
-		errors.append("Initial active roots and base_hp must grant at least one HP")
+	if errors.is_empty():
+		var initial: Dictionary = PROGRESSION.new(data).capabilities()
+		var initial_hp: int = int(initial.stats.max_hp.effective) if data.get("capability_model", "legacy") == "unified_1" else int(initial.max_hp)
+		if initial_hp < 1:
+			errors.append("Initial active roots and base_hp must grant at least one HP")
 	for interaction in data.interactions:
 		var source := _object(document, interaction.source)
 		var target := _object(document, interaction.target)

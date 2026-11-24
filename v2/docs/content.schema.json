@@ -84,7 +84,21 @@
         "requires_all": {"$ref": "#/$defs/ids"}, "requires_any": {"$ref": "#/$defs/ids"},
         "abilities": {"type": "array", "items": {"type": "string"}},
         "map_position": {"$ref": "#/$defs/point"},
-        "exclusive_group": {"type": "string"}, "modifiers": {"type": "object"}
+        "exclusive_group": {"type": "string"}, "modifiers": {"type": "object"},
+        "contributions": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["id", "kind"],
+            "properties": {
+              "id": {"$ref": "#/$defs/id"},
+              "kind": {"enum": ["stat", "quality"]},
+              "stat": {"type": "string"},
+              "op": {"enum": ["add", "multiply"]},
+              "value": {"type": "number"},
+              "quality": {"type": "string"}
+            }
+          }
+        }
       }
     },
     "door": {
@@ -123,6 +137,7 @@
       "properties": {
         "root": {"$ref": "#/$defs/id"}, "initial_capacity": {"type": "integer", "minimum": 0},
         "base_hp": {"type": "integer", "minimum": 0},
+        "capability_model": {"enum": ["legacy", "unified_1"]},
         "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}},
         "links": {"type": "array", "items": {"$ref": "#/$defs/link"}},
         "interactions": {"type": "array", "items": {"$ref": "#/$defs/interaction"}}

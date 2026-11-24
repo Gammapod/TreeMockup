@@ -5,6 +5,9 @@ signal reward_collected(object_id: String)
 signal player_defeated
 signal switch_toggled(object_id: String)
 signal objective_event(event: String, object_id: String)
+signal phase_outcome(outcome: Dictionary)
+signal restriction_changed(state: Dictionary)
+signal phase_started(attempt: Dictionary)
 
 const PLAYER = preload("res://player.gd")
 const GUARDIAN = preload("res://roost_guardian.gd")
@@ -13,6 +16,7 @@ const ROOM_BOUNDS := Rect2(35, 55, 730, 530)
 const WALL_THICKNESS := 15.0
 const DOOR_HALF_WIDTH := 32.0
 const DOOR_ARM_DISTANCE := 80.0
+const PHASE_MARGIN := 0.01
 var player
 var template: Dictionary
 var portals: Array = []
@@ -45,6 +49,11 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 	player.set_capabilities(caps)
 	player.hp = mini(hp, player.max_hp)
 	player.attack.connect(_attack)
+	player.phase_arrival_requested.connect(_phase_arrival)
+	player.unified_restriction_changed.connect(func(state): restriction_changed.emit(state.duplicate(true)))
+	player.unified_dash_started.connect(func(attempt):
+		if attempt.phase:
+			phase_started.emit(attempt.duplicate(true)))
 	add_child(player)
 	set_portals(links)
 	for rect in obstacles:
@@ -199,15 +208,100 @@ func apply_object_states(states: Dictionary) -> void:
 	object_states = states.duplicate()
 	for object in objects:
 		if barriers.has(object.id):
-			var passable: bool = player.capabilities.abilities.has("flippers") if object.kind == "water" else bool(object_states.get(object.id, false))
+			var passable: bool = _water_pass() if object.kind == "water" else bool(object_states.get(object.id, false))
 			barriers[object.id].collision_layer = 0 if passable else 1
 	queue_redraw()
+
+# Informational geometry resolution only. The caller owns movement, contact,
+# action timing and guarded defeat; this never changes the player or room.
+func resolve_phase_geometry(origin: Vector2, attempted: Vector2) -> Dictionary:
+	var result := {"status": "landed", "reason": "", "origin": origin, "attempted": attempted, "position": attempted}
+	var player_shape: CollisionShape2D = player.get_child(0)
+	var radius: float = player_shape.shape.radius + PHASE_MARGIN
+	var interior := ROOM_BOUNDS.grow(-radius)
+	var origin_inside := _phase_inside(interior, origin)
+	var destination_inside := _phase_inside(interior, attempted)
+	# Rectangles are convex: if both endpoints are strictly inside, the
+	# full center segment is inside too, even across a door opening.
+	var boundary_ok := origin_inside and destination_inside
+	if not boundary_ok or not _phase_position_clear(attempted, radius):
+		result.reason = "boundary" if not boundary_ok else "blocked_destination"
+		if origin_inside and _phase_position_clear(origin, radius):
+			result.status = "returned"
+			result.position = origin
+		else:
+			result.status = "blocked_return"
+			result.position = null
+	return result
+
+func _phase_inside(rect: Rect2, point: Vector2) -> bool:
+	return point.x > rect.position.x and point.y > rect.position.y and point.x < rect.end.x and point.y < rect.end.y
+
+func _phase_position_clear(point: Vector2, radius: float) -> bool:
+	for rect in obstacles:
+		if _phase_circle_intersects(point, radius, rect):
+			return false
+	var water_pass := _water_pass()
+	for object in objects:
+		if object.kind == "wall" and not object_states.get(object.id, false) and _phase_circle_intersects(point, radius, object.bounds):
+			return false
+		if object.kind == "water" and not water_pass and _phase_circle_intersects(point, radius, object.bounds):
+			return false
+	for body in boundary_walls:
+		var shape: CollisionShape2D = body.get_child(0)
+		var size: Vector2 = shape.shape.size
+		if _phase_circle_intersects(point, radius, Rect2(body.position - size * 0.5, size)):
+			return false
+	return true
+
+func _water_pass() -> bool:
+	var caps: Dictionary = player.capabilities
+	return caps.get("qualities", {}).get("water_pass", {}).get("effective", false) if caps.get("model") == "unified_1" else caps.get("abilities", {}).has("flippers")
+
+func _phase_arrival(attempt: Dictionary) -> void:
+	if not is_inside_tree() or player == null or player.hp <= 0:
+		return
+	var outcome := resolve_phase_geometry(attempt.origin, attempt.destination)
+	outcome["contact_damage"] = 0
+	outcome["wave_damage"] = 0
+	if outcome.status == "blocked_return":
+		player.hp = 0
+	else:
+		player.position = outcome.position
+		for enemy in enemies:
+			if bosses.has(enemy.id) and not bosses[enemy.id].contact_dangerous():
+				continue
+			if enemy.body.position.distance_to(player.position) < enemy.radius + 13:
+				var hp_before: int = player.hp
+				player.hurt()
+				outcome.contact_damage += hp_before - player.hp
+		# Teleport is not swept; check only the arrival point against the
+		# guardian's current wave, then reset its target history.
+		for boss in bosses.values():
+			boss.previous_target = player.position
+			if player.hp > 0 and boss.phase == "wave" and not boss.wave_touched and boss.wave_intersects(player.position, player.position, boss.wave_radius, boss.wave_radius):
+				boss.wave_touched = true
+				var hp_before: int = player.hp
+				player.hurt(false)
+				outcome.wave_damage += hp_before - player.hp
+	phase_outcome.emit(outcome.duplicate(true))
+	if player.hp <= 0:
+		player_defeated.emit()
+
+func cancel_pending_phase() -> void:
+	if player != null:
+		player.cancel_pending_phase()
+
+func _phase_circle_intersects(point: Vector2, radius: float, rect: Rect2) -> bool:
+	var nearest := Vector2(clampf(point.x, rect.position.x, rect.end.x), clampf(point.y, rect.position.y, rect.end.y))
+	return point.distance_squared_to(nearest) <= radius * radius
 
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
+	var absent: bool = player.unified_actions != null and player.unified_actions.phase_absent()
 	for id in bosses:
-		bosses[id].advance(delta, player.position, _living_summons(id))
+		bosses[id].advance(delta, player.position, _living_summons(id), not absent)
 	if player.hp <= 0:
 		return
 	for enemy in enemies:
@@ -217,9 +311,11 @@ func _physics_process(delta: float) -> void:
 		else:
 			enemy.body.velocity = enemy.body.position.direction_to(player.position) * enemy.speed
 			enemy.body.move_and_slide()
-		if enemy.body.position.distance_to(player.position) < enemy.radius + 13 and player.hurt() and player.hp == 0:
+		if not absent and enemy.body.position.distance_to(player.position) < enemy.radius + 13 and player.hurt() and player.hp == 0:
 			player_defeated.emit()
 			return
+	if absent:
+		return
 	for i in range(pickups.size() - 1, -1, -1):
 		if not pickups[i].get("chest", false) and (pickups[i].kind != "health" or player.hp < player.max_hp) and player.position.distance_to(pickups[i].position) < 27:
 			var id: String = pickups[i].id
@@ -241,6 +337,8 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if player != null and player.unified_actions != null and player.unified_actions.phase_absent():
+		return
 	if event.is_pressed() and not event.is_echo() and event.physical_keycode == KEY_E:
 		for i in range(pickups.size() - 1, -1, -1):
 			if pickups[i].get("chest", false) and (pickups[i].kind != "health" or player.hp < player.max_hp) and player.position.distance_to(pickups[i].position) < 50:

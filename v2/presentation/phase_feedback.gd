@@ -1,0 +1,107 @@
+extends Node2D
+
+# Presentation only. The coordinator owns timing, outcomes, damage and room
+# generation; this component never resolves actions or geometry.
+var message: Label
+var restriction: Label
+var attempted: Variant = null
+var _message_lifetime := 0.0
+var _coordinator: Object
+
+func _ready() -> void:
+	z_as_relative = false
+	z_index = 100
+	message = _make_label(Vector2(12, 12))
+	restriction = _make_label(Vector2(12, 100))
+	set_process(true)
+
+func _make_label(pos: Vector2) -> Label:
+	var label := Label.new()
+	label.position = pos
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	add_child(label)
+	return label
+
+func bind_coordinator(source: Object) -> void:
+	if is_instance_valid(_coordinator):
+		for binding in _bindings():
+			if _coordinator.is_connected(binding[0], binding[1]):
+				_coordinator.disconnect(binding[0], binding[1])
+	_coordinator = source
+	if is_instance_valid(source):
+		for binding in _bindings():
+			if not source.is_connected(binding[0], binding[1]):
+				source.connect(binding[0], binding[1])
+
+func _bindings() -> Array:
+	return [["phase_started", _on_phase_started], ["restriction_changed", _on_restriction_changed], ["phase_outcome", _on_phase_outcome]]
+
+func _on_phase_started(attempt: Dictionary) -> void:
+	if not attempt.get("phase", false):
+		return
+	attempted = null
+	_message_lifetime = 0.0
+	message.text = "Phase transit"
+	queue_redraw()
+
+func _on_restriction_changed(state: Dictionary) -> void:
+	if not state.get("blocked", false):
+		restriction.text = ""
+		return
+	var causes: PackedStringArray = []
+	for entry in [["sword", "Sword"], ["dash", "Dash"]]:
+		var remaining := float(state.get(entry[0], 0.0))
+		if remaining > 0.0:
+			causes.append("%s %.1fs" % [entry[1], remaining])
+	restriction.text = "Movement restricted" + (" • " + ", ".join(causes) if not causes.is_empty() else "")
+
+func _on_phase_outcome(outcome: Dictionary) -> void:
+	attempted = null
+	var status: String = outcome.get("status", "")
+	match status:
+		"landed":
+			message.text = "Phase landed"
+		"returned":
+			message.text = "Blocked — returned"
+			attempted = outcome.get("attempted")
+		"blocked_return":
+			message.text = "Return blocked"
+			attempted = outcome.get("attempted")
+		_:
+			message.text = ""
+	if attempted is Vector2:
+		message.text += "\nAttempted destination: %.0f, %.0f" % [attempted.x, attempted.y]
+	for damage in [["contact_damage", "Contact damage"], ["wave_damage", "Wave damage"]]:
+		var value: Variant = outcome.get(damage[0], 0)
+		if (value is bool and value) or ((value is int or value is float) and value > 0):
+			message.text += "\n" + damage[1]
+			if not value is bool:
+				message.text += ": " + str(value)
+	_message_lifetime = 2.0
+	queue_redraw()
+
+func _process(delta: float) -> void:
+	# The short display lifetime is visual only; no gameplay state is inferred.
+	if _message_lifetime > 0.0:
+		_message_lifetime -= delta
+		if _message_lifetime <= 0.0:
+			message.text = ""
+			attempted = null
+			queue_redraw()
+
+func _draw() -> void:
+	if attempted is Vector2:
+		draw_arc(attempted, 13.0, 0.0, TAU, 32, Color.WHITE, 3.0)
+		draw_line(attempted + Vector2(-8, -8), attempted + Vector2(8, 8), Color.WHITE, 3.0)
+		draw_line(attempted + Vector2(-8, 8), attempted + Vector2(8, -8), Color.WHITE, 3.0)
+
+func reset_feedback() -> void:
+	attempted = null
+	_message_lifetime = 0.0
+	message.text = ""
+	restriction.text = ""
+	queue_redraw()

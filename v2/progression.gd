@@ -1,5 +1,7 @@
 extends RefCounted
 
+const UNIFIED_BUILD = preload("res://runtime/unified_build.gd")
+
 var definition: Dictionary
 var active: Dictionary = {}
 var cleared: Dictionary = {}
@@ -148,7 +150,13 @@ func preview_activation(id: String, current: String) -> Dictionary:
 				return _failure("exclusive_choice")
 	if available_points() < definition.nodes[id].cost:
 		return _failure("capacity")
-	return {"ok": true, "reason": "", "affected": [id]}
+	var result := {"ok": true, "reason": "", "affected": [id]}
+	if definition.get("capability_model", "legacy") == "unified_1":
+		var selected := active.duplicate()
+		selected[id] = true
+		result.build_before = UNIFIED_BUILD.compose(definition, active)
+		result.build_after = UNIFIED_BUILD.compose(definition, selected)
+	return result
 
 func activate(id: String, current: String) -> Dictionary:
 	var result := preview_activation(id, current)
@@ -184,7 +192,11 @@ func preview_deactivation(id: String, current: String) -> Dictionary:
 			affected.append(candidate)
 	if not remaining.has(current):
 		return {"ok": false, "reason": "would_strand_player", "affected": affected}
-	return {"ok": true, "reason": "", "affected": affected}
+	var result := {"ok": true, "reason": "", "affected": affected}
+	if definition.get("capability_model", "legacy") == "unified_1":
+		result.build_before = UNIFIED_BUILD.compose(definition, active)
+		result.build_after = UNIFIED_BUILD.compose(definition, remaining)
+	return result
 
 func deactivate(id: String, current: String) -> Dictionary:
 	var result := preview_deactivation(id, current)
@@ -214,6 +226,8 @@ func preview_root_travel(destination: String, current: String) -> Dictionary:
 	return {"ok": true, "reason": "", "affected": []}
 
 func capabilities() -> Dictionary:
+	if definition.get("capability_model", "legacy") == "unified_1":
+		return UNIFIED_BUILD.compose(definition, active)
 	var abilities: Dictionary = {}
 	var stats := {"move_speed": 220.0, "sword_range": 92.0, "sword_arc": 1.8, "sword_damage": 1.0, "dash_speed": 650.0, "max_hp": int(definition.get("base_hp", 5)), "sword_strikes": 1, "sword_cooldown": 0.32, "dash_duration": 0.16, "dash_cooldown": 0.65, "dash_phase": false, "sprint": false}
 	var damage_multiplier := 1.0

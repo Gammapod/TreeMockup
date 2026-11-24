@@ -11,6 +11,7 @@ var selection: Label
 var node_action: Button
 var root_travel: Button
 var edit_permission: Label
+var current_build_label: Label
 var selection_scroll: ScrollContainer
 var inspected_node := ""
 
@@ -45,6 +46,11 @@ func _ready() -> void:
 	selection_scroll.add_child(details)
 	details.add_child(edit_permission)
 	details.add_child(selection)
+	current_build_label = Label.new()
+	current_build_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	current_build_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	current_build_label.hide()
+	details.add_child(current_build_label)
 	resized.connect(func():
 		selection_scroll.custom_minimum_size.y = 120 if size.y >= 560 else 80)
 	node_action = Button.new()
@@ -72,6 +78,8 @@ func configure(definition: Dictionary) -> void:
 	# Definitions are validated immutable content for the duration of a run.
 	data = definition
 	snapshot = {}
+	current_build_label.text = ""
+	current_build_label.hide()
 	edit_permission.text = ""
 	edit_permission.hide()
 	gameplay_map.set_definition(data)
@@ -80,6 +88,13 @@ func configure(definition: Dictionary) -> void:
 func refresh(state: Dictionary) -> void:
 	# Keep a coherent presentation while the mutable run advances.
 	snapshot = state.duplicate(true)
+	var current_build: Dictionary = snapshot.get("current_build", {})
+	if current_build.get("model", "") == "unified_1":
+		current_build_label.text = "Current build:" + _unified_build_text(current_build)
+		current_build_label.show()
+	else:
+		current_build_label.text = ""
+		current_build_label.hide()
 	edit_permission.text = "" if snapshot.get("can_edit_tree", true) else "Tree editing disabled while this room is uncleared."
 	edit_permission.visible = not edit_permission.text.is_empty()
 	gameplay_map.set_occupied(snapshot.current)
@@ -147,6 +162,10 @@ func select_node(id: String) -> void:
 		selection.text += " • Root — permanently active, allocation 0"
 	if not preview.ok:
 		selection.text += "\n" + reason_text
+	if preview.get("build_before", {}).get("model", "") == "unified_1":
+		selection.text += "\n\nCurrent build (Before):" + _unified_build_text(preview.build_before)
+		if preview.ok and preview.get("build_after", {}).get("model", "") == "unified_1":
+			selection.text += "\n\nIf action succeeds (After):" + _unified_build_text(preview.build_after)
 	node_action.text = "Deactivate / refund" if is_active else "Activate (%d %s)" % [node.cost, "point" if node.cost == 1 else "points"]
 	node_action.disabled = not preview.ok
 	var refund := 0
@@ -176,6 +195,45 @@ func select_node(id: String) -> void:
 		for effect in rule.effects:
 			selection.text += "\n  " + effect.kind.replace("_", " ").capitalize() + (" — " + effect.object if effect.has("object") else "")
 	node_action.tooltip_text = selection.text
+
+func _unified_build_text(build: Dictionary) -> String:
+	# Display only supplied results; in particular, never calculate dormant values
+	# or infer a successful action from an unavailable/rejected preview.
+	var text := ""
+	for id in build.get("qualities", {}):
+		var quality: Dictionary = build.qualities[id]
+		var status := "Not granted"
+		if quality.get("granted", false):
+			status = "Granted • Effective" if quality.get("effective", false) else "Granted • Dormant"
+		if quality.get("granted", false) and not quality.get("effective", false) and not str(quality.get("requires", "")).is_empty():
+			status += " (requires %s)" % str(quality.requires).replace("_", " ").capitalize()
+		status += _unified_sources_text(quality.get("sources", []))
+		text += "\n  %s: %s" % [str(id).replace("_", " ").capitalize(), status]
+	for id in build.get("stats", {}):
+		var stat: Dictionary = build.stats[id]
+		var status: String
+		if stat.get("effective") == null:
+			status = "Dormant"
+			if not str(stat.get("requires", "")).is_empty():
+				status += " (requires %s)" % str(stat.requires).replace("_", " ").capitalize()
+		else:
+			status = str(stat.effective)
+			if stat.get("clamped", false):
+				status += " (capped)"
+		status += _unified_sources_text(stat.get("sources", []))
+		text += "\n  %s: %s" % [str(id).replace("_", " ").capitalize(), status]
+	return text
+
+func _unified_sources_text(sources: Array) -> String:
+	var names: PackedStringArray = []
+	for source in sources:
+		var id := str(source.get("node_id", ""))
+		if not id.is_empty():
+			var node: Dictionary = data.get("nodes", {}).get(id, {})
+			var label := str(node.get("name", id))
+			if not names.has(label):
+				names.append(label)
+	return " • Sources: " + ", ".join(names) if not names.is_empty() else ""
 
 func _requirement_details(node: Dictionary) -> String:
 	var text := "\n\nOngoing prerequisites:"

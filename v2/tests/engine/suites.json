@@ -1,0 +1,21 @@
+[
+  {"id":"run","script":"tests/engine/run_tests.gd","area":"progression","invariants":["P1","P2","P3"]},
+  {"id":"branching","script":"tests/engine/branching_tests.gd","area":"progression","invariants":["P1","P3","H1"]},
+  {"id":"root_travel","script":"tests/engine/root_travel_tests.gd","area":"progression","invariants":["T1"]},
+  {"id":"clear","script":"tests/engine/clear_tests.gd","area":"lifecycle","invariants":["C1","C2","C3"]},
+  {"id":"clear_hardening","script":"tests/engine/clear_hardening_tests.gd","area":"lifecycle","invariants":["L1"]},
+  {"id":"content","script":"tests/engine/content_tests.gd","area":"content","invariants":["A1","A4","H2","H3"]},
+  {"id":"capability_metadata","script":"tests/engine/capability_metadata_tests.gd","area":"content","invariants":["A5","UAB1","UAB2"]},
+  {"id":"tutorial_candidate","script":"tests/engine/tutorial_candidate_tests.gd","area":"content","invariants":["A1","H1","H2","R1","P1","P2"]},
+  {"id":"door_layout","script":"tests/engine/door_layout_tests.gd","area":"content","invariants":["A2"]},
+  {"id":"phase_integration","script":"tests/engine/phase_integration_tests.gd","area":"lifecycle","invariants":["UAB8","UAB9","L1"]},
+  {"id":"build","script":"tests/engine/build_tests.gd","area":"combat","invariants":["B4","H1"]},
+  {"id":"unified","script":"tests/engine/unified_tests.gd","area":"combat","invariants":["UAB1","UAB2"]},
+  {"id":"unified_portable","script":"tests/engine/unified_portable_tests.gd","area":"content","invariants":["A1","UAB8"]},
+  {"id":"unified_action","script":"tests/engine/unified_action_tests.gd","area":"combat","invariants":["UAB3"]},
+  {"id":"unified_player","script":"tests/engine/unified_player_tests.gd","area":"combat","invariants":["UAB6"]},
+  {"id":"unified_room","script":"tests/engine/unified_room_tests.gd","area":"combat","invariants":["UAB7","E1"]},
+  {"id":"phase_geometry","script":"tests/engine/phase_geometry_tests.gd","area":"combat","invariants":["UAB4","UAB5"]},
+  {"id":"arena","script":"tests/engine/arena_tests.gd","area":"combat","invariants":["B5","L1"]},
+  {"id":"boss","script":"tests/engine/boss_tests.gd","area":"combat","invariants":["E1","E2"]}
+]

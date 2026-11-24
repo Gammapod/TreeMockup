@@ -32,7 +32,7 @@ sources:
 | **Clear condition** | ALL-combined objective: defeat all enemies, hit a named switch, or collect all room tokens. |
 | **Clear effect** | Completion result: reveal a pickup, prevent enemy respawn, or become a root. |
 | **Token** | Room-local objective item; it is neither capacity nor gold, resets on uncleared departure, and disappears on clear. |
-| **Permanent reward** | Gold or capacity pickup/chest collected once using `(node_id, object_id)` identity. |
+| **Permanent reward** | Gold, capacity or health pickup/chest collected once per run using `(node_id, object_id)` identity; health restores current HP rather than increasing maximum HP. |
 | **Capacity** | Allocation budget: initial capacity plus collected capacity rewards, minus active non-root node costs. |
 
 # Player primitives
@@ -42,14 +42,16 @@ sources:
 | **Sword** | Space-triggered directional melee attack, granted by an active node. |
 | **Dash** | Shift-triggered movement burst, granted by an active node. |
 | **Flippers** | Ability that bypasses water collision. |
-| **Modifier** | Numeric or behavior adjustment aggregated from active nodes; behavior styles require their base ability. |
+| **Contribution** | A unified node's enabled quality or additive/multiplicative stat adjustment; action-specific effects are dormant without their base action. |
+| **Modifier** | A node's numeric or behavior adjustment; legacy bundles use modifiers and styles, while unified bundles use contributions. |
 | **Reach / arc** | Sword's forward extent and angular coverage; independent numeric stats. |
-| **Attack interval** | Time between starting successive attacks, bounded by action duration. |
-| **Phase Dash** | A dash behavior granting enemy-contact immunity while retaining 65% of normal distance. |
+| **Attack interval** | In legacy content, time between starting successive attacks; unified Sword Cooldown is measured after the attack ends. |
+| **Phase Dash** | In unified content, a fixed-duration teleport across interior obstacles that returns or triggers defeat on an invalid landing; the legacy Phase style is a shorter moving dash with contact immunity. |
+| **Rooted cooldown** | An optional unified action quality restricting ordinary movement through an action and its cooldown; Dash can still move during a sword restriction. |
 | **Max-HP upgrade** | Raises health capacity without healing; removal clamps current HP. |
 | **Trial restart** | Arena-only fresh attempt: retains allocations, restores encounters and full build HP, and returns to Workshop. |
 | **Roost Guardian** | Tethered boss with a pressure/telegraph/gapped-wave/recovery cycle and capped bat summons. |
-| **Shockwave gap** | Safe wedge locked at telegraph start; Phase Dash does not grant wave immunity. |
+| **Shockwave gap** | Safe wedge locked at telegraph start; legacy Phase does not grant wave immunity, while a unified Phase player is absent during teleport transit. |
 | **Root travel** | Map travel from any active room to another cleared, active root, preserving build and HP. |
 | **Editing lock** | Optional uncleared-room policy that blocks activation and deactivation while occupied. |
 

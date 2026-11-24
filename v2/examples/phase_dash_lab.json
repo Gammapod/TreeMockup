@@ -1,0 +1,56 @@
+{
+  "format": "room-tree",
+  "version": 2,
+  "id": "phase_dash_lab",
+  "name": "Phase Dash — Movement Lab",
+  "rooms": [
+    {
+      "id": "lab", "name": "Movement Lab", "size": [800, 600], "ports": [],
+      "spawn": [190, 300],
+      "objects": [
+        {"id": "narrow_wall", "kind": "wall", "position": [340, 170], "size": [40, 260], "properties": {}},
+        {"id": "thick_wall", "kind": "wall", "position": [480, 170], "size": [150, 100], "properties": {}},
+        {"id": "water", "kind": "water", "position": [480, 310], "size": [80, 120], "properties": {}}
+      ],
+      "clear": {"conditions": [], "effects": [{"kind": "become_root"}]}
+    },
+    {"id": "side_room", "name": "Configuration Room", "size": [800, 600], "ports": [], "objects": []}
+  ],
+  "dungeon": {
+    "root": "start",
+    "capability_model": "unified_1",
+    "initial_capacity": 2,
+    "base_hp": 5,
+    "nodes": [
+      {
+        "id": "start", "name": "Sword and Dash", "template": "lab", "cost": 0,
+        "requires_all": [], "requires_any": [], "abilities": [], "map_position": [0, 0],
+        "contributions": [
+          {"id": "sword", "kind": "quality", "quality": "sword"},
+          {"id": "dash", "kind": "quality", "quality": "dash"}
+        ]
+      },
+      {
+        "id": "phase", "name": "Phase and Rooted Recharge", "template": "side_room", "cost": 1,
+        "requires_all": [], "requires_any": [], "abilities": [], "map_position": [180, 0],
+        "contributions": [
+          {"id": "teleport", "kind": "quality", "quality": "phase_teleport"},
+          {"id": "root", "kind": "quality", "quality": "dash_root"}
+        ]
+      },
+      {
+        "id": "flippers", "name": "Water Passage", "template": "side_room", "cost": 1,
+        "requires_all": [], "requires_any": [], "abilities": [], "map_position": [0, 180],
+        "contributions": [{"id": "water", "kind": "quality", "quality": "water_pass"}]
+      }
+    ],
+    "links": [
+      {"id": "phase_link", "a": "start", "b": "phase", "activate_from": ["start", "phase"], "a_door": {"wall": "east", "offset": 0.5}, "b_door": {"wall": "west", "offset": 0.5}},
+      {"id": "water_link", "a": "start", "b": "flippers", "activate_from": ["start", "flippers"], "a_door": {"wall": "south", "offset": 0.5}, "b_door": {"wall": "north", "offset": 0.5}}
+    ],
+    "interactions": []
+  },
+  "extensions": {
+    "notes": "Experimental movement fixture, not a dungeon baseline. Compare normal and Phase dash; try invalid wall and water landings, then water passage. Engine validation and human playtest pending."
+  }
+}

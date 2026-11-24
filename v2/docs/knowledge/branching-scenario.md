@@ -8,7 +8,7 @@ generated: { by: "openai/gpt-5.6-terra", at: 2026-11-15T00:00:00Z }
 sources:
   - { resource: ../../examples/branching.json, title: Playable scenario }
   - { resource: ../../examples/scenario-designs/branching-dungeon.mmd, title: Scenario diagram }
-  - { resource: ../../tests/branching_tests.gd, title: Branching scenario test trace }
+  - { resource: ../../tests/engine/branching_tests.gd, title: Branching scenario test trace }
   - { resource: ../archive/branching-design-closeout.md, title: Archived implementation closeout }
 ---
 
@@ -37,6 +37,6 @@ allocation point, and one cost per non-root room.
 
 # Evidence
 
-`tests/branching_tests.gd` covers topology/funding, prerequisite and
+`tests/engine/branching_tests.gd` covers topology/funding, prerequisite and
 exclusive-choice cascades, occupied-room protection, ability styles, and HP
 behavior. The scenario is a regression fixture, not a claim of final balance.

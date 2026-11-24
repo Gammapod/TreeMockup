@@ -42,7 +42,7 @@ func configure(record: Dictionary, target: Vector2) -> void:
 func contact_dangerous() -> bool:
 	return phase != "recovery"
 
-func advance(delta: float, target: Vector2, living_adds: int) -> void:
+func advance(delta: float, target: Vector2, living_adds: int, target_present: bool = true) -> void:
 	var remaining := delta
 	while remaining > 0.000001:
 		var duration := _duration()
@@ -65,7 +65,7 @@ func advance(delta: float, target: Vector2, living_adds: int) -> void:
 		elif phase == "wave":
 			var old_radius := wave_radius
 			wave_radius += WAVE_SPEED * step
-			if not wave_touched and wave_intersects(previous_target, target, old_radius, wave_radius):
+			if target_present and not wave_touched and wave_intersects(previous_target, target, old_radius, wave_radius):
 				wave_touched = true
 				wave_hit.emit()
 		phase_time += step

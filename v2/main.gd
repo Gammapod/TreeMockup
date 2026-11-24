@@ -1,5 +1,9 @@
 extends Control
 
+signal phase_outcome(outcome: Dictionary)
+signal restriction_changed(state: Dictionary)
+signal phase_started(attempt: Dictionary)
+
 const CONTENT = preload("res://content.gd")
 const PROGRESSION = preload("res://progression.gd")
 const ROOM = preload("res://room.gd")
@@ -18,6 +22,8 @@ var object_records: Dictionary = {}
 var studio
 var shell
 var tree_ui
+var phase_feedback
+var _blocked_return_defeat := false
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color("121b28"))
@@ -36,7 +42,10 @@ func _ready() -> void:
 	tree_ui.configure(data)
 	tree_ui.action_requested.connect(_toggle)
 	tree_ui.root_travel_requested.connect(_request_root_travel)
-	_enter_room(data.root, "", progression.capabilities().max_hp)
+	phase_feedback = preload("res://presentation/phase_feedback.gd").new()
+	shell.room_viewport.add_child(phase_feedback)
+	phase_feedback.bind_coordinator(self)
+	_enter_room(data.root, "", _build_max_hp(progression.capabilities()))
 
 func _process(_delta: float) -> void:
 	if room != null:
@@ -45,6 +54,8 @@ func _process(_delta: float) -> void:
 func _enter_room(destination: String, entry: String, hp: int) -> void:
 	# Every replacement invalidates deferred commands from the previous scene/run.
 	room_generation += 1
+	phase_feedback.reset_feedback()
+	_blocked_return_defeat = false
 	if room != null:
 		progression.leave_room(current)
 		room_records[current] = room.defeated.duplicate()
@@ -70,6 +81,10 @@ func _enter_room(destination: String, entry: String, hp: int) -> void:
 	room.player_defeated.connect(_defeat)
 	room.switch_toggled.connect(_switch_toggled)
 	room.objective_event.connect(_objective_event)
+	var generation := room_generation
+	room.phase_outcome.connect(func(outcome): _forward_phase_outcome(generation, outcome))
+	room.restriction_changed.connect(func(state): _forward_restriction(generation, state))
+	room.phase_started.connect(func(attempt): _forward_phase_started(generation, attempt))
 	transition_pending = false
 	_refresh()
 	tree_ui.frame_current_room()
@@ -92,7 +107,22 @@ func _request_travel(destination: String, entry: String) -> void:
 
 func _queue_transition(kind: String, destination: String, entry: String = "") -> void:
 	transition_pending = true
+	if room != null:
+		room.cancel_pending_phase()
 	_finish_transition.call_deferred(room_generation, kind, destination, entry)
+
+func _forward_phase_outcome(generation: int, outcome: Dictionary) -> void:
+	if generation == room_generation and not transition_pending:
+		_blocked_return_defeat = outcome.get("status", "") == "blocked_return"
+		phase_outcome.emit(outcome.duplicate(true))
+
+func _forward_restriction(generation: int, state: Dictionary) -> void:
+	if generation == room_generation and not transition_pending:
+		restriction_changed.emit(state.duplicate(true))
+
+func _forward_phase_started(generation: int, attempt: Dictionary) -> void:
+	if generation == room_generation and not transition_pending:
+		phase_started.emit(attempt.duplicate(true))
 
 func _request_root_travel(destination: String) -> void:
 	if transition_pending:
@@ -109,7 +139,7 @@ func _finish_transition(generation: int, kind: String, destination: String, entr
 		return
 	transition_pending = false
 	if kind == "defeat":
-		_enter_room(data.root, "", progression.capabilities().max_hp)
+		_enter_room(data.root, "", _build_max_hp(progression.capabilities()))
 		return
 	if kind == "trial":
 		var selected: Array = progression.active.keys()
@@ -141,7 +171,8 @@ func _collect(object_id: String) -> void:
 func _defeat() -> void:
 	if transition_pending:
 		return
-	message = "Defeated — returned to Sanctuary. Build and collected rewards retained."
+	message = "Return blocked — defeated and returned to Sanctuary. Build and collected rewards retained." if _blocked_return_defeat else "Defeated — returned to Sanctuary. Build and collected rewards retained."
+	_blocked_return_defeat = false
 	_queue_transition("defeat", data.root)
 
 func _switch_toggled(object_id: String) -> void:
@@ -178,7 +209,8 @@ func _toggle(id: String) -> void:
 	_refresh()
 
 func _refresh() -> void:
-	room.player.set_capabilities(progression.capabilities())
+	var caps: Dictionary = progression.capabilities()
+	room.player.set_capabilities(caps)
 	room.apply_object_states(object_records.get(current, {}))
 	room.set_portals(_portals())
 	var collected: Dictionary = {}
@@ -196,8 +228,7 @@ func _refresh() -> void:
 		var is_active: bool = progression.active.has(id)
 		previews[id] = progression.preview_deactivation(id, current) if is_active else progression.preview_activation(id, current)
 		travel_previews[id] = progression.preview_root_travel(id, current)
-	tree_ui.refresh({"current": current, "active": progression.active, "cleared": progression.cleared, "roots": progression.roots, "can_edit_tree": progression.can_edit_tree(current), "travel_previews": travel_previews, "available_points": progression.available_points(), "previews": previews})
-	var caps: Dictionary = progression.capabilities()
+	tree_ui.refresh({"current": current, "active": progression.active, "cleared": progression.cleared, "roots": progression.roots, "can_edit_tree": progression.can_edit_tree(current), "travel_previews": travel_previews, "available_points": progression.available_points(), "previews": previews, "current_build": caps.duplicate(true)})
 	status.text = message + "\n" + _ability_stats(caps)
 	var arena: bool = data.get("scenario_id", "") == "build_arena"
 	shell.retry_button.visible = arena
@@ -209,6 +240,15 @@ func _refresh() -> void:
 	room.queue_redraw()
 
 func _ability_stats(caps: Dictionary) -> String:
+	if caps.get("model") == "unified_1":
+		var unified_lines: PackedStringArray = []
+		if caps.qualities.sword.effective:
+			unified_lines.append("Sword · Reach %.1f · Arc %.1f° · Damage %.2f · Cooldown %.3fs" % [caps.stats.sword_range.effective, rad_to_deg(caps.stats.sword_arc.effective), caps.stats.sword_damage.effective, caps.stats.sword_cooldown.effective])
+		if caps.qualities.dash.effective:
+			unified_lines.append("Dash · Distance %.1f · Recharge %.3fs" % [caps.stats.dash_distance.effective, caps.stats.dash_recharge.effective])
+		if caps.qualities.water_pass.effective:
+			unified_lines.append("Water traversal")
+		return "\n".join(unified_lines) if not unified_lines.is_empty() else "No active abilities."
 	var lines: PackedStringArray = []
 	if caps.abilities.has("sword"):
 		lines.append("Sword · Reach %.1f · Arc %.1f° · Damage %.2f · Interval %.3fs" % [caps.sword_range, rad_to_deg(caps.sword_arc), caps.sword_damage, caps.sword_cooldown])
@@ -217,6 +257,9 @@ func _ability_stats(caps: Dictionary) -> String:
 	if caps.abilities.has("flippers"):
 		lines.append("Flippers · Water traversal")
 	return "\n".join(lines) if not lines.is_empty() else "No active abilities."
+
+func _build_max_hp(caps: Dictionary) -> int:
+	return int(caps.stats.max_hp.effective) if caps.get("model") == "unified_1" else int(caps.max_hp)
 
 func _request_trial_restart() -> void:
 	if data.get("scenario_id", "") == "build_arena" and not transition_pending and (studio == null or not studio.visible):
@@ -276,4 +319,4 @@ func _start_run(compiled: Dictionary, retained_build: Array = []) -> void:
 			if progression.activate(id, source).ok:
 				break
 	message = "Playtesting authored content. F2 returns to the editors."
-	_enter_room(data.root, "", progression.capabilities().max_hp)
+	_enter_room(data.root, "", _build_max_hp(progression.capabilities()))

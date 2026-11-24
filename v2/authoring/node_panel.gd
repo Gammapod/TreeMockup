@@ -2,6 +2,8 @@ extends ScrollContainer
 
 # Presentation owns copied source and emits edits addressed by stable node ID.
 signal field_requested(node_id: String, field: String, value: Variant)
+signal model_requested(model: String)
+signal contribution_requested(node_id: String, contribution_id: String, entry: Variant, expected_existing: bool, expected_entry: Variant, expected_slot: Variant)
 signal template_edit_requested(node_id: String)
 signal template_duplicate_requested(node_id: String)
 signal doors_requested
@@ -42,6 +44,28 @@ var diagnostics: Label
 var bindings: Label
 var name_focus_id := ""
 var preview_key := ""
+var metadata: Dictionary = {}
+var model_choice: OptionButton
+var ability_label: Label
+var unified_box: VBoxContainer
+var contribution_choice: OptionButton
+var contribution_type: OptionButton
+var contribution_id: LineEdit
+var contribution_operation: OptionButton
+var contribution_value: LineEdit
+var contribution_help: Label
+var contribution_remove: Button
+var contribution_save: Button
+var contribution_entries: Array = []
+var contribution_table: VBoxContainer
+var table_controls: Dictionary = {}
+var table_feedback: Label
+var table_drafts: Dictionary = {}
+var table_drafts_by_node: Dictionary = {}
+# Expansion is editor view state shared across node selection and refresh.
+var section_expanded := {"Player": true, "Sword": true, "Dash": true}
+var section_buttons: Dictionary = {}
+var section_contents: Dictionary = {}
 
 func _ready() -> void:
 	horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -49,6 +73,14 @@ func _ready() -> void:
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(column)
 	heading = _label(column, "Select a tree node to edit its properties.")
+	_label(column, "Dungeon capability model")
+	model_choice = OptionButton.new()
+	model_choice.add_item("Legacy")
+	model_choice.add_item("Unified")
+	model_choice.item_selected.connect(func(index):
+		if not updating: model_requested.emit("legacy" if index == 0 else "unified_1"))
+	column.add_child(model_choice)
+	_label(column, "Changing model validates the whole dungeon; incompatible source is never converted or removed. Legacy cannot contain a contributions field, even if empty (edit in JSON).")
 	form = VBoxContainer.new()
 	column.add_child(form)
 	_label(form, "Name")
@@ -63,7 +95,7 @@ func _ready() -> void:
 	cost.allow_greater = true
 	cost.value_changed.connect(func(value): _field("cost", int(value)))
 	form.add_child(cost)
-	_label(form, "Abilities")
+	ability_label = _label(form, "Abilities")
 	abilities = MenuButton.new()
 	abilities.clip_text = true
 	abilities.text = "Choose abilities…"
@@ -133,6 +165,34 @@ func _ready() -> void:
 	# Keep both kinds of grants together, above the template/geometry section.
 	form.move_child(modifier_toggle, form.get_children().find(abilities) + 1)
 	form.move_child(modifiers_box, form.get_children().find(modifier_toggle) + 1)
+	unified_box = VBoxContainer.new()
+	form.add_child(unified_box)
+	form.move_child(unified_box, form.get_children().find(modifiers_box) + 1)
+	contribution_table = VBoxContainer.new()
+	unified_box.add_child(contribution_table)
+	_label(unified_box, "Individual contributions / JSON escape — requirements do not grant the action")
+	contribution_choice = OptionButton.new()
+	contribution_choice.item_selected.connect(_select_contribution)
+	unified_box.add_child(contribution_choice)
+	_label(unified_box, "Stable ID (node-local)")
+	contribution_id = LineEdit.new()
+	unified_box.add_child(contribution_id)
+	_label(unified_box, "Contribution")
+	contribution_type = OptionButton.new()
+	contribution_type.item_selected.connect(func(_index): _update_contribution_help())
+	unified_box.add_child(contribution_type)
+	contribution_operation = OptionButton.new()
+	contribution_operation.add_item("Add")
+	contribution_operation.set_item_metadata(0, "add")
+	contribution_operation.add_item("Multiply")
+	contribution_operation.set_item_metadata(1, "multiply")
+	unified_box.add_child(contribution_operation)
+	contribution_value = LineEdit.new()
+	contribution_value.placeholder_text = "Operand (not a final stat)"
+	unified_box.add_child(contribution_value)
+	contribution_help = _label(unified_box, "")
+	contribution_save = _button(unified_box, "Save contribution", _save_contribution)
+	contribution_remove = _button(unified_box, "Remove contribution", _remove_contribution)
 	_label(form, "Template information (read-only)")
 	summary = _label(form, "")
 	bindings = _label(form, "")
@@ -175,9 +235,274 @@ func _modifier(key: String, value: Variant) -> void:
 	else: values[key] = value
 	_field("modifiers", values)
 
+func _matching_contributions(kind: String, key: String, op: String = "") -> Array:
+	return contribution_entries.filter(func(entry):
+		return entry.get("kind", "") == kind and entry.get(kind, "") == key and (kind != "stat" or entry.get("op", "") == op))
+
+func _build_contribution_table() -> void:
+	for child in contribution_table.get_children():
+		contribution_table.remove_child(child)
+		child.queue_free()
+	table_controls.clear()
+	section_buttons.clear()
+	section_contents.clear()
+	_label(contribution_table, "Node contributions — blank means absent; press Enter to commit. + and × are not final build values.")
+	table_feedback = _label(contribution_table, "")
+	if not table_drafts.is_empty():
+		_button(contribution_table, "Discard uncommitted table drafts", func():
+			table_drafts.clear()
+			_build_contribution_table())
+	_label(contribution_table, "Sword / Dash modifiers require that action; they do not grant it. Rooted cooldown restricts movement, not all actions. Max HP increases do not heal.")
+	for group in [
+		{"name": "Player", "qualities": [["water_pass", "Water Walking"]], "stats": ["max_hp", "move_speed"]},
+		{"name": "Sword", "qualities": [["sword", "Sword Attack Enabled"], ["sword_root", "Sword Rooted Cooldown"]], "stats": ["sword_damage", "sword_range", "sword_arc", "sword_cooldown"]},
+		{"name": "Dash", "qualities": [["dash", "Dash Enabled"], ["phase_teleport", "Phase Teleport"], ["dash_root", "Dash Rooted Cooldown"]], "stats": ["dash_distance", "dash_recharge"]}
+	]:
+		var group_name: String = group.name
+		var toggle := Button.new()
+		toggle.toggle_mode = true
+		toggle.focus_mode = Control.FOCUS_ALL
+		toggle.button_pressed = section_expanded[group_name]
+		contribution_table.add_child(toggle)
+		var content := VBoxContainer.new()
+		contribution_table.add_child(content)
+		section_buttons[group_name] = toggle
+		section_contents[group_name] = content
+		_set_section_expanded(group_name, toggle.button_pressed)
+		toggle.toggled.connect(func(expanded): _set_section_expanded(group_name, expanded))
+		for quality in group.qualities:
+			var key: String = quality[0]
+			var matches := _matching_contributions("quality", key)
+			var check := CheckBox.new()
+			check.text = quality[1] + (" — multiple; inspect individual entries" if matches.size() > 1 else "")
+			check.button_pressed = not matches.is_empty()
+			check.disabled = matches.size() > 1
+			content.add_child(check)
+			table_controls["quality:" + key] = check
+			check.toggled.connect(func(on):
+				_table_commit("quality", key, "", on)
+				if is_instance_valid(check) and check.is_inside_tree():
+					check.set_pressed_no_signal(not matches.is_empty()))
+		for stat in group.stats:
+			var info: Dictionary = metadata.get("stats", {}).get(stat, {})
+			_label(content, "%s (%s)" % [info.get("label", stat), info.get("unit", "")])
+			var row := HBoxContainer.new()
+			content.add_child(row)
+			for op in ["add", "multiply"]:
+				var matches := _matching_contributions("stat", stat, op)
+				var slot: String = "stat:" + str(stat) + ":" + str(op)
+				var column := VBoxContainer.new()
+				column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row.add_child(column)
+				_label(column, "+ Base Stat" if op == "add" else "× Multiplier")
+				var field := LineEdit.new()
+				field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				field.custom_minimum_size.x = 50
+				field.placeholder_text = "+ Base Stat" if op == "add" else "× Multiplier"
+				field.tooltip_text = ("Additive contribution" if op == "add" else "Multiplicative contribution") + "; blank removes the contribution."
+				if matches.size() == 1:
+					field.text = str(matches[0].get("value", ""))
+				if table_drafts.has(slot):
+					field.text = table_drafts[slot].text
+				var fractional_hp: bool = stat == "max_hp" and op == "add" and matches.size() == 1 and float(matches[0].get("value", 0)) != floor(float(matches[0].get("value", 0)))
+				if matches.size() > 1 or fractional_hp:
+					field.editable = false
+					field.text = "Multiple — inspect" if matches.size() > 1 else field.text
+					field.tooltip_text = "Preserved; edit individual contributions or JSON."
+				column.add_child(field)
+				table_controls[slot] = field
+				field.text_changed.connect(func(text):
+					if not table_drafts.has(slot):
+						table_drafts[slot] = {"text": text, "entries": matches.duplicate(true)}
+					else:
+						table_drafts[slot].text = text)
+				field.text_submitted.connect(func(text): _table_commit("stat", stat, op, text))
+				if matches.size() > 1 or fractional_hp:
+					_label(content, "%s %s: %s — inspect individual entries / JSON." % [info.get("label", stat), op, "multiple" if matches.size() > 1 else "fractional HP"])
+
+func _set_section_expanded(group: String, expanded: bool) -> void:
+	section_expanded[group] = expanded
+	var button: Button = section_buttons[group]
+	button.text = ("%s — expanded ▾" if expanded else "%s — collapsed ▸") % group
+	button.tooltip_text = ("Collapse " if expanded else "Expand ") + group + " contributions"
+	section_contents[group].visible = expanded
+
+func _table_commit(kind: String, key: String, op: String, value: Variant) -> void:
+	var matches := _matching_contributions(kind, key, op)
+	var slot := "stat:" + key + ":" + op
+	if kind == "stat" and table_drafts.has(slot) and table_drafts[slot].entries != matches:
+		table_feedback.text = "Contribution changed since editing began; source unchanged. Clear this draft before editing again."
+		return
+	if matches.size() > 1:
+		return
+	var existing := not matches.is_empty()
+	var original: Variant = matches[0].duplicate(true) if existing else null
+	if kind == "stat" and key == "max_hp" and op == "add" and existing and float(original.value) != floor(float(original.value)):
+		return
+	var remove := (kind == "quality" and not bool(value)) or (kind == "stat" and str(value).strip_edges().is_empty())
+	if remove and not existing:
+		return
+	var id := str(original.id) if existing else key + ("_" + op if kind == "stat" else "")
+	if not existing:
+		var base := id
+		var suffix := 1
+		while contribution_entries.any(func(item): return item.get("id", "") == id):
+			id = base + "_" + str(suffix)
+			suffix += 1
+	var entry: Variant = null
+	if not remove:
+		entry = original.duplicate(true) if existing else {"id": id, "kind": kind}
+		entry[kind] = key
+		if kind == "stat":
+			var text := str(value).strip_edges()
+			if not text.is_valid_float() or (key == "max_hp" and op == "add" and not text.is_valid_int()):
+				table_feedback.text = "%s %s: enter %s" % [key.replace("_", " ").capitalize(), op, "an integer for HP addition." if key == "max_hp" and op == "add" else "a numeric operand."]
+				return
+			entry.op = op
+			entry.value = int(text) if key == "max_hp" and op == "add" else float(text)
+	contribution_requested.emit(node_id, id, entry, existing, original, {"kind": kind, "key": key, "op": op, "entries": matches.duplicate(true)})
+	if kind == "stat" and table_drafts.has(slot):
+		var updated := _matching_contributions(kind, key, op)
+		if (entry == null and updated.is_empty()) or (entry != null and updated.size() == 1 and updated[0] == entry):
+			table_drafts.erase(slot)
+
+func _configure_contributions(changed_node: bool) -> void:
+	var selected_id := ""
+	if not changed_node and contribution_choice.selected > 0:
+		selected_id = str(contribution_choice.get_item_metadata(contribution_choice.selected))
+	contribution_entries = node.get("contributions", []).duplicate(true)
+	_build_contribution_table()
+	contribution_choice.clear()
+	contribution_choice.add_item("New contribution…")
+	contribution_choice.set_item_metadata(0, "")
+	var selected := 0
+	for entry in contribution_entries:
+		contribution_choice.add_item("%s — %s" % [str(entry.get("id", "?")), str(entry.get("quality", entry.get("stat", entry.get("kind", "?"))))])
+		contribution_choice.set_item_metadata(contribution_choice.item_count - 1, entry.get("id", ""))
+		if entry.get("id", "") == selected_id:
+			selected = contribution_choice.item_count - 1
+	contribution_choice.select(selected)
+	contribution_type.clear()
+	for group in ["qualities", "stats"]:
+		for key in metadata.get(group, {}):
+			var item: Dictionary = metadata[group][key]
+			contribution_type.add_item(str(item.get("label", key)))
+			contribution_type.set_item_metadata(contribution_type.item_count - 1, {"kind": "quality" if group == "qualities" else "stat", "key": key})
+	_select_contribution(selected)
+
+func _select_contribution(index: int) -> void:
+	if contribution_type.item_count == 0:
+		return
+	var entry: Dictionary = contribution_entries[index - 1] if index > 0 and index <= contribution_entries.size() else {}
+	if entry.is_empty():
+		var suffix := 1
+		while contribution_entries.any(func(item): return item.get("id", "") == "contribution_%d" % suffix):
+			suffix += 1
+		contribution_id.text = "contribution_%d" % suffix
+		contribution_type.select(0)
+		contribution_operation.select(0)
+		contribution_value.text = "0"
+	else:
+		contribution_id.text = str(entry.get("id", ""))
+		var found := -1
+		for i in range(contribution_type.item_count):
+			var item: Dictionary = contribution_type.get_item_metadata(i)
+			if item.kind == entry.get("kind", "") and item.key == entry.get(item.kind, ""):
+				found = i
+				break
+		if found < 0:
+			contribution_type.select(-1)
+			contribution_help.text = "Unsupported contribution preserved; edit in JSON."
+			contribution_save.disabled = true
+			contribution_remove.disabled = false
+			return
+		if entry.get("kind", "") == "stat" and entry.get("op", "") not in metadata.stats[entry.stat].operations:
+			contribution_type.select(found)
+			contribution_help.text = "Unsupported operation preserved; edit in JSON."
+			contribution_save.disabled = true
+			contribution_remove.disabled = false
+			return
+		contribution_type.select(found)
+		contribution_operation.select(1 if entry.get("op", "") == "multiply" else 0)
+		contribution_value.text = str(entry.get("value", 0))
+	contribution_id.editable = entry.is_empty()
+	contribution_type.disabled = not entry.is_empty()
+	contribution_save.disabled = false
+	contribution_remove.disabled = entry.is_empty()
+	_update_contribution_help()
+
+func _update_contribution_help() -> void:
+	if contribution_type.selected < 0:
+		return
+	var selected: Dictionary = contribution_type.get_item_metadata(contribution_type.selected)
+	var is_stat: bool = selected.kind == "stat"
+	contribution_operation.visible = is_stat
+	contribution_value.visible = is_stat
+	var info: Dictionary = metadata.get("stats" if is_stat else "qualities", {}).get(selected.key, {})
+	if is_stat:
+		var current_op := ""
+		if contribution_operation.selected >= 0:
+			current_op = str(contribution_operation.get_item_metadata(contribution_operation.selected))
+		contribution_operation.clear()
+		for op in info.get("operations", []):
+			contribution_operation.add_item(str(op).capitalize())
+			contribution_operation.set_item_metadata(contribution_operation.item_count - 1, op)
+			if op == current_op:
+				contribution_operation.select(contribution_operation.item_count - 1)
+	var text := ""
+	if not str(info.get("requires", "")).is_empty():
+		text = "Requires %s to take effect; does not grant it. " % str(info.requires).capitalize()
+	if is_stat:
+		text += "Unit: %s. Final composed range: %s–%s; not operand limits." % [info.get("unit", ""), info.get("min", ""), info.get("max", "")]
+	if selected.key == "max_hp":
+		text += " Increasing max HP does not heal."
+	if selected.key in ["sword_root", "dash_root"]:
+		text += " Restricts ordinary movement, not a full stun."
+	if selected.key == "phase_teleport":
+		text += " Teleport is not legacy Phase."
+	contribution_help.text = text
+
+func _save_contribution() -> void:
+	if contribution_type.selected < 0:
+		return
+	var selected: Dictionary = contribution_type.get_item_metadata(contribution_type.selected)
+	var existing: bool = contribution_choice.selected > 0
+	var id := contribution_id.text.strip_edges()
+	if id.is_empty() or (not existing and contribution_entries.any(func(item): return item.get("id", "") == id)):
+		contribution_help.text = "Choose a unique, nonempty contribution ID."
+		return
+	var entry: Dictionary = contribution_entries[contribution_choice.selected - 1].duplicate(true) if existing else {"id": id, "kind": selected.kind}
+	entry[selected.kind] = selected.key
+	if selected.kind == "stat":
+		if contribution_operation.selected < 0:
+			contribution_help.text = "No supported operation is available."
+			return
+		if not contribution_value.text.is_valid_float():
+			contribution_help.text = "Enter a numeric operand."
+			return
+		entry.op = contribution_operation.get_item_metadata(contribution_operation.selected)
+		entry.value = float(contribution_value.text)
+	contribution_requested.emit(node_id, id, entry, existing, contribution_entries[contribution_choice.selected - 1].duplicate(true) if existing else null, null)
+
+func _remove_contribution() -> void:
+	if contribution_choice.selected > 0:
+		contribution_requested.emit(node_id, str(contribution_choice.get_item_metadata(contribution_choice.selected)), null, true, contribution_entries[contribution_choice.selected - 1].duplicate(true), null)
+
 func configure(document: Dictionary, id: String) -> void:
 	updating = true
+	var unified: bool = document.dungeon.get("capability_model", "legacy") == "unified_1"
+	model_choice.select(1 if unified else 0)
+	ability_label.visible = not unified
+	abilities.visible = not unified
+	modifier_toggle.visible = not unified
+	if unified:
+		modifiers_box.hide()
+	unified_box.visible = unified
 	var changed_node := node_id != id
+	if changed_node:
+		if not node_id.is_empty():
+			table_drafts_by_node[node_id] = table_drafts.duplicate(true)
+		table_drafts = table_drafts_by_node.get(id, {}).duplicate(true)
 	node_id = id
 	node = {}
 	for candidate in document.dungeon.nodes:
@@ -192,6 +517,8 @@ func configure(document: Dictionary, id: String) -> void:
 	if changed_node:
 		scroll_vertical = 0
 	heading.text = "Node: " + node.id
+	if unified:
+		_configure_contributions(changed_node)
 	if changed_node or not name_input.has_focus():
 		name_input.text = node.name
 	if cost.value != float(node.cost):
