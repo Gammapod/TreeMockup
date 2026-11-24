@@ -1,0 +1,1226 @@
+{
+	"format": "room-tree",
+	"version": 2.0,
+	"id": "unified_tutorial_boots",
+	"name": "Tutorial and Boots Branch — Candidate",
+	"rooms": [
+		{
+			"id": "start_room",
+			"name": "Start",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "wall_1",
+					"kind": "wall",
+					"position": [
+						150.0,
+						140.0
+					],
+					"size": [
+						50.0,
+						50.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "wall_2",
+					"kind": "wall",
+					"position": [
+						600.0,
+						140.0
+					],
+					"size": [
+						50.0,
+						50.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "wall_3",
+					"kind": "wall",
+					"position": [
+						150.0,
+						460.0
+					],
+					"size": [
+						50.0,
+						50.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "wall_4",
+					"kind": "wall",
+					"position": [
+						600.0,
+						460.0
+					],
+					"size": [
+						50.0,
+						50.0
+					],
+					"properties": {
+
+					}
+				}
+			],
+			"clear": {
+				"conditions": [],
+				"effects": [
+					{
+						"kind": "become_root"
+					}
+				]
+			}
+		},
+		{
+			"id": "storage_room",
+			"name": "Key Storage",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						300.0,
+						250.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "medicine_1",
+					"kind": "pickup",
+					"position": [
+						260.0,
+						370.0
+					],
+					"properties": {
+						"kind": "health",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "medicine_2",
+					"kind": "pickup",
+					"position": [
+						300.0,
+						370.0
+					],
+					"properties": {
+						"kind": "health",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "medicine_3",
+					"kind": "pickup",
+					"position": [
+						340.0,
+						370.0
+					],
+					"properties": {
+						"kind": "health",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "medicine_4",
+					"kind": "pickup",
+					"position": [
+						380.0,
+						370.0
+					],
+					"properties": {
+						"kind": "health",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "switch_1",
+					"kind": "switch",
+					"position": [
+						570.0,
+						260.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "wall_1",
+					"kind": "wall",
+					"position": [
+						690.0,
+						60.0
+					],
+					"size": [
+						20.0,
+						510.0
+					],
+					"properties": {
+
+					}
+				}
+			]
+		},
+		{
+			"id": "sword_room",
+			"name": "Sword Trial",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "bat_1",
+					"kind": "enemy",
+					"position": [
+						470.0,
+						235.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "bat_2",
+					"kind": "enemy",
+					"position": [
+						520.0,
+						390.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						300.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_enemies_defeated"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "capacity"
+					},
+					{
+						"kind": "prevent_enemy_respawn"
+					}
+				]
+			}
+		},
+		{
+			"id": "boots_room",
+			"name": "Boots Crossroads",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "capacity",
+					"kind": "chest",
+					"position": [
+						210.0,
+						410.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "wall_left",
+					"kind": "wall",
+					"position": [
+						280.0,
+						60.0
+					],
+					"size": [
+						40.0,
+						120.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "wall_right",
+					"kind": "wall",
+					"position": [
+						480.0,
+						60.0
+					],
+					"size": [
+						40.0,
+						120.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "gate",
+					"kind": "wall",
+					"position": [
+						320.0,
+						140.0
+					],
+					"size": [
+						160.0,
+						40.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "switch_1",
+					"kind": "switch",
+					"position": [
+						365.0,
+						105.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_hidden",
+					"kind": "token",
+					"position": [
+						445.0,
+						105.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_left",
+					"kind": "token",
+					"position": [
+						190.0,
+						260.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_right",
+					"kind": "token",
+					"position": [
+						610.0,
+						260.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_south",
+					"kind": "token",
+					"position": [
+						400.0,
+						440.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "gold",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						290.0
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_tokens_collected"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "gold"
+					}
+				]
+			}
+		},
+		{
+			"id": "phase_room",
+			"name": "Phase Trial",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "narrow_wall",
+					"kind": "wall",
+					"position": [
+						350.0,
+						150.0
+					],
+					"size": [
+						40.0,
+						300.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_entry",
+					"kind": "token",
+					"position": [
+						210.0,
+						300.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_far",
+					"kind": "token",
+					"position": [
+						485.0,
+						300.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						525.0,
+						200.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_tokens_collected"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "capacity"
+					}
+				]
+			}
+		},
+		{
+			"id": "quick_room",
+			"name": "Quick Step Trial",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "center",
+					"kind": "wall",
+					"position": [
+						310.0,
+						230.0
+					],
+					"size": [
+						180.0,
+						140.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "bat_1",
+					"kind": "enemy",
+					"position": [
+						250.0,
+						190.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "bat_2",
+					"kind": "enemy",
+					"position": [
+						520.0,
+						410.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						170.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_enemies_defeated"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "capacity"
+					},
+					{
+						"kind": "prevent_enemy_respawn"
+					}
+				]
+			}
+		},
+		{
+			"id": "landing_room",
+			"name": "Boots Landing",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "bat",
+					"kind": "enemy",
+					"position": [
+						640.0,
+						120.0
+					],
+					"properties": {
+						"hp": 2.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "capacity",
+					"kind": "pickup",
+					"position": [
+						170.0,
+						110.0
+					],
+					"properties": {
+						"kind": "capacity",
+						"value": 1.0
+					}
+				},
+				{
+					"id": "medicine",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						300.0
+					],
+					"properties": {
+						"kind": "health",
+						"value": 4.0
+					}
+				},
+				{
+					"id": "water_1",
+					"kind": "water",
+					"position": [
+						300.0,
+						70.0
+					],
+					"properties": {
+
+					},
+					"size": [
+						200.0,
+						90.0
+					]
+				},
+				{
+					"id": "water_2",
+					"kind": "water",
+					"position": [
+						50.0,
+						400.0
+					],
+					"properties": {
+
+					},
+					"size": [
+						460.0,
+						50.0
+					]
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_enemies_defeated"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "capacity"
+					},
+					{
+						"kind": "prevent_enemy_respawn"
+					}
+				]
+			}
+		},
+		{
+			"id": "speed_room",
+			"name": "Speed Up — Placeholder",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "center",
+					"kind": "wall",
+					"position": [
+						300.0,
+						220.0
+					],
+					"size": [
+						200.0,
+						160.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "bat",
+					"kind": "enemy",
+					"position": [
+						530.0,
+						290.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "gold",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						180.0
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_enemies_defeated"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "gold"
+					},
+					{
+						"kind": "prevent_enemy_respawn"
+					}
+				]
+			}
+		},
+		{
+			"id": "flippers_room",
+			"name": "Water Passage — Placeholder",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "water",
+					"kind": "water",
+					"position": [
+						50.0,
+						70.0
+					],
+					"size": [
+						700.0,
+						500.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_left",
+					"kind": "token",
+					"position": [
+						180.0,
+						300.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "token_right",
+					"kind": "token",
+					"position": [
+						580.0,
+						300.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "gold",
+					"kind": "pickup",
+					"position": [
+						620.0,
+						220.0
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_tokens_collected"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "gold"
+					}
+				]
+			}
+		},
+		{
+			"id": "speed_room_copy_1",
+			"name": "Speed Up — Placeholder copy",
+			"size": [
+				800.0,
+				600.0
+			],
+			"ports": [],
+			"objects": [
+				{
+					"id": "center",
+					"kind": "wall",
+					"position": [
+						300.0,
+						220.0
+					],
+					"size": [
+						200.0,
+						160.0
+					],
+					"properties": {
+
+					}
+				},
+				{
+					"id": "bat",
+					"kind": "enemy",
+					"position": [
+						530.0,
+						290.0
+					],
+					"properties": {
+						"hp": 1.0,
+						"speed": 55.0
+					}
+				},
+				{
+					"id": "gold",
+					"kind": "pickup",
+					"position": [
+						400.0,
+						180.0
+					],
+					"properties": {
+						"kind": "gold",
+						"value": 1.0
+					}
+				}
+			],
+			"clear": {
+				"conditions": [
+					{
+						"kind": "all_enemies_defeated"
+					}
+				],
+				"effects": [
+					{
+						"kind": "reveal_pickup",
+						"object": "gold"
+					},
+					{
+						"kind": "prevent_enemy_respawn"
+					}
+				]
+			}
+		}
+	],
+	"dungeon": {
+		"root": "start",
+		"capability_model": "unified_1",
+		"initial_capacity": 1.0,
+		"base_hp": 1.0,
+		"nodes": [
+			{
+				"id": "start",
+				"name": "Start",
+				"template": "start_room",
+				"cost": 0.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					-100.0,
+					160.0
+				]
+			},
+			{
+				"id": "key_store",
+				"name": "Key Storage — Health",
+				"template": "storage_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					0.0,
+					160.0
+				],
+				"contributions": [
+					{
+						"id": "hp",
+						"kind": "stat",
+						"stat": "max_hp",
+						"op": "add",
+						"value": 4.0
+					}
+				]
+			},
+			{
+				"id": "sword",
+				"name": "Sword",
+				"template": "sword_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					100.0,
+					100.0
+				],
+				"contributions": [
+					{
+						"id": "sword",
+						"kind": "quality",
+						"quality": "sword"
+					}
+				]
+			},
+			{
+				"id": "boots",
+				"name": "Boots — Dash",
+				"template": "boots_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					400.0,
+					100.0
+				],
+				"contributions": [
+					{
+						"id": "dash",
+						"kind": "quality",
+						"quality": "dash"
+					}
+				]
+			},
+			{
+				"id": "phase",
+				"name": "Phase Dash",
+				"template": "phase_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"exclusive_group": "dash_choice",
+				"abilities": [],
+				"map_position": [
+					450.0,
+					0.0
+				],
+				"contributions": [
+					{
+						"id": "phase",
+						"kind": "quality",
+						"quality": "phase_teleport"
+					},
+					{
+						"id": "rooted",
+						"kind": "quality",
+						"quality": "dash_root"
+					}
+				]
+			},
+			{
+				"id": "quick",
+				"name": "Quick Step",
+				"template": "quick_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"exclusive_group": "dash_choice",
+				"abilities": [],
+				"map_position": [
+					350.0,
+					0.0
+				],
+				"contributions": [
+					{
+						"id": "distance",
+						"kind": "stat",
+						"stat": "dash_distance",
+						"op": "multiply",
+						"value": 1.4
+					},
+					{
+						"id": "recharge",
+						"kind": "stat",
+						"stat": "dash_recharge",
+						"op": "multiply",
+						"value": 0.7
+					}
+				]
+			},
+			{
+				"id": "landing",
+				"name": "Boots Landing — Health",
+				"template": "landing_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					400.0,
+					-100.0
+				],
+				"contributions": [
+					{
+						"id": "hp",
+						"kind": "stat",
+						"stat": "max_hp",
+						"op": "add",
+						"value": 5.0
+					}
+				]
+			},
+			{
+				"id": "speed",
+				"name": "Speed Up",
+				"template": "speed_room_copy_1",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					320.0,
+					-180.0
+				],
+				"contributions": [
+					{
+						"id": "move_speed_add",
+						"kind": "stat",
+						"stat": "move_speed",
+						"op": "add",
+						"value": 12.0
+					}
+				]
+			},
+			{
+				"id": "flippers",
+				"name": "Flippers",
+				"template": "flippers_room",
+				"cost": 1.0,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					400.0,
+					-200.0
+				],
+				"contributions": [
+					{
+						"id": "water",
+						"kind": "quality",
+						"quality": "water_pass"
+					}
+				]
+			},
+			{
+				"id": "node_1",
+				"name": "Miniboss (placeholder)",
+				"template": "landing_room",
+				"cost": 1000,
+				"requires_all": [],
+				"requires_any": [],
+				"abilities": [],
+				"map_position": [
+					250.0,
+					-30.0
+				]
+			}
+		],
+		"links": [
+			{
+				"id": "start_storage",
+				"a": "start",
+				"b": "key_store",
+				"activate_from": [
+					"start",
+					"key_store"
+				]
+			},
+			{
+				"id": "storage_sword",
+				"a": "key_store",
+				"b": "sword",
+				"activate_from": [
+					"key_store",
+					"sword"
+				],
+				"a_door": {
+					"wall": "east",
+					"offset": 0.5
+				}
+			},
+			{
+				"id": "sword_boots",
+				"a": "sword",
+				"b": "boots",
+				"activate_from": [
+					"sword",
+					"boots"
+				]
+			},
+			{
+				"id": "boots_phase",
+				"a": "boots",
+				"b": "phase",
+				"activate_from": [
+					"boots",
+					"phase"
+				],
+				"a_door": {
+					"wall": "north",
+					"offset": 0.9
+				}
+			},
+			{
+				"id": "boots_quick",
+				"a": "boots",
+				"b": "quick",
+				"activate_from": [
+					"boots",
+					"quick"
+				],
+				"a_door": {
+					"wall": "north",
+					"offset": 0.1
+				}
+			},
+			{
+				"id": "boots_landing",
+				"a": "boots",
+				"b": "landing",
+				"activate_from": [
+					"boots",
+					"landing"
+				],
+				"a_door": {
+					"wall": "north",
+					"offset": 0.5
+				}
+			},
+			{
+				"id": "phase_landing",
+				"a": "phase",
+				"b": "landing",
+				"activate_from": [
+					"phase",
+					"landing"
+				]
+			},
+			{
+				"id": "quick_landing",
+				"a": "quick",
+				"b": "landing",
+				"activate_from": [
+					"quick",
+					"landing"
+				]
+			},
+			{
+				"id": "landing_speed",
+				"a": "landing",
+				"b": "speed",
+				"activate_from": [
+					"landing",
+					"speed"
+				],
+				"a_door": {
+					"wall": "north",
+					"offset": 0.195833333333333
+				}
+			},
+			{
+				"id": "landing_flippers",
+				"a": "landing",
+				"b": "flippers",
+				"activate_from": [
+					"landing",
+					"flippers"
+				],
+				"a_door": {
+					"wall": "north",
+					"offset": 0.5
+				}
+			},
+			{
+				"id": "link_2",
+				"a": "sword",
+				"b": "node_1",
+				"activate_from": [
+					"sword",
+					"node_1"
+				]
+			},
+			{
+				"id": "link_1",
+				"a": "boots",
+				"b": "node_1",
+				"activate_from": [
+					"boots",
+					"node_1"
+				]
+			}
+		],
+		"interactions": [
+			{
+				"id": "storage_switch",
+				"source": {
+					"node": "key_store",
+					"object": "switch_1",
+					"event": "toggled"
+				},
+				"target": {
+					"node": "key_store",
+					"object": "wall_1",
+					"action": "set_open"
+				}
+			},
+			{
+				"id": "boots_shortcut",
+				"source": {
+					"node": "boots",
+					"object": "switch_1",
+					"event": "toggled"
+				},
+				"target": {
+					"node": "boots",
+					"object": "gate",
+					"action": "set_open"
+				}
+			}
+		]
+	},
+	"extensions": {
+		"design_source": "scenario-designs/Test_Dungeon.mmd",
+		"notes": "Experimental combined candidate. Room layouts, combat, modifiers, clear conditions and reward tuning are provisional. Landing capacity is an explicit temporary funding aid for evaluating optional nodes."
+	}
+}

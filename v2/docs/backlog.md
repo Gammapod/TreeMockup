@@ -64,6 +64,13 @@ and evaluate small slices separately; preserve existing regression scenarios.
 `examples/Test_Dungeon.json` is exploratory material, and
 `examples/scenario-designs/Test_Dungeon.mmd` sketches the proposed opening,
 branches and mini-boss; it is a design, not a validated playable route.
+The separate `examples/unified_tutorial_boots.json` candidate brings the
+tutorial and Boots Branch into the unified model; its temporary funding aid and
+other placeholders are documented in
+`examples/scenario-designs/unified-tutorial-boots-candidate.md`. The user
+playtested and revised the candidate; earlier route checks predate the revised
+geometry. Level-design iteration is experimental and is not gated on
+deterministic scenario validation.
 
 - **Cleared-node prerequisites — proposed:** The mini-boss design calls for
   two rooms to be both active and cleared. Current ALL/ANY prerequisites test
@@ -89,6 +96,11 @@ branches and mini-boss; it is a design, not a validated playable route.
   enemy reachable with either a long sword or Flippers. Current hit checks
   without Flippers are blocked by water; decide whether to change that rule or
   use different geometry before treating this as a supported solution.
+- **Water-passage refund safety — design question:** The revised Boots Landing
+  allows refunding neighboring Flippers while the player stands in water,
+  making it solid under the player. Physical recovery is untested. Decide
+  whether to guard the refund, support safe recovery, or handle the situation
+  differently; do not assume root travel proves an unobstructed walking route.
 
 Existing `reveal_pickup` supports clear-revealed capacity or gold pickups and
 chests; no new capacity-reveal mechanic is currently identified. Existing
@@ -97,6 +109,18 @@ A permanent non-toggleable switch is a separate possible future element, not a
 requirement for this opening.
 
 ## Gameplay presentation and traversal
+
+### UI-03 · Unified combat and dash feedback — P2 — Candidate
+
+- **Observation:** The user reported that sword range/activation indicators
+  disappeared after the unified ability change. Investigate and reproduce
+  before assuming a cause or changing the accepted legacy presentation.
+- **First slice:** Make facing, the attack hitbox during a sword action, sword
+  cooldown and dash cooldown legible in unified play. Use authoritative action
+  parameters and timing, including captured values and movement restrictions.
+- **Evaluate:** Can players anticipate facing and range, see when a hit occurs,
+  and tell when each action is ready? Suitable feedback is desired before an
+  external dungeon share, but is not yet high priority for V2.
 
 ### UI-01 · Interactive dungeon map / skill tree — P1 — Completed
 
@@ -216,6 +240,63 @@ interaction vocabulary require separate design rather than expansion by editor U
 switch-to-wall bindings are sufficient for the first editor UX pass.
 
 These generally follow gameplay experiments unless editing friction is preventing them. Preserve the portable content boundary: UI controls edit source JSON values and stable IDs, not runtime objects; unknown fields survive edits.
+
+### EDIT-09 · Room geometry and door context — P2 — Explore
+
+- **Observation:** The room editor's displayed bounds/grid extend beyond the
+  playable interior and omit walls/instance doors, making placement harder.
+- **Small comparison:** Investigate aligning the template editor's grid and
+  boundaries to the actual playable interior; separately explore showing
+  instance-door context while editing a template.
+- **Longer-term option, not an accepted direction:** Consider a combined
+  instance/door/room editor or unique rooms instead of reusable templates.
+  Compare against the smaller fix before changing the reusable-template
+  boundary, portable content or existing bundles. Door placement is per
+  instance; a reusable template can have multiple distinct door layouts.
+- **Evaluate:** Can authors place objects relative to playable walls and the
+  relevant doors without confusing template geometry with instance state?
+
+### EDIT-10 · Multi-select and move tree nodes — P2 — Candidate
+
+- **First slice:** Select multiple nodes and move them together as one deliberate
+  gesture and one undo/redo transaction; preserve their relative positions.
+- **Boundary:** Authored map positions can affect automatic doors. Show or
+  otherwise make those consequences inspectable; preserve selection, pending
+  JSON and source history semantics.
+- **Evaluate:** Can an author rearrange a branch without individually moving
+  every node or unintentionally changing doorway placement?
+
+### EDIT-11 · Direct tree link creation — P2 — Candidate
+
+- **First slice:** Compare selecting two nodes with a source-to-destination
+  drag to create a link, avoiding manual ID entry.
+- **Boundary:** Preserve explicit activation-direction semantics, door
+  resolution, whole-document validation, undo/redo and stable IDs. Do not
+  silently create an unsupported or unintended directional rule.
+- **Evaluate:** Can authors connect the intended nodes and understand what
+  direction, if any, they authored?
+
+### EDIT-12 · Node Properties redesign — P2 — Design first
+
+- **Goal:** Reduce visual clutter without hiding necessary authoring or
+  compromising supported existing content.
+- **User's initial layout:** Node Name first; hide capability-model control and
+  default new dungeons/nodes to Unified; place Instance Preview below the name;
+  pin Capacity Cost above Player stats in Contributions; show collapsible
+  contribution sections initially collapsed; hide individual-contribution/JSON
+  escape controls; use labels and fields with explanations in tooltips.
+- **Boundary:** This is a proposal, not approval to remove recovery paths or
+  silently migrate legacy content. Model selection is dungeon-level, and legacy
+  bundles and ambiguous/unknown contributions need safe, discoverable access.
+  Defining new-project defaults and migration/validation behavior requires
+  Engine coordination; visual organization belongs to Frontend.
+- **Evaluate:** Can authors perform common edits quickly and still inspect,
+  repair and preserve unusual or legacy data?
+
+### EDIT-13 · Editor ribbon redesign — P3 — Explore
+
+- **Goal:** Review the top ribbon for clutter and discoverability. No specific
+  layout is selected yet; use an explicit design workflow before implementation.
 
 ### EDIT-01 · Select a tree element to focus its JSON — Completed
 

@@ -25,7 +25,8 @@ sources:
 
 **Current design target:** the interconnected 14–18-node dungeon, using the
 accepted abilities and boss capstone. The user has begun work in
-`examples/Test_Dungeon.json`; its goals and remaining design are to be discussed.
+`examples/Test_Dungeon.json`; `examples/unified_tutorial_boots.json` is the
+playtested opening/Boots candidate under continued design.
 The grouped unified contribution editor is implemented; other candidates live
 in the [backlog](../backlog.md).
 
@@ -57,6 +58,14 @@ tables here.
 * **Observation**: The user reported that Phase Dash behaved exactly as intended, both with and without rooted recharge. They suggested timing could be a little faster but is fine for now.
 * **Decision**: keep the Phase direction for continued dungeon development; leave timing adjustment for later testing. See `examples/scenario-designs/unified-abilities-proposal.md`.
 * **Next**: use the unified contribution editor for dungeon design and evaluate Phase in actual branch encounters.
+
+## Unified tutorial + Boots Branch (2026-11-24)
+* **Status**: evaluated; revised candidate, not a completed dungeon.
+* **Question**: Do the tutorial and first movement branch provide a coherent physical skill-tree foundation?
+* **Slice**: `examples/unified_tutorial_boots.json`; tutorial, two mutually exclusive movement options, shortcut and optional endpoints.
+* **Observation**: The user said the abilities and connectedness match the design, liked Start's pillars and Key Storage's lessons, and considered Sword and the movement trial encounters placeholders. They revised map/door placement and added water around the Flippers route.
+* **Decision**: keep developing the candidate; prefer automatic doors except where an obstacle demands a specific placement. The user-created miniboss is a visual placeholder, not an implemented encounter.
+* **Next**: evaluate placeholder room content and future presentation/authoring candidates; recheck routes after the user's geometry edits.
 
 ## Unified contribution editor (2026-11-23)
 * **Status**: implemented; grouped table positively reviewed, collapse controls implemented.

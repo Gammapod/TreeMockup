@@ -32,12 +32,15 @@ and [UI](ui.md) contracts describe accepted behavior; the
   upgrade. The challenge need not prove the player used that particular
   ability; allow other approaches where practical.
 * Distinguish those encouraging tests from deliberate ability gates. When a
-  route truly requires an ability, support that requirement with checked
-  geometry or an explicitly designed mechanic; verify alternatives, refunds
-  and safe exits rather than assuming a clear condition checks ability use.
-* Treat map positions and instance doors as gameplay content. Automatic door
-  placement can change when map positions change; check actual entry points,
-  obstacles and walking routes rather than inferring them from the graph.
+  route truly requires an ability, express it through geometry or an explicitly
+  designed mechanic; consider alternatives, refunds and safe exits rather than
+  assuming a clear condition checks ability use. Evaluate the experience
+  through playtesting, not a claimed deterministic level-design proof.
+* Prefer automatic instance-door placement. Use a manual override when a
+  doorway's position relative to room geometry matters, such as the Boots
+  Crossroads–Landing door behind its gate. Map positions and doors are gameplay
+  content: changing the map can move automatic doors, so consider actual entry
+  points, obstacles and walking routes rather than inferring them from the graph.
 
 ## Budget exploration
 
@@ -55,7 +58,8 @@ and [UI](ui.md) contracts describe accepted behavior; the
   it. Aim for different configurations to make the challenge easier in
   different ways, including possible combat and mobility approaches. Do not
   assume a particular solution is feasible without checking geometry and
-  runtime behavior.
+  runtime behavior. The dungeon is experimental; budget reasoning guides
+  iteration, not a requirement for automated level-design validation.
 * Plan persistent world changes and return routes alongside the budget.
   Preserve safe ways to recover from allocations and ensure rewards cannot be
   duplicated by re-entry.
@@ -107,6 +111,10 @@ tradeoff. These are goals, not claims that the current candidate achieves them.
   and without rooted recharge. Timing could be faster but is acceptable for
   now; its usefulness in dungeon encounters remains to be evaluated. See the
   [experiment record](experiments.md#unified-abilities--phase-dash-lab-2026-11-23).
+* **Tutorial + Boots candidate:** The user found the abilities and connectivity
+  match the design and liked the Start pillars and Key Storage lessons. Rooms,
+  enemy choices and reward placement remain open; see the
+  [experiment record](experiments.md#unified-tutorial--boots-branch-2026-11-24).
 
 Add lessons only when grounded in observed feedback or evaluated experiments;
 distinguish player observations from technical checks and unevaluated ideas.
