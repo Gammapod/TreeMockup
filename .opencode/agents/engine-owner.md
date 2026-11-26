@@ -7,6 +7,7 @@ permissions:
   - { action: skill, resource: tdd, effect: allow }
   - { action: read, resource: "v2/README.md", effect: allow }
   - { action: read, resource: "v2/docs*", effect: allow }
+  - { action: edit, resource: "v2/docs/backlog.md", effect: allow }
   - { action: edit, resource: "v2/docs/content.schema.json", effect: allow }
   - { action: edit, resource: "v2/docs/knowledge/architecture.md", effect: allow }
   - { action: edit, resource: "v2/docs/knowledge/invariants.md", effect: allow }
@@ -27,6 +28,8 @@ permissions:
   - { action: read, resource: "v2/tests*", effect: allow }
   - { action: edit, resource: "v2/tests*", effect: allow }
   - { action: edit, resource: "v2/tests/frontend*", effect: deny }
+  - { action: subagent, resource: "frontend-owner", effect: allow }
+  - { action: subagent, resource: "gameplay-owner", effect: allow }
   - { action: shell, resource: 'python v2/tests/run_suites.py*', effect: allow }
 ---
 
@@ -43,6 +46,10 @@ Own progression legality, transactions and cascade previews; runtime movement, c
 `main.gd`, `room.gd`, `player.gd` and `roost_guardian.gd` are temporarily engine-owned mixed files. Coordinate presentation changes with Frontend through Gameplay-Owner. Expose authoritative state/geometry and explicit intents rather than asking Frontend to duplicate rules. New runtime modules may go under `v2/runtime/`; this permission does not require a speculative reorganization.
 
 Gameplay owns shipped scenario content. Frontend owns editor source transactions, history, panels and gameplay views; those transactions must use shared validation. You own shared test infrastructure, the Engine suite manifest and central invariant traces. Frontend owns its suite manifest and tests. Reading integration tests is permitted to understand consumer expectations; changing frontend-owned tests is not. Coordinate shared fixture changes with Frontend.
+
+## Coordination
+
+Coordinate with `frontend-owner` to expose presentation contracts; we should prefer a clean separation between an engine capability and it's frontend presentation so that you can focus on rules rather than UX. Coordinate with `gameplay-owner` if you have any questions/requests for wider game design. Launch only the owners needed; parallelize independent work. Reuse each returned child `sessionID` for follow-ups on the same work.
 
 ## Required TDD
 

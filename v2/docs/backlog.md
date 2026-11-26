@@ -34,15 +34,15 @@ the slice. Items not listed remain in their priority bands below.
 | **2 · Midpoint prerequisites and encounter** | Finalize which specific rooms in each branch are the mini-boss prerequisites. Implement **cleared-room prerequisites** with active and cleared conditions separate, then add a mini-boss enemy and arena that awards the second root on clear. | Engine checks new mechanic and encounter behavior; user evaluates the room choices, fight and pacing. The existing cost-1000 visual placeholder is not a miniboss implementation. |
 | **3 · Connected branch and puzzle** | Design a continuation toward the target dungeon: individual upgrades and pairings, a required ability approached by mutually exclusive routes, and a multi-room refund/reallocation puzzle using persistent switch/wall state where feasible. Consider funding, return and persistence. Pull **EDIT-09/10/11** or **EDIT-06** if actual authoring friction warrants it. | A playable subsection; user evaluates whether the spatial and build decisions are meaningful. Identify unsupported mechanics rather than assuming them. |
 | **4 · Capstone integration** | Connect the evaluated sections to the accepted Guardian in a shareable, approximately 14–18-node candidate, with at most two roots. Revisit **LOOT-01** placement and **STAT-01/02** as build and recovery comparisons; address **UI-03** before external sharing if needed. Tune the boss against dungeon builds rather than the workshop in isolation. | Trace at least representative navigation- and combat-leaning routes and final budgets, then playtest the end-to-end tradeoff, recovery and pacing. Decide keep/revise/discard; do not infer enjoyment or general solvability from validation. |
-| **5 · Evidence-driven follow-ups** | Pull **LOOT-04**, other abilities/hazards, **EDIT-12/13**, or broader layout and clear-state ideas only in response to a specific observation and hypothesis. Group related resource work (STAT-05 + LOOT-02, or STAT-06 + AB-01) as separate experiments rather than adding both pools at once. | State the comparison, rule choices and evidence sought before implementation; retain accepted baselines and record user observations separately from automated checks. |
+| **5 · Evidence-driven follow-ups** | Pull **LOOT-04**, other abilities/hazards, or broader layout and clear-state ideas only in response to a specific observation and hypothesis. Group related resource work (STAT-05 + LOOT-02, or STAT-06 + AB-01) as separate experiments rather than adding both pools at once. Presentation and editor priorities are sequenced separately below. | State the comparison, rule choices and evidence sought before implementation; retain accepted baselines and record user observations separately from automated checks. |
 
 **Priority adjustments:** Sword Branch development and the midpoint prerequisite
 and encounter are the next P1 work. The user requested cleared-room
 prerequisites; specify the smallest supported semantics and presentation before
-implementation. UI-03 remains P2 unless feedback blocks a
-fair test or external sharing. EDIT-06/09/10/11 remain P2 pull-as-needed;
-EDIT-12 stays design-first and EDIT-13 parked. Random drops and new enemy
-locomotion remain P2 candidates, not prerequisites to opening work.
+implementation. The presentation/editor sequence below is an ordered workstream,
+not a replacement for these gameplay priorities. EDIT-06/09/10/11 remain P2
+pull-as-needed. Random drops and new enemy locomotion remain P2 candidates, not
+prerequisites to opening work.
 
 **Checkpoint caveat:** after the user's geometry edits the candidate compiled;
 the layout-specific route suite was subsequently retired at the user's request.
@@ -84,7 +84,8 @@ Carry forward the user's desired moments:
 
 Plan build funding and persistent-state transitions alongside physical routes.
 The 29-node workshop remains a testing fixture, not the target dungeon layout.
-Presentation legibility and boss tuning follow the dungeon design and feedback.
+Presentation legibility supports fair evaluation; boss tuning follows dungeon
+design and feedback.
 
 ### Dungeon-enabling candidates
 
@@ -146,17 +147,57 @@ requirement for this opening.
 
 ## Gameplay presentation and traversal
 
-### UI-03 · Unified combat and dash feedback — P2 — Candidate
+### Presentation and editor UX sequence — proposed
+
+Execute these dependency bands in order, selecting small reviewable slices; they
+do not reorder unrelated dungeon experiments or authorize gameplay rule changes.
+
+1. **Frontend-independent of engine changes:** create a coherent standard icon
+   asset set; improve room-object labels/symbols, map visual hierarchy and editor
+   organization using already available data. Prototype readable zoom, context
+   controls and fallback labels. Do not invent state or supported mechanics.
+2. **Existing engine capabilities through clean frontend contracts:** verify what
+   facts are already supplied, then expose any missing facts through copied,
+   authoritative snapshots/events and intents before consuming them. UI-03,
+   map and editor context may span bands 1 and 2; an existing mechanic does not
+   imply its presentation contract already exists. Engine and Frontend agree the
+   contract first; execution remains authoritative.
+3. **Actual engine/content capability changes:** only after explicit scope and
+   rule decisions, consider authorable icon identifiers if current portable
+   content cannot support them, new-project model defaults or migration, and
+   other new mechanics. Cleared-room prerequisites remain the separately
+   prioritized dungeon feature, not a UI prerequisite. Validate changes and
+   preserve existing bundles rather than silently converting them.
+
+#### UI-03 · Combat, room and map legibility — candidate
 
 - **Observation:** The user reported that sword range/activation indicators
   disappeared after the unified ability change. Investigate and reproduce
   before assuming a cause or changing the accepted legacy presentation.
-- **First slice:** Make facing, the attack hitbox during a sword action, sword
-  cooldown and dash cooldown legible in unified play. Use authoritative action
-  parameters and timing, including captured values and movement restrictions.
-- **Evaluate:** Can players anticipate facing and range, see when a hit occurs,
-  and tell when each action is ready? Suitable feedback is desired before an
-  external dungeon share, but is not yet high priority for V2.
+- **Combat:** Show the sword hitbox/sector and hit timing from captured,
+  authoritative action geometry and timing; do not recompute from a changed
+  build or imply the displayed sector is the set of targets actually hit.
+  Convey occlusion and suppressed hits using authoritative resolution facts
+  where available; investigate missing contracts rather than promising an exact
+  occlusion display. Put graphical sword and dash cooldown/readiness cues by the avatar.
+  Legacy and unified timing differ; distinguish cooldown/readiness from movement
+  restriction timers, including overlapping restrictions. Existing restriction
+  events are not cooldown clocks. Confirm available phase and readiness facts
+  with Engine before specifying any missing presentation contract.
+- **Room objects:** Make diagonal obstacle labels legible; distinguish enemy
+  type and danger without color alone. Use recognizable gold `$`, capacity key
+  and health cross cues, retaining values and existing health behavior.
+- **Map:** Explore an icon-led minimap centered on the occupied room and its
+  direct neighbors, preserving selection, manual pan/zoom, Fit graph, and
+  existing state and consequence distinctions. Provide standard icons and an
+  authorable choice where supported; investigate a portable, validated icon
+  contract otherwise, preserving unknown content and a readable fallback.
+  Test zoom and label density at practical sizes: zoom trades context for
+  readability and cannot guarantee no overlap.
+- **Evaluate:** Can players predict reach and action readiness, distinguish
+  hazards and rewards, and orient themselves without losing map actions or
+  consequences? Check representative sizes and legacy/unified scenarios; seek
+  user playtest evidence before deciding keep/revise/discard.
 
 ### UI-01 · Interactive dungeon map / skill tree — P1 — Completed
 
@@ -283,7 +324,9 @@ These generally follow gameplay experiments unless editing friction is preventin
   playable interior and omit walls/instance doors, making placement harder.
 - **Small comparison:** Investigate aligning the template editor's grid and
   boundaries to the actual playable interior; separately explore showing
-  instance-door context while editing a template.
+  instance-door context while editing a template. Use the shared door resolver
+  for the selected node instance, not a frontend approximation or
+  template-global door layout.
 - **Longer-term option, not an accepted direction:** Consider a combined
   instance/door/room editor or unique rooms instead of reusable templates.
   Compare against the smaller fix before changing the reusable-template
@@ -312,27 +355,34 @@ These generally follow gameplay experiments unless editing friction is preventin
 - **Evaluate:** Can authors connect the intended nodes and understand what
   direction, if any, they authored?
 
-### EDIT-12 · Node Properties redesign — P2 — Design first
+### EDIT-12 · Node Properties redesign — candidate
 
 - **Goal:** Reduce visual clutter without hiding necessary authoring or
   compromising supported existing content.
-- **User's initial layout:** Node Name first; hide capability-model control and
-  default new dungeons/nodes to Unified; place Instance Preview below the name;
-  pin Capacity Cost above Player stats in Contributions; show collapsible
-  contribution sections initially collapsed; hide individual-contribution/JSON
-  escape controls; use labels and fields with explanations in tooltips.
+- **Proposed layout:** Node Name first, Instance Preview below, Capacity Cost
+  above Player stats, collapsible contribution sections initially collapsed,
+  concise labels and tooltip explanations. Reduce routine clutter with
+  contextual or advanced controls rather than removing recovery paths.
 - **Boundary:** This is a proposal, not approval to remove recovery paths or
   silently migrate legacy content. Model selection is dungeon-level, and legacy
   bundles and ambiguous/unknown contributions need safe, discoverable access.
-  Defining new-project defaults and migration/validation behavior requires
-  Engine coordination; visual organization belongs to Frontend.
+  Defining Unified new-project defaults, model selection and any migration or
+  validation change requires separate Engine coordination and user decision;
+  visual organization belongs to Frontend. Preserve stable IDs, drafts, invalid
+  pending JSON blocking, validation and undo/redo.
 - **Evaluate:** Can authors perform common edits quickly and still inspect,
   repair and preserve unusual or legacy data?
 
-### EDIT-13 · Editor ribbon redesign — P3 — Explore
+### EDIT-13 · Context-sensitive editor controls — candidate
 
-- **Goal:** Review the top ribbon for clutter and discoverability. No specific
-  layout is selected yet; use an explicit design workflow before implementation.
+- **Goal:** Simplify the top ribbon and present controls relevant to the current
+  tree, room and selection context without hiding essential operations. Compare
+  layouts before implementation and retain discoverable advanced/recovery paths.
+- **Boundary:** Context is presentation, not a second content model or permission
+  system. Preserve canvas gestures, instance-door context, validated transactions,
+  pending JSON and history; see EDIT-09/10/11 for related authoring needs.
+- **Evaluate:** Can authors find common actions and recover unusual content while
+  switching contexts without unintended edits?
 
 ### EDIT-01 · Select a tree element to focus its JSON — Completed
 

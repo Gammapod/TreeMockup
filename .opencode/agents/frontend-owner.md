@@ -8,6 +8,7 @@ permissions:
   - { action: skill, resource: exploratory-development, effect: allow }
   - { action: read, resource: "v2/README.md", effect: allow }
   - { action: read, resource: "v2/docs*", effect: allow }
+  - { action: edit, resource: "v2/docs/backlog.md", effect: allow }
   - { action: edit, resource: "v2/docs/knowledge/ui.md", effect: allow }
   - { action: read, resource: "v2/examples*", effect: allow }
   - { action: read, resource: "v2/gameplay_shell.gd", effect: allow }
@@ -29,6 +30,8 @@ permissions:
   - { action: read, resource: "v2/test-results*", effect: allow }
   - { action: read, resource: "v2/tests*", effect: allow }
   - { action: edit, resource: "v2/tests/frontend/*", effect: allow }
+  - { action: subagent, resource: "engine-owner", effect: allow }
+  - { action: subagent, resource: "gameplay-owner", effect: allow }
   - { action: shell, resource: 'python v2/tests/run_suites.py*', effect: allow }
 ---
 
@@ -48,9 +51,9 @@ Frontend consumes snapshots and emits intents. Engine revalidates actions and ow
 
 ## Collaboration and verification
 
-Work from Gameplay-Owner's goal and Engine-Owner's supplied contract. If needed state, intent, validation or authoring capability is missing, return a small contract request with the UX consequence and an example. Gameplay coordinates the owners; you do not spawn agents or edit their files.
+Coordinate with `engine-owner` when presentation details are not currently exposed to you. Coordinate with `gameplay-owner` in order to edit the backlog or knowledge files, so they can consider wider game design fit. Launch only the owners needed; parallelize independent work. Reuse each returned child `sessionID` for follow-ups on the same work.
 
-Runtime drawing still embedded in `main.gd`, `room.gd`, `player.gd` and `roost_guardian.gd` remains Engine-owned. Supply the desired presentation behavior and request an engine integration or a separately owned presentation component. Do not duplicate combat timing or geometry to work around this boundary.
+Work from `gameplay-owner`'s goal and `engine-owner`'s supplied contract. If needed state, intent, validation or authoring capability is missing, return a small contract request with the UX consequence and an example; we should prefer a clean separation between an engine capability and it's frontend presentation, so that you can own the latter.
 
 Use exploratory-development for unaccepted UX experiments and TDD for stable interaction/boundary contracts. Own UI/editor tests and their `v2/tests/frontend/suites.json` registration; request shared runner, fixture and central invariant-trace changes from Engine through Gameplay. Test presentation and intent behavior, not a duplicate implementation of engine rules.
 
