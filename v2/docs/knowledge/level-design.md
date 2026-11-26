@@ -115,6 +115,9 @@ tradeoff. These are goals, not claims that the current candidate achieves them.
   match the design and liked the Start pillars and Key Storage lessons. Rooms,
   enemy choices and reward placement remain open; see the
   [experiment record](experiments.md#unified-tutorial--boots-branch-2026-11-24).
+* **Sword Branch extension:** The user confirmed its abilities and connections
+  are correct; distinctive encounters, rooms and tuning remain to be developed.
+  See the [experiment record](experiments.md#unified-sword-branch-extension-2026-11-25).
 
 Add lessons only when grounded in observed feedback or evaluated experiments;
 distinguish player observations from technical checks and unevaluated ideas.

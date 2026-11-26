@@ -44,7 +44,7 @@ silently reinterpret it.
 | Element | Required/current meaning |
 | --- | --- |
 | Room template | `id`, `name`, `size`, `ports`, `objects`; optional `spawn` and `clear`. Coordinates are local; runtime playtest currently requires 800×600. |
-| Node | `id`, `name`, `template`, nonnegative `cost`, ALL/ANY prerequisite ID arrays, `abilities`, and advisory `map_position`; optional exclusive group. Legacy nodes use ability IDs and optional `modifiers`; unified nodes keep `abilities` empty and may use `contributions` instead. |
+| Node | `id`, `name`, `template`, nonnegative `cost`, ALL/ANY active-node prerequisite ID arrays, `abilities`, and advisory `map_position`; optional exclusive group. Legacy nodes use ability IDs and optional `modifiers`; unified nodes keep `abilities` empty and may use `contributions` instead. |
 | Link | Two node IDs and their unique instantiated ports; travel is bidirectional, while `activate_from` controls local activation direction. |
 | Interaction | Stable `{node, object, event}` → `{node, object, action}` binding. It must work when the target room is unloaded. |
 | Clear rule | Optional template `conditions`, `effects`, and `block_tree_editing_until_cleared`; see the [clear-state contract](clear-state.md). |
@@ -52,6 +52,9 @@ silently reinterpret it.
 IDs are ASCII letters, digits, underscores, or hyphens. Room and node IDs
 have separate namespaces; object/port IDs are template-local. Changing an ID
 requires updating references—validation does not guess rewrites.
+Prerequisite arrays test allocation, not whether referenced rooms have been
+cleared. A cleared-room prerequisite is not currently supported; choosing its
+nodes and defining its semantics remain future work.
 
 # Validation and lifecycle
 

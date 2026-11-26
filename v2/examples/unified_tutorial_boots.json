@@ -839,6 +839,51 @@
 					}
 				]
 			}
+		},
+		{
+			"id": "spear_trial", "name": "Spear Trial — Placeholder",
+			"size": [800, 600], "ports": [],
+			"objects": [
+				{"id": "pillar_1", "kind": "wall", "position": [275, 185], "size": [65, 135], "properties": {}},
+				{"id": "pillar_2", "kind": "wall", "position": [460, 280], "size": [65, 135], "properties": {}},
+				{"id": "approaching_bat", "kind": "enemy", "position": [520, 210], "properties": {"hp": 3, "speed": 45}},
+				{"id": "side_bat", "kind": "enemy", "position": [260, 390], "properties": {"hp": 1, "speed": 45}},
+				{"id": "capacity", "kind": "pickup", "position": [400, 170], "properties": {"kind": "capacity", "value": 1}}
+			],
+			"clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": [{"kind": "reveal_pickup", "object": "capacity"}, {"kind": "prevent_enemy_respawn"}]}
+		},
+		{
+			"id": "heavy_trial", "name": "Heavy Trial — Placeholder",
+			"size": [800, 600], "ports": [],
+			"objects": [
+				{"id": "pillar", "kind": "wall", "position": [350, 240], "size": [100, 120], "properties": {}},
+				{"id": "durable_bat", "kind": "enemy", "position": [500, 220], "properties": {"hp": 6, "speed": 35, "radius": 22}},
+				{"id": "side_bat", "kind": "enemy", "position": [235, 390], "properties": {"hp": 1, "speed": 40}},
+				{"id": "capacity", "kind": "pickup", "position": [400, 170], "properties": {"kind": "capacity", "value": 1}}
+			],
+			"clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": [{"kind": "reveal_pickup", "object": "capacity"}, {"kind": "prevent_enemy_respawn"}]}
+		},
+		{
+			"id": "sword_landing_room", "name": "Sword Landing — Placeholder",
+			"size": [800, 600], "ports": [],
+			"objects": [
+				{"id": "center", "kind": "wall", "position": [335, 245], "size": [130, 110], "properties": {}},
+				{"id": "bat_1", "kind": "enemy", "position": [260, 210], "properties": {"hp": 2, "speed": 45}},
+				{"id": "bat_2", "kind": "enemy", "position": [540, 390], "properties": {"hp": 1, "speed": 45}},
+				{"id": "medicine", "kind": "pickup", "position": [400, 440], "properties": {"kind": "health", "value": 4}},
+				{"id": "gold", "kind": "pickup", "position": [400, 180], "properties": {"kind": "gold", "value": 1}}
+			],
+			"clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": [{"kind": "reveal_pickup", "object": "gold"}, {"kind": "prevent_enemy_respawn"}]}
+		},
+		{
+			"id": "strength_trial", "name": "Strength Trial — Placeholder",
+			"size": [800, 600], "ports": [],
+			"objects": [
+				{"id": "center", "kind": "wall", "position": [335, 255], "size": [130, 90], "properties": {}},
+				{"id": "durable_bat", "kind": "enemy", "position": [510, 215], "properties": {"hp": 6, "speed": 40, "radius": 22}},
+				{"id": "gold", "kind": "pickup", "position": [400, 180], "properties": {"kind": "gold", "value": 1}}
+			],
+			"clear": {"conditions": [{"kind": "all_enemies_defeated"}], "effects": [{"kind": "reveal_pickup", "object": "gold"}, {"kind": "prevent_enemy_respawn"}]}
 		}
 	],
 	"dungeon": {
@@ -1054,6 +1099,37 @@
 					250.0,
 					-30.0
 				]
+			},
+			{
+				"id": "spear", "name": "Spear Mod", "template": "spear_trial", "cost": 1,
+				"requires_all": [], "requires_any": [], "exclusive_group": "sword_choice",
+				"abilities": [], "map_position": [-40, 20],
+				"contributions": [
+					{"id": "reach", "kind": "stat", "stat": "sword_range", "op": "multiply", "value": 1.8},
+					{"id": "arc", "kind": "stat", "stat": "sword_arc", "op": "multiply", "value": 0.55}
+				]
+			},
+			{
+				"id": "heavy", "name": "Heavy Mod", "template": "heavy_trial", "cost": 1,
+				"requires_all": [], "requires_any": [], "exclusive_group": "sword_choice",
+				"abilities": [], "map_position": [100, -60],
+				"contributions": [
+					{"id": "damage", "kind": "stat", "stat": "sword_damage", "op": "multiply", "value": 1.6},
+					{"id": "reach", "kind": "stat", "stat": "sword_range", "op": "multiply", "value": 1.2},
+					{"id": "arc", "kind": "stat", "stat": "sword_arc", "op": "multiply", "value": 1.2},
+					{"id": "cooldown", "kind": "stat", "stat": "sword_cooldown", "op": "multiply", "value": 3},
+					{"id": "rooted", "kind": "quality", "quality": "sword_root"}
+				]
+			},
+			{
+				"id": "sword_landing", "name": "Sword Landing — Health", "template": "sword_landing_room", "cost": 1,
+				"requires_all": [], "requires_any": [], "abilities": [], "map_position": [-40, -110],
+				"contributions": [{"id": "hp", "kind": "stat", "stat": "max_hp", "op": "add", "value": 5}]
+			},
+			{
+				"id": "strength", "name": "Strength Up", "template": "strength_trial", "cost": 1,
+				"requires_all": [], "requires_any": [], "abilities": [], "map_position": [-140, -170],
+				"contributions": [{"id": "damage", "kind": "stat", "stat": "sword_damage", "op": "multiply", "value": 1.5}]
 			}
 		],
 		"links": [
@@ -1188,7 +1264,13 @@
 					"boots",
 					"node_1"
 				]
-			}
+			},
+			{"id": "sword_spear", "a": "sword", "b": "spear", "activate_from": ["sword", "spear"]},
+			{"id": "sword_heavy", "a": "sword", "b": "heavy", "activate_from": ["sword", "heavy"]},
+			{"id": "sword_sword_landing", "a": "sword", "b": "sword_landing", "activate_from": ["sword", "sword_landing"]},
+			{"id": "spear_sword_landing", "a": "spear", "b": "sword_landing", "activate_from": ["spear", "sword_landing"]},
+			{"id": "heavy_sword_landing", "a": "heavy", "b": "sword_landing", "activate_from": ["heavy", "sword_landing"]},
+			{"id": "sword_landing_strength", "a": "sword_landing", "b": "strength", "activate_from": ["sword_landing", "strength"]}
 		],
 		"interactions": [
 			{
@@ -1221,6 +1303,6 @@
 	},
 	"extensions": {
 		"design_source": "scenario-designs/Test_Dungeon.mmd",
-		"notes": "Experimental combined candidate. Room layouts, combat, modifiers, clear conditions and reward tuning are provisional. Landing capacity is an explicit temporary funding aid for evaluating optional nodes."
+		"notes": "Experimental combined candidate. Boots and Sword room layouts, combat, modifiers, clear conditions and reward tuning are provisional. Boots Landing capacity is an explicit temporary funding aid for evaluating optional nodes."
 	}
 }

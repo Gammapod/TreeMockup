@@ -27,6 +27,9 @@ sources:
   cleared; `prevent_enemy_respawn` prevents later respawns.
 * `reveal_pickup` makes the authored reward eligible once; collection remains
   per node/object and cannot duplicate.
+* Node `requires_all` and `requires_any` test active allocations, not clear
+  state. There is no supported prerequisite for clearing another room; the
+  planned mini-boss gate requires a separate progression/content change.
 
 # Roots and permissions
 

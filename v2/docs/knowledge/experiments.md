@@ -26,7 +26,7 @@ sources:
 **Current design target:** the interconnected 14–18-node dungeon, using the
 accepted abilities and boss capstone. The user has begun work in
 `examples/Test_Dungeon.json`; `examples/unified_tutorial_boots.json` is the
-playtested opening/Boots candidate under continued design.
+opening/Boots/Sword candidate under continued design.
 The grouped unified contribution editor is implemented; other candidates live
 in the [backlog](../backlog.md).
 
@@ -63,9 +63,17 @@ tables here.
 * **Status**: evaluated; revised candidate, not a completed dungeon.
 * **Question**: Do the tutorial and first movement branch provide a coherent physical skill-tree foundation?
 * **Slice**: `examples/unified_tutorial_boots.json`; tutorial, two mutually exclusive movement options, shortcut and optional endpoints.
-* **Observation**: The user said the abilities and connectedness match the design, liked Start's pillars and Key Storage's lessons, and considered Sword and the movement trial encounters placeholders. They revised map/door placement and added water around the Flippers route.
+* **Observation**: The user said the abilities and connectedness match the design, liked Start's pillars and Key Storage's lessons, and considered Sword and the movement trial encounters placeholders. They revised map/door placement and added water around the Flippers route. Refunding Flippers in water pushed the player to an edge; they noted possible trapping against another obstacle and deferred a general clipping solution.
 * **Decision**: keep developing the candidate; prefer automatic doors except where an obstacle demands a specific placement. The user-created miniboss is a visual placeholder, not an implemented encounter.
-* **Next**: evaluate placeholder room content and future presentation/authoring candidates; recheck routes after the user's geometry edits.
+* **Next**: develop placeholder room content and evaluate future presentation/authoring candidates as needed.
+
+## Unified Sword Branch extension (2026-11-25)
+* **Status**: evaluated for abilities and connectivity; encounters and layouts remain provisional.
+* **Question**: Does the candidate express the intended Spear/Heavy/neither branch and its shared landing?
+* **Slice**: Added Spear, Heavy, Sword Landing and Strength Up to `examples/unified_tutorial_boots.json`; encounters, values and rewards are placeholders.
+* **Observation**: The user confirmed that the abilities and connections are correct.
+* **Decision**: continue developing the branch; no conclusion about enemy behavior, balance or room layout is implied.
+* **Next**: flesh out distinctive encounters and rooms, then finalize the mini-boss's prerequisite nodes and implement cleared-room prerequisites and the encounter.
 
 ## Unified contribution editor (2026-11-23)
 * **Status**: implemented; grouped table positively reviewed, collapse controls implemented.

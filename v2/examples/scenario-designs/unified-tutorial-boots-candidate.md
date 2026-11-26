@@ -18,7 +18,8 @@ preserved. Design intent comes from `Test_Dungeon.mmd`.
 * Boots Room uses visit-local tokens; one is behind the gate. The two option
   rewards are separate and can both eventually be collected by reallocating.
 * Physical links, rather than single-node prerequisites, constrain activation
-  and connectivity. The branch is independent of the unfinished Sword Branch.
+  and connectivity. The Boots loop is intended to be completable without
+  depending on the Sword Branch.
 
 ## Provisional content to assess
 
@@ -34,8 +35,33 @@ preserved. Design intent comes from `Test_Dungeon.mmd`.
   rewards in Boots Room and both endpoints are placeholders for later budgeting.
 * Speed and Flippers are optional trial endpoints, not a completed continuation.
   The user added a visually placed, cost-1000 mini-boss placeholder, not an
-  encounter. There is no Sword Branch, cleared-node prerequisite, new enemy
-  movement, random health drops or final boss in this slice.
+  encounter. There are no cleared-node prerequisites, new enemy movement,
+  random health drops or final boss in this slice.
+
+## Sword Branch extension — provisional
+
+The same bundle now includes Spear, Heavy, Sword Landing and Strength Up,
+connected as in `Test_Dungeon.mmd`. Spear and Heavy are mutually exclusive;
+Sword Landing also has a direct connection from Sword for choosing neither.
+New links use automatic doorway placement. The original Sword room remains
+unchanged. The user confirmed the branch's abilities and connections are
+correct; its encounters, tuning and layouts remain open.
+
+* **Spear:** reach ×1.8, arc ×0.55. Two placeholder bats and pillars are meant
+  to encourage reach and deliberate facing.
+* **Heavy:** damage ×1.6, reach ×1.2, arc ×1.2, sword cooldown ×3 and rooted
+  sword cooldown. A durable and a weaker bat offer a first comparison.
+* **Sword Landing:** +5 max HP, a mixed encounter, separate healing and
+  clear-revealed Gold.
+* **Strength Up:** damage ×1.5, a durable bat and clear-revealed Gold.
+
+These numbers, encounters, geometry and rewards are provisional rather than
+balance claims. Spear and Heavy each reveal a separate capacity on clear; the
+question of whether visiting both should grant both rewards remains open. The
+direct Landing route does not itself add capacity, so accessing Strength may
+require later exploration or reallocating. The mini-boss is still a visual
+placeholder, and cleared-node prerequisites remain unimplemented. Automatic
+doors depend on map positions, so new links can affect existing auto placements.
 
 ## User playtest and revisions
 
@@ -80,8 +106,9 @@ Quick doorway. The early return prevented later physical-route checks. The user
 does not want deterministic level-design validation to gate this experimental
 dungeon's iteration.
 
-In Landing, Flippers can currently be refunded while standing in water; water
-then becomes solid under the player. Exact physical recovery was not tested.
-This is distinct from the Flippers room itself, where occupied-node protection
-prevents a normal refund that removes the occupied node. Root travel is a
-model-supported escape, not proof of an unobstructed walking route.
+In the user's playtest, refunding Flippers while standing in water pushed the
+player to the nearest water edge. The user noted that the player can become
+stuck between water and another obstacle, but does not want a general clipping
+solution or prevention work at this stage. This is distinct from the Flippers
+room itself, where occupied-node protection prevents a normal refund that
+removes the occupied node.

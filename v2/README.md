@@ -188,6 +188,7 @@ Open `v2/examples/*.json` from the editor:
 - `combat.json`: the old combat topology, capacity progression, bats and gold rewards adapted to node allocation.
 - `cleared_rooms.json`: six-node clear-state lab with shared-template enemy rooms, a switch reward, token collection and combined objectives earning a second root. [Contracts](docs/knowledge/clear-state.md); the former walkthrough is [archived](docs/archive/cleared-rooms-closeout.md).
 - `tutorial_candidate.json`: a separate introductory dungeon slice with capacity, health, a sword-operated switch and provisional branch endpoints.
+- `unified_tutorial_boots.json`: the evolving unified tutorial, Boots and Sword Branch candidate; its mini-boss node, encounters and rewards are provisional. [Design notes](examples/scenario-designs/unified-tutorial-boots-candidate.md).
 - `phase_dash_lab.json`: unified-model comparison of ordinary Dash, Phase teleport and Water Passage.
 - `Test_Dungeon.json`: an exploratory collection of room and ability-node ideas, not a completed dungeon; the evolving design graph is `scenario-designs/Test_Dungeon.mmd`.
 
@@ -203,7 +204,7 @@ ignored.
 
 1. Roots are created by clear effects, permanently active and allocate zero points. Promotion releases the node's allocation and waives upstream support. The starting room uses the same effect. Other active rooms allocate points; deactivation refunds their authored costs.
 2. Activation is local and respects authored activation direction. Travel between active linked rooms is bidirectional.
-3. ALL and ANY prerequisites are ongoing requirements. Exclusive groups permit at most one active member.
+3. ALL and ANY prerequisites are ongoing active-node requirements; cleared-room prerequisites are not yet supported. Exclusive groups permit at most one active member.
 4. Deactivation removes unsupported and root-disconnected rooms to a fixed point. Alternate support can preserve a room.
 5. A transaction that would deactivate the occupied room is rejected, with no partial effects.
 6. Abilities derive from active rooms, irrespective of which room scene is loaded.

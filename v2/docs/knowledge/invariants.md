@@ -22,7 +22,7 @@ paths are in the owner manifests `tests/engine/suites.json` and
 
 | ID | Contract | Primary trace |
 | --- | --- | --- |
-| P1 | Activation is local, direction-aware, capacity-limited, prerequisite-aware, and exclusive-group-aware; travel over active links is bidirectional. | `tests/run_tests.gd`, `tests/branching_tests.gd` |
+| P1 | Activation is local, direction-aware, capacity-limited, active-node-prerequisite-aware, and exclusive-group-aware; travel over active links is bidirectional. Room clear is not an allocation prerequisite. | `tests/run_tests.gd`, `tests/branching_tests.gd` |
 | P2 | ALL and ANY prerequisites are ongoing. Deactivation removes unsupported or root-disconnected nodes to a fixed point, refunds affected non-roots, and is atomic if it would remove the occupied room. | `tests/run_tests.gd`, `tests/map_preview_tests.gd` |
 | P3 | Active rooms derive abilities/modifiers; permanent rewards are collected once per node/object instance and survive deactivation. | `tests/run_tests.gd`, `tests/branching_tests.gd` |
 | C1 | Clear state is per node, monotonic for a run, independent of activation, and default-cleared when a template has no conditions. Clear conditions combine with ALL. | `tests/clear_tests.gd` |
@@ -120,6 +120,9 @@ selectors to run all suites in scope. Areas are
 `progression`, `lifecycle`, `content`, `editor`, `presentation`, and `combat`.
 Tags describe the contracts exercised, not exhaustive coverage or proof that
 every assertion maps individually to that invariant.
+For example, the Engine `tutorial_candidate` suite exercises
+`examples/tutorial_candidate.json`; it is not a test of the evolving
+`examples/unified_tutorial_boots.json` or its Sword Branch.
 
 ## Evidence and failure semantics
 

@@ -36,13 +36,14 @@ sources:
   preventing immediate bounce-back. `E` remains for deliberate interactions.
 * BUILD-01 exposes final sword/dash stats and selected-node benefits/costs.
   The player's sector previews attack reach/arc and uses captured parameters
-  during an attack. Its launch/restart controls send coordinator intents;
-  restart obeys the same editor-pause and stale-transition boundaries as travel.
+  during an attack. Launch/restart controls send coordinator intents; restart
+  obeys the same editor-pause and stale-transition boundaries as travel.
 * For unified builds the tree details show the supplied current build even
   without a selection. A selected node can show the supplied before build and,
   only for an allowed preview with an after build, the hypothetical after build.
-  Quality grant/effectiveness, dormant requirements, capped stats and supplied
-  source node names are displayed; the panel does not compose build values.
+  Quality grant/effectiveness, dormant requirements and capped stats are
+  displayed. Supplied source node IDs are resolved to names using the run
+  definition (falling back to IDs); the panel does not compose build values.
 * Phase feedback presents coordinator events: transit, landing, return or
   blocked return, and separately reported contact or wave damage. A failed
   attempt can show its supplied destination as coordinates and a world marker.

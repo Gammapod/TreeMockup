@@ -13,13 +13,42 @@ Prefer work that:
 3. Can be tested in a small scenario with existing primitives.
 4. Removes authoring friction that is actually slowing experiments.
 
-Breadth of content, visual polish, and general-purpose infrastructure are secondary. A lower-priority item can move up when a specific scenario needs it. “Implemented” does not mean “accepted”: keep a baseline to compare against and record whether to keep, revise, or discard the experiment.
+Breadth of content, visual polish, and general-purpose infrastructure are secondary. A lower-priority item can move up when a specific scenario needs it. “Implemented” does not mean “accepted”: keep a baseline to compare against and record whether to keep, revise, or discard the experiment. The sprint groupings below are a proposed sequence of small, related slices, not a commitment to ship every item or an acceptance of new rules.
 
 ### Priority bands
 
 - **P1 — next experiments:** direct tests of the central conceit, or essential support for those tests.
 - **P2 — pull when needed:** promising mechanics and authoring aids with a concrete experimental use.
 - **P3 — parked:** broad, costly, or underspecified ideas that currently teach less than smaller experiments.
+
+## Proposed sprint sequence
+
+Sprints are outcome-based, with no assumed duration. Work on one major gameplay
+question at a time within a sprint; use the result to revise or skip later
+sprints. Supporting editor and presentation work is pulled only when it affects
+the slice. Items not listed remain in their priority bands below.
+
+| Order | Outcome and grouped work | Exit evidence / decision |
+| --- | --- | --- |
+| **1 · Flesh out Sword Branch** | Retain the confirmed abilities and connections; develop more distinctive room layouts and enemy behaviors for Spear, Heavy, Sword Landing and Strength Up. Pick new enemy movement only where it tests a specific build choice. Tune rewards and funding through play. Pull **UI-03** if missing cues prevent a fair evaluation. | User playtests and decides what to keep/revise. Experimental layout is not gated on deterministic level-design checks. |
+| **2 · Midpoint prerequisites and encounter** | Finalize which specific rooms in each branch are the mini-boss prerequisites. Implement **cleared-room prerequisites** with active and cleared conditions separate, then add a mini-boss enemy and arena that awards the second root on clear. | Engine checks new mechanic and encounter behavior; user evaluates the room choices, fight and pacing. The existing cost-1000 visual placeholder is not a miniboss implementation. |
+| **3 · Connected branch and puzzle** | Design a continuation toward the target dungeon: individual upgrades and pairings, a required ability approached by mutually exclusive routes, and a multi-room refund/reallocation puzzle using persistent switch/wall state where feasible. Consider funding, return and persistence. Pull **EDIT-09/10/11** or **EDIT-06** if actual authoring friction warrants it. | A playable subsection; user evaluates whether the spatial and build decisions are meaningful. Identify unsupported mechanics rather than assuming them. |
+| **4 · Capstone integration** | Connect the evaluated sections to the accepted Guardian in a shareable, approximately 14–18-node candidate, with at most two roots. Revisit **LOOT-01** placement and **STAT-01/02** as build and recovery comparisons; address **UI-03** before external sharing if needed. Tune the boss against dungeon builds rather than the workshop in isolation. | Trace at least representative navigation- and combat-leaning routes and final budgets, then playtest the end-to-end tradeoff, recovery and pacing. Decide keep/revise/discard; do not infer enjoyment or general solvability from validation. |
+| **5 · Evidence-driven follow-ups** | Pull **LOOT-04**, other abilities/hazards, **EDIT-12/13**, or broader layout and clear-state ideas only in response to a specific observation and hypothesis. Group related resource work (STAT-05 + LOOT-02, or STAT-06 + AB-01) as separate experiments rather than adding both pools at once. | State the comparison, rule choices and evidence sought before implementation; retain accepted baselines and record user observations separately from automated checks. |
+
+**Priority adjustments:** Sword Branch development and the midpoint prerequisite
+and encounter are the next P1 work. The user requested cleared-room
+prerequisites; specify the smallest supported semantics and presentation before
+implementation. UI-03 remains P2 unless feedback blocks a
+fair test or external sharing. EDIT-06/09/10/11 remain P2 pull-as-needed;
+EDIT-12 stays design-first and EDIT-13 parked. Random drops and new enemy
+locomotion remain P2 candidates, not prerequisites to opening work.
+
+**Checkpoint caveat:** after the user's geometry edits the candidate compiled;
+the layout-specific route suite was subsequently retired at the user's request.
+The full general regression run passed 30/30 suites. The user observed that
+refunding Flippers in water pushes the player to an edge and explicitly deferred
+general clipping prevention.
 
 ## Current checkpoint
 
@@ -29,7 +58,7 @@ Breadth of content, visual polish, and general-purpose infrastructure are second
 4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline. CLEAR-03 through CLEAR-06 remain potential future experiments.
 5. **BUILD-01 — Completed, baseline accepted.** Stackable sword/dash modifiers, max-HP-only upgrades, and the expanded eight-point workshop are retained. See the [architectural closeout](archive/build-01-closeout.md).
 6. **BOSS-01 — Completed, capstone accepted (2026-11-16):** free Roost Guardian trial retained as the encounter to design the dungeon around. Tweaking/polish is deferred. See the [architectural closeout](archive/boss-01-closeout.md).
-7. **Current focus:** design the interconnected 14–18-node dungeon. The unified ability model, Phase lab and grouped contribution editor are implemented; the user positively evaluated Phase and the table. Further dungeon testing remains open. See the [experiment record](knowledge/experiments.md).
+7. **Current focus:** develop the interconnected 14–18-node dungeon. The user confirmed the new Sword Branch abilities and connections; distinctive rooms and encounters remain to be developed. Finalize midpoint prerequisites, implement cleared-room prerequisites, and add the mini-boss and arena. See the [experiment record](knowledge/experiments.md).
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
@@ -68,14 +97,22 @@ The separate `examples/unified_tutorial_boots.json` candidate brings the
 tutorial and Boots Branch into the unified model; its temporary funding aid and
 other placeholders are documented in
 `examples/scenario-designs/unified-tutorial-boots-candidate.md`. The user
-playtested and revised the candidate; earlier route checks predate the revised
+playtested and revised the opening; a provisional Sword Branch has since been
+added and its abilities and connections confirmed by the user. Encounter
+balance and layouts remain open. Earlier route checks predate the revised
 geometry. Level-design iteration is experimental and is not gated on
 deterministic scenario validation.
 
-- **Cleared-node prerequisites — proposed:** The mini-boss design calls for
-  two rooms to be both active and cleared. Current ALL/ANY prerequisites test
-  active nodes only; a separate cleared-node condition remains unimplemented.
-  Preserve the distinction between persistent clear state and active allocation.
+- **Cleared-node prerequisites — P1 next step (Sprint 2):** Finalize which
+  specific rooms from each branch gate the mini-boss and implement the
+  cleared-room prerequisite feature. Current ALL/ANY prerequisites test active
+  nodes only; preserve the distinction between persistent clear state and active
+  allocation. The current sketch requires both active and cleared; agree the
+  exact scope, preview and execution semantics before implementation.
+- **Midpoint mini-boss and arena — P1 next step (Sprint 2):** Replace the
+  cost-1000 visual placeholder with a designed enemy and arena, with
+  `become_root` on clear. Respect the two-root maximum and test the encounter
+  experience with the user; its behavior is not yet selected.
 - **LOOT-01 — HP pickups — implemented:** Authored health pickups and chests
   restore a fixed amount up to current maximum HP, remain available at full HP,
   and are collected once per node/object per run. The tutorial candidate places
@@ -85,22 +122,21 @@ deterministic scenario validation.
   enemies. Decide drop probability, reproducibility, pickup lifetime, and
   behavior on re-entry, respawn and repeated kills; check for farming and
   unreliable recovery. Depends on a defined HP pickup.
-- **HAZ-04 — Enemy movement and locomotion:** Explore skeletons moving
+- **HAZ-04a — Enemy movement and locomotion:** Explore skeletons moving
   semi-randomly along cardinal directions and snakes moving along one axis
   and bouncing off obstacles. Proposed collision policy: flying bats and
   Guardian pass over water but not walls; walking enemies pass through neither.
   Specify behavior when Flippers are allocated or refunded, and validate
   Guardian arena assumptions separately. Future hazards and locomotion types
   need their own explicit interaction rules.
-- **Sword/terrain interaction — design question:** Room 7 proposes a trapped
+- **Sword/terrain interaction — P1 investigation if needed (Sprint 1):** Room 7 proposes a trapped
   enemy reachable with either a long sword or Flippers. Current hit checks
   without Flippers are blocked by water; decide whether to change that rule or
   use different geometry before treating this as a supported solution.
-- **Water-passage refund safety — design question:** The revised Boots Landing
-  allows refunding neighboring Flippers while the player stands in water,
-  making it solid under the player. Physical recovery is untested. Decide
-  whether to guard the refund, support safe recovery, or handle the situation
-  differently; do not assume root travel proves an unobstructed walking route.
+- **Water-passage refund / clipping — deferred:** The user observed that
+  refunding Flippers while standing in water pushes the player to a water edge.
+  The player can become stuck between water and another obstacle. The user does
+  not want prevention or a general clipping solution for the current dungeon.
 
 Existing `reveal_pickup` supports clear-revealed capacity or gold pickups and
 chests; no new capacity-reveal mechanic is currently identified. Existing
@@ -371,7 +407,8 @@ Avoid building the whole catalogue first. Each primitive should enable a choice 
 | HAZ-01 | P2 | **Darkness:** one dark room and one illumination/vision benefit. | Can allocating perception alter how a room is explored? | A readable darkness representation; distinguish room visibility from STAT-03's map reveal. |
 | HAZ-02 | P2 | **Pits:** one pit region and one defined crossing/recovery behavior. | Does traversal capability change which rooms/routes are attractive? | A movement solution and explicit fall/recovery rule; compare with existing water/flippers. |
 | HAZ-03 | P2 | **Spikes:** one static or timed damage zone. | Can environmental timing make defensive/mobility choices relevant without extra enemy types? | Damage cooldown and clear visual feedback. |
-| HAZ-04 | P2 | **New enemy behavior:** one telegraphed attacker, charger, or ranged enemy chosen to test one branch. | Does it expose a difference between builds that chasing bats cannot? | Pick the target build question first; avoid an enemy roster project. |
+| HAZ-04a | P2 | **Enemy locomotion:** skeleton/snake movement and flying/walking terrain policies, as described in the dungeon-enabling candidates. | Does a chosen movement pattern expose a useful build or spatial decision? | Explicit collision policies; test Guardian assumptions separately. |
+| HAZ-04b | P2 | **New enemy attack behavior:** one telegraphed attacker, charger, or ranged enemy chosen to test one branch. | Does it expose a difference between builds that chasing bats cannot? | Pick the target build question first; avoid an enemy roster project. |
 | LOOT-01 | Implemented | **Health pickups/chests:** restore HP up to the current maximum; not consumed at full health. | Does recovery placement support the intended dungeon pacing? | [Content contract](knowledge/content.md#health-pickups); dungeon playtesting. |
 | LOOT-02 | P2 | **MP restoration:** one pickup restoring MP up to its maximum. | Does recovery placement make magic allocation and route choice interesting? | STAT-05. |
 | LOOT-03 | P2 | **Temporary powerups:** one timed effect, such as speed, layered over the active build. | Does temporary power complement the skill tree or obscure which rooms grant the player's abilities? | Capability composition and an explicit expiry/stacking rule; test one effect. |

@@ -28,24 +28,30 @@ subgraph sword-branch [Sword]
     %% Golden path: Player defeats the enemies and sees that an upgrade appears. The player must make their first choice and explore the rest of the dungeon.
     %% Player learns: "Defeating all enemies can make collectibles appear"
     %% Player learns: "Not all paths can remain open at once"
+    %% Room goal: teach the unmodified attack in a readable first engagement; current encounter is a functional placeholder.
     weapons_1["Spear Mod"]
     %% Ability: modifications that make the sword significantly narrower and longer range.
-    %% Contents, clear conditions, rewards: TBD
+    %% Room idea: a threat approaching along an open lane rewards reach; a second threat from another angle exposes narrow coverage. Keep the first lesson readable.
+    %% Candidate reward: 1 capacity revealed on clear, to fund weapons_landing. Clear condition and encounter tuning remain TBD.
     weapons_2["Heavy Mod"]
-    %% Ability: modifications that make the sword moderately wider and longer range, moderately more powerful, and significantly slower. Player rooted during sword cooldown, inturruptible by dash.
-    %% Contents, clear conditions, rewards: TBD
+    %% Ability: modifications that make the sword moderately wider and longer range, moderately more powerful, and significantly slower. Player rooted from attack through sword cooldown; Dash can move the player without ending the restriction or cooldown.
+    %% Room idea: a high-HP enemy demonstrates damage; a readable second threat or approach makes the choice of recovery position matter. Avoid overwhelming the first lesson.
+    %% Candidate reward: 1 capacity revealed on clear, to fund weapons_landing. Clear condition and encounter tuning remain TBD.
     weapons_landing["Health Mod"]
     %% Ability: +5 HP increase
-    %% Contents, clear conditions, rewards: TBD
+    %% Room idea: a modest mixed encounter fair with Spear, Heavy, or neither, making this a shared proving room. A separate health pickup could let the player use the increased maximum HP; allocation itself does not heal.
+    %% Clear condition: TBD, but should be meaningful because this node is a proposed miniboss requirement. Reward: Gold placeholder pending overall funding.
     weapons_bonus["Strength Up"]
     %% Ability: moderate attack power increase
-    %% Contents, clear conditions, rewards: TBD
+    %% Room idea: a durable enemy and geometry that still rewards movement demonstrate increased damage without necessarily adding Heavy's rooted restriction. Clear condition TBD; reward Gold placeholder pending overall funding.
 end
 sword_room --- weapons_1 --- weapons_landing
 sword_room --- weapons_2 --- weapons_landing
 weapons_1 x-.-x weapons_2 %% mutually exclusive nodes
 sword_room --- weapons_landing
 weapons_landing --- weapons_bonus
+%% Budget hypothesis: after the Sword reward, one available capacity funds Spear, Heavy, or the direct landing. A modifier-room capacity reward could fund the landing.
+%% Open question: if Spear and Heavy each contain a permanent reward, a player can eventually refund/reallocate and collect both. Decide whether to encourage that exploration or design a shared reward.
 
 subgraph boots-branch [Boots]
 %% Major idea: Player learns movement/exploration basics. Player must choose boots_1 or boots_2 before clearing boots_room. Clearing boots_room is necessary for reaching miniboss.
