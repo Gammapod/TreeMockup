@@ -15,6 +15,32 @@ func _run() -> void:
 	_expect(ui.gameplay_map.node_states.start == "active", "Root is active")
 	_expect(ui.gameplay_map.node_states.sword == "available", "Local affordable room is available")
 	_expect(ui.gameplay_map.node_states.prize == "blocked", "Remote room is blocked")
+	_expect(ui.gameplay_map._icon_for_node({}) == "neutral", "Absent icon uses neutral even for named or capable nodes")
+	_expect(ui.gameplay_map._icon_for_node({"icon_id": "sword"}) == "sword", "Map displays explicitly supplied known icon")
+	for value in ["unknown_future", "", null, 7, {"unexpected": true}, ["sword"]]:
+		_expect(ui.gameplay_map._icon_for_node({"icon_id": value}) == "neutral", "Unknown or malformed icon safely falls back")
+	_expect(ui.gameplay_map._icon_for_node({"name": "Sword", "abilities": ["sword"]}) == "neutral", "Map never infers an icon from benefits or name")
+	_expect(ui.gameplay_map._shows_label("start") and ui.gameplay_map._shows_label("sword"), "Occupied room and direct neighbor retain their labels")
+	_expect(not ui.gameplay_map._shows_label("prize"), "Remote unselected room does not add a persistent label")
+	ui.select_node("prize")
+	_expect(ui.gameplay_map._shows_label("prize"), "Selecting a remote room reveals its label")
+	ui.select_node("")
+	_expect(ui.gameplay_map.focus_mode == Control.FOCUS_ALL and ui.node_action.focus_mode == Control.FOCUS_ALL and ui.root_travel.focus_mode == Control.FOCUS_ALL, "Map and explicit actions are keyboard-focusable")
+	var keyboard := InputEventAction.new()
+	keyboard.action = "ui_right"
+	keyboard.pressed = true
+	var before_keyboard: Dictionary = game.progression.active.duplicate()
+	ui.gameplay_map._gui_input(keyboard)
+	_expect(not ui.gameplay_map.selected.is_empty() and game.progression.active == before_keyboard, "Keyboard inspection selects without allocation")
+	ui.select_node("")
+	ui.gameplay_map.grab_focus()
+	await process_frame
+	var arrow := InputEventKey.new()
+	arrow.keycode = KEY_RIGHT
+	arrow.pressed = true
+	root.push_input(arrow)
+	_expect(not ui.gameplay_map.selected.is_empty() and game.progression.active == before_keyboard, "Focused map accepts a real arrow key without allocating")
+	ui.select_node("")
 	# A map click selects; only the explicit action commits.
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT

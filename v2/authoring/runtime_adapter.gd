@@ -5,7 +5,8 @@ const PROGRESSION = preload("res://progression.gd")
 const DOORS = preload("res://authoring/door_layout.gd")
 
 func compile(document: Dictionary, allow_unified_experiment: bool = false) -> Dictionary:
-	var errors: Array[String] = STORE.new().validate(document)
+	var store = STORE.new()
+	var errors: Array[String] = store.validate(document)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
 	var data: Dictionary = document.dungeon.duplicate(true)
@@ -69,6 +70,8 @@ func compile(document: Dictionary, allow_unified_experiment: bool = false) -> Di
 		data.templates[room.id] = template
 	for node in document.dungeon.nodes:
 		var result: Dictionary = node.duplicate(true)
+		if result.has("icon_id") and not store.is_valid_node_icon_id(result.icon_id):
+			result.erase("icon_id")
 		result.cost = int(node.cost)
 		result.map_position = _vector(node.map_position)
 		for ability in node.abilities:

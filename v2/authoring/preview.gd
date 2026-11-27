@@ -1,5 +1,7 @@
 extends Control
 
+const ICONS = preload("res://presentation/icons.gd")
+
 signal placed(point: Vector2)
 signal moved(id: String, point: Vector2)
 signal object_resized(id: String, bounds: Rect2)
@@ -186,6 +188,35 @@ func hit_items(point: Vector2) -> Array:
 func _radius(object: Dictionary) -> float:
 	return float(object.properties.get("radius", 14)) if object.kind == "enemy" else 13.0
 
+func _object_icon_id(object: Dictionary) -> String:
+	var kind: String = object.get("kind", "")
+	if kind == "token":
+		return "token"
+	if kind not in ["pickup", "chest"]:
+		return ""
+	var properties: Variant = object.get("properties", {})
+	if not properties is Dictionary:
+		return ""
+	var reward: String = str(properties.get("kind", ""))
+	return reward if reward in ["health", "gold", "capacity"] else ""
+
+func _terrain_label_fits(kind: String, dimensions: Vector2, scale: float) -> bool:
+	if kind not in ["water", "wall", "obstacle"] or scale <= 0:
+		return false
+	var width := ThemeDB.fallback_font.get_string_size(kind.capitalize(), HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+	var rotated := Vector2(width * cos(PI / 6) + 14 * sin(PI / 6), width * sin(PI / 6) + 14 * cos(PI / 6))
+	return dimensions.x * scale >= rotated.x + 20 and dimensions.y * scale >= rotated.y + 20
+
+func _draw_terrain_label(kind: String, bounds: Rect2) -> void:
+	if not _terrain_label_fits(kind, bounds.size, zoom):
+		return
+	var text := kind.capitalize()
+	var font := ThemeDB.fallback_font
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+	draw_set_transform(pan + bounds.get_center() * zoom, -PI / 6)
+	draw_string(font, Vector2(-width / 2, 4), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
+	draw_set_transform(pan, 0, Vector2(zoom, zoom))
+
 func _resize_edges(hit: Dictionary, point: Vector2) -> Vector2:
 	if mode != "room" or not hit.has("size") or hit.size == Vector2.ZERO or hit.id != selection:
 		return Vector2.ZERO
@@ -248,15 +279,21 @@ func _draw() -> void:
 			_text(p + Vector2(16, 5), port.id)
 		for object in content.get("objects", []):
 			var p := Vector2(object.position[0], object.position[1])
-			var color: Color = {"token": Color("ff95df"), "enemy": Color("c580df"), "pickup": Color("88cbff"), "chest": Color("ffd569"), "switch": Color("e5935d"), "water": Color("3479b5")}.get(object.kind, Color("909dad"))
+			var color: Color = {"token": Color("ff95df"), "enemy": Color("c580df"), "pickup": Color("88cbff"), "chest": Color("ffd569"), "switch": Color("e5935d"), "water": Color("3479b5"), "wall": Color("626d79"), "obstacle": Color("80664c")}.get(object.kind, Color("909dad"))
 			if object.has("size") and object.size is Array and object.size.size() == 2:
-				draw_rect(Rect2(p, Vector2(object.size[0], object.size[1])), color)
+				var bounds := Rect2(p, Vector2(object.size[0], object.size[1]))
+				draw_rect(bounds, color)
+				_draw_terrain_label(object.kind, bounds)
 				if selection == object.id:
 					draw_rect(Rect2(p, Vector2(object.size[0], object.size[1])).grow(3 / zoom), Color.WHITE, false, 2 / zoom)
 					for corner in [p, p + Vector2(object.size[0], 0), p + Vector2(0, object.size[1]), p + Vector2(object.size[0], object.size[1])]:
 						draw_rect(Rect2(corner - Vector2(4, 4) / zoom, Vector2(8, 8) / zoom), Color.WHITE)
 			else:
 				draw_circle(p, _radius(object), color)
+				var icon := _object_icon_id(object)
+				var side := minf(_radius(object) * 1.3, 22.0 / zoom)
+				if not icon.is_empty() and side * zoom >= 14:
+					ICONS.draw_icon(self, icon, Rect2(p - Vector2.ONE * side / 2, Vector2.ONE * side), Color("172332"))
 				if selection == object.id:
 					draw_arc(p, _radius(object) + 4 / zoom, 0, TAU, 32, Color.WHITE, 2 / zoom)
 			_text(p + Vector2(18, -8), object.id)

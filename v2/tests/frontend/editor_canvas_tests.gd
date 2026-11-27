@@ -13,6 +13,18 @@ func _run() -> void:
 	await process_frame
 	_fresh()
 	await process_frame
+	_expect(editor.room_tools.visible and not editor.tree_tools.visible and editor.viewport_tools.visible and editor.selection_tools.visible, "Room view exposes room and viewport tools")
+	_expect(editor.undo_button.is_visible_in_tree() and editor.redo_button.is_visible_in_tree(), "History remains visible in room view")
+	editor._set_mode("tree")
+	_expect(editor.tree_tools.visible and not editor.room_tools.visible and editor.viewport_tools.visible and editor.selection_tools.visible, "Tree view exposes tree and viewport tools")
+	editor.inspector.text = "{invalid"
+	editor.mode_buttons.room.pressed.emit()
+	_expect(editor.mode == "tree" and editor.tree_tools.visible and not editor.room_tools.visible and editor.inspector.text == "{invalid", "Rejected mode change preserves contextual controls and JSON")
+	editor.inspector.text = editor.inspector_original
+	editor._set_mode("bundle")
+	_expect(not editor.room_tools.visible and not editor.tree_tools.visible and not editor.viewport_tools.visible and not editor.selection_tools.visible, "Bundle view hides canvas-specific tools")
+	_expect(editor.undo_button.is_visible_in_tree() and editor.redo_button.is_visible_in_tree(), "History remains visible in bundle view")
+	editor._set_mode("room")
 	var room: Dictionary = editor.document.rooms[0]
 	room.objects = [
 		{"id": "water", "kind": "water", "position": [100.0, 100.0], "size": [300, 200], "properties": {}, "extension": {"keep": true}},
@@ -22,6 +34,15 @@ func _run() -> void:
 	editor._refresh()
 	await process_frame
 	var canvas = editor.preview
+	_expect(canvas._object_icon_id({"kind": "token"}) == "token", "Explicit token has a token cue")
+	for reward in ["health", "gold", "capacity"]:
+		_expect(canvas._object_icon_id({"kind": "pickup", "properties": {"kind": reward}}) == reward, "Explicit pickup reward has a matching cue: " + reward)
+		_expect(canvas._object_icon_id({"kind": "chest", "properties": {"kind": reward}}) == reward, "Explicit chest reward has a matching cue: " + reward)
+	_expect(canvas._object_icon_id({"kind": "pickup", "properties": {}}).is_empty() and canvas._object_icon_id({"kind": "pickup", "properties": {"kind": "future"}}).is_empty(), "Missing or unknown reward never gains an inferred cue")
+	_expect(canvas._object_icon_id({"kind": "enemy", "properties": {"kind": "gold"}}).is_empty(), "Reward-shaped properties do not change another object kind")
+	_expect(canvas._terrain_label_fits("water", Vector2(250, 150), 1.0), "Large terrain can show a diagonal type label")
+	_expect(not canvas._terrain_label_fits("water", Vector2(20, 10), 1.0) and not canvas._terrain_label_fits("water", Vector2(250, 150), 0.05), "Small or zoomed-out terrain suppresses labels")
+	_expect(not canvas._terrain_label_fits("future", Vector2(250, 150), 1.0), "Unknown terrain kind has no inferred type label")
 	_expect(canvas.hit_items(Vector2(390, 290))[0].id == "water", "Rectangles pick across their full area")
 	_expect(canvas.hit_items(Vector2(219, 200))[0].id == "enemy", "Topmost visible object and authored radius win hit-testing")
 	_click(Vector2(200, 200))
@@ -101,11 +122,17 @@ func _run() -> void:
 	# Responsive layout checks exercise container geometry, not just window settings.
 	for dimensions in [Vector2i(960, 640), Vector2i(1600, 900), Vector2i(960, 1000)]:
 		root.size = dimensions
-		await process_frame
-		await process_frame
-		_expect(editor.preview.size.x >= 300 and editor.preview.size.y >= 200, "Canvas remains useful at " + str(dimensions))
-		_expect(editor.inspector_tabs.get_global_rect().end.x <= dimensions.x and editor.feedback.get_global_rect().end.y <= dimensions.y, "Inspector and feedback fit window " + str(dimensions))
-		_expect(editor.preview.get_global_rect().end.x <= editor.inspector_tabs.global_position.x, "Split panes do not overlap")
+		for mode in ["room", "tree", "bundle"]:
+			editor._set_mode(mode)
+			await process_frame
+			await process_frame
+			_expect(editor.preview.size.x >= 300 and editor.preview.size.y >= 200, "Canvas remains useful in %s at %s" % [mode, dimensions])
+			_expect(editor.inspector_tabs.get_global_rect().end.x <= dimensions.x and editor.feedback.get_global_rect().end.y <= dimensions.y, "Inspector and feedback fit in %s at %s" % [mode, dimensions])
+			_expect(editor.preview.get_global_rect().end.x <= editor.inspector_tabs.global_position.x, "Split panes do not overlap in " + mode)
+			_expect(editor.undo_button.get_global_rect().end.x <= dimensions.x and editor.redo_button.get_global_rect().end.x <= dimensions.x, "History controls fit in %s at %s" % [mode, dimensions])
+			if mode != "bundle":
+				_expect(editor.viewport_tools.get_global_rect().end.y <= editor.preview.get_global_rect().position.y, "Viewport tools sit above canvas")
+				_expect(editor.selection_tools.get_global_rect().end.y <= editor.inspector_tabs.get_global_rect().position.y, "Selection tools sit above Properties")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(saved_path))
 	editor.queue_free()
 	await process_frame

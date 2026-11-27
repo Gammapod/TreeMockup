@@ -23,6 +23,8 @@ var strikes_emitted := 0
 var dash_phase := false
 var dash_speed := 650.0
 var unified_actions
+var _attack_total := 0.0
+var _dash_total := 0.0
 
 func set_capabilities(snapshot: Dictionary) -> void:
 	var unified: bool = snapshot.get("model") == "unified_1"
@@ -79,6 +81,7 @@ func start_attack() -> bool:
 	attack_snapshot = {"facing": facing, "reach": capabilities.sword_range, "arc": capabilities.get("sword_arc", 1.8), "damage": capabilities.sword_damage, "strikes": capabilities.get("sword_strikes", 1)}
 	attack_time = 0.16 + 0.08 * (attack_snapshot.strikes - 1)
 	attack_cooldown = maxf(attack_time, capabilities.get("sword_cooldown", 0.32))
+	_attack_total = attack_cooldown
 	attack_elapsed = 0.0
 	strikes_emitted = 0
 	return true
@@ -103,7 +106,32 @@ func start_dash() -> bool:
 	dash_speed = capabilities.dash_speed
 	dash_phase = capabilities.get("dash_phase", false)
 	dash_cooldown = capabilities.get("dash_cooldown", 0.65)
+	_dash_total = maxf(dash_time, dash_cooldown)
 	return true
+
+func action_presentation_state() -> Dictionary:
+	var unified: bool = capabilities.get("model") == "unified_1"
+	var sword_available: bool
+	var dash_available: bool
+	var clocks: Dictionary
+	if unified:
+		sword_available = capabilities.qualities.sword.effective
+		dash_available = capabilities.qualities.dash.effective
+		clocks = unified_actions.presentation_clocks()
+	else:
+		sword_available = capabilities.abilities.has("sword")
+		dash_available = capabilities.abilities.has("dash") and not capabilities.get("sprint", false)
+		clocks = {
+			"sword": {"remaining": maxf(attack_cooldown, attack_time), "total": _attack_total},
+			"dash": {"remaining": maxf(dash_cooldown, dash_time), "total": _dash_total}
+		}
+	var sword_remaining: float = clocks.sword.remaining
+	var dash_remaining: float = clocks.dash.remaining
+	clocks.sword["available"] = sword_available
+	clocks.sword["ready"] = sword_available and (sword_remaining <= 0.0 if unified else sword_remaining <= 0.00001)
+	clocks.dash["available"] = dash_available
+	clocks.dash["ready"] = dash_available and dash_remaining <= 0.0
+	return clocks
 
 func movement_speed(sprint_held: bool) -> float:
 	if capabilities.get("model") == "unified_1":
@@ -161,17 +189,5 @@ func _draw() -> void:
 	var unified: bool = capabilities.get("model") == "unified_1"
 	if unified and unified_actions.phase_absent():
 		return
-	if not unified and capabilities.abilities.has("sword"):
-		var active := attack_time > 0.0
-		var angle: float = attack_snapshot.facing.angle() if active else facing.angle()
-		var reach: float = attack_snapshot.reach if active else capabilities.get("sword_range", 92.0)
-		var arc: float = attack_snapshot.arc if active else capabilities.get("sword_arc", 1.8)
-		var footprint := PackedVector2Array([Vector2.ZERO])
-		for i in range(49):
-			footprint.append(Vector2.from_angle(angle - arc * 0.5 + arc * i / 48.0) * reach)
-		draw_colored_polygon(footprint, Color(0.61, 0.92, 0.84, 0.22 if active else 0.07))
-		draw_arc(Vector2.ZERO, reach, angle - arc * 0.5, angle + arc * 0.5, 49, Color(0.61, 0.92, 0.84, 1.0 if active else 0.35), 3 if active else 1)
-		draw_line(Vector2.ZERO, footprint[1], Color(0.61, 0.92, 0.84, 0.35))
-		draw_line(Vector2.ZERO, footprint[-1], Color(0.61, 0.92, 0.84, 0.35))
 	draw_circle(Vector2.ZERO, 13, Color("ffffff") if invulnerability > 0 else Color("f6d365"))
 	draw_line(Vector2.ZERO, facing * 23, Color.WHITE, 3)

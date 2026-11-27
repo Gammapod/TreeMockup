@@ -84,6 +84,7 @@
         "requires_all": {"$ref": "#/$defs/ids"}, "requires_any": {"$ref": "#/$defs/ids"},
         "abilities": {"type": "array", "items": {"type": "string"}},
         "map_position": {"$ref": "#/$defs/point"},
+        "icon_id": {"description": "Optional stable-ID presentation hint. Other legacy JSON values are preserved and ignored at runtime."},
         "exclusive_group": {"type": "string"}, "modifiers": {"type": "object"},
         "contributions": {
           "type": "array",

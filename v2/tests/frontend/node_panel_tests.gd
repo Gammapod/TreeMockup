@@ -36,6 +36,11 @@ func _run() -> void:
 	editor._select_element("node", "one")
 	await process_frame
 	var panel = editor.node_panel
+	_expect(editor.mode_buttons.tree.button_pressed and not editor.mode_buttons.room.button_pressed, "Ribbon identifies the current editor mode")
+	editor.inspector.text = "{invalid"
+	editor.mode_buttons.room.pressed.emit()
+	_expect(editor.mode == "tree" and editor.mode_buttons.tree.button_pressed and not editor.mode_buttons.room.button_pressed and editor.inspector.text == "{invalid", "Rejected mode change retains ribbon state and pending JSON")
+	editor.inspector.text = editor.inspector_original
 	_expect(editor.inspector_tabs.current_tab == 0 and panel.node_id == "one", "Selecting a tree node populates Properties")
 	_expect(panel.usage.text.begins_with("Used by 2"), "Template usage counts instances")
 	_expect(panel.summary.text.contains("Potential capacity upgrades: +5") and panel.summary.text.contains("reward: +3 (chest, revealed on clear)"), "Capacity summary includes chest values and clear-hidden rewards")
@@ -134,6 +139,7 @@ func _run() -> void:
 	await process_frame
 	_expect(editor.inspector_tabs.get_global_rect().end.x <= 960 and editor.feedback.get_global_rect().end.y <= 640, "Expanded properties fit minimum window")
 	_expect(panel.get_v_scroll_bar().visible, "Long contextual form scrolls instead of displacing canvas")
+	_test_icons()
 	_test_unified_editor()
 	_test_unified_table()
 	editor.queue_free()
@@ -144,6 +150,84 @@ func _run() -> void:
 		for failure in failures:
 			printerr("ASSERTION FAILED: " + failure)
 	_complete(0 if failures.is_empty() else 1)
+
+func _test_icons() -> void:
+	editor.document = editor.store.migrate(editor.store.new_project())
+	editor._reset_history()
+	editor._set_mode("tree")
+	var id: String = editor.document.dungeon.nodes[0].id
+	editor._select_element("node", id)
+	var panel = editor.node_panel
+	var before: Dictionary = editor.document.duplicate(true)
+	panel.configure(editor.document, id)
+	_expect(editor.document == before and editor.history.undo_stack.is_empty(), "Opening icon picker never authors a default")
+	var sword_index := -1
+	for i in range(panel.icon_choice.item_count):
+		if panel.icon_choice.get_item_metadata(i) == "sword":
+			sword_index = i
+	_expect(sword_index >= 0, "Sword is available as an explicit icon choice")
+	if sword_index < 0:
+		return
+	panel.icon_choice.select(sword_index)
+	panel.icon_choice.item_selected.emit(sword_index)
+	_expect(_node(id).get("icon_id") == "sword", "Choosing an icon commits the explicit ID")
+	var typed_before: Dictionary = editor.document.duplicate(true)
+	for invalid in [12, {}, "", "res://icon.svg"]:
+		editor._edit_node_field(id, "icon_id", invalid)
+		_expect(editor.document == typed_before, "Typed icon edits reject malformed new IDs without changing source")
+	editor._undo()
+	_expect(not _node(id).has("icon_id"), "Undo restores absent icon field")
+	editor._redo()
+	_expect(_node(id).get("icon_id") == "sword", "Redo restores explicit icon")
+	var path := "user://node_icon_roundtrip.json"
+	editor._save_to(path)
+	var loaded: Dictionary = editor.store.load_document(path)
+	_expect(loaded.ok and loaded.document.dungeon.nodes[0].get("icon_id") == "sword", "Icon choice survives save and load")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	panel.icon_choice.select(0)
+	panel.icon_choice.item_selected.emit(0)
+	_expect(not _node(id).has("icon_id"), "Clear removes the field rather than inventing a value")
+	editor._undo()
+	_expect(_node(id).get("icon_id") == "sword", "Undo restores an explicitly cleared icon")
+	_node(id).icon_id = "future_icon"
+	editor._refresh()
+	_expect(panel.icon_choice.get_item_text(panel.icon_choice.selected).contains("future_icon") and _node(id).icon_id == "future_icon", "Unknown icon remains visible and unchanged")
+	editor._save_to(path)
+	loaded = editor.store.load_document(path)
+	_expect(loaded.ok and loaded.document.dungeon.nodes[0].icon_id == "future_icon", "Unknown well-formed ID survives save and load")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	panel.icon_choice.select(sword_index)
+	panel.icon_choice.item_selected.emit(sword_index)
+	_expect(_node(id).icon_id == "sword", "Unknown icon can be deliberately replaced with a known choice")
+	editor._undo()
+	_expect(_node(id).icon_id == "future_icon", "Undo restores a replaced unknown ID")
+	before = editor.document.duplicate(true)
+	editor.inspector.text = "{invalid"
+	panel.icon_choice.select(sword_index)
+	panel.icon_choice.item_selected.emit(sword_index)
+	_expect(editor.document == before and editor.inspector.text == "{invalid" and panel.icon_choice.get_item_text(panel.icon_choice.selected).contains("future_icon"), "Invalid pending JSON blocks icon edit, restores picker and preserves draft")
+	editor.inspector.text = editor.inspector_original
+	panel.icon_choice.select(0)
+	panel.icon_choice.item_selected.emit(0)
+	_expect(not _node(id).has("icon_id"), "Unknown icon can be deliberately cleared")
+	editor._undo()
+	_expect(_node(id).get("icon_id") == "future_icon", "Undo restores an unknown icon unchanged")
+	for value in [null, 5, {}, ["sword"], ""]:
+		_node(id).icon_id = value
+		editor._refresh()
+		before = editor.document.duplicate(true)
+		panel.configure(editor.document, id)
+		_expect(editor.document == before and panel.icon_choice.get_item_text(panel.icon_choice.selected).contains("preserved"), "Malformed icon is safely shown and never overwritten by opening")
+		panel.icon_choice.select(0)
+		panel.icon_choice.item_selected.emit(0)
+		_expect(not _node(id).has("icon_id"), "Explicit clear removes a malformed legacy icon")
+		editor._undo()
+		_expect(_node(id).has("icon_id") and _node(id).icon_id == value, "Undo preserves the original malformed legacy value")
+		panel.icon_choice.select(sword_index)
+		panel.icon_choice.item_selected.emit(sword_index)
+		_expect(_node(id).get("icon_id") == "sword", "A known choice can replace a malformed legacy icon")
+		editor._undo()
+		_expect(_node(id).has("icon_id") and _node(id).icon_id == value, "Undo restores a replaced malformed icon")
 
 func _test_unified_editor() -> void:
 	# EDITOR-UNIFIED: model switches and ID-addressed contribution edits are
@@ -164,6 +248,15 @@ func _test_unified_editor() -> void:
 	editor._redo()
 	var panel = editor.node_panel
 	_expect(panel.unified_box.visible and not panel.abilities.visible and not panel.modifier_toggle.visible, "Unified model shows contributions instead of legacy controls")
+	_expect(not panel.individual_contents.visible and panel.individual_toggle.focus_mode == Control.FOCUS_ALL, "Individual editor starts collapsed and has a keyboard-focusable control")
+	var before_view: Dictionary = editor.document.duplicate(true)
+	var history_view: int = editor.history.undo_stack.size()
+	panel.individual_toggle.button_pressed = true
+	panel.contribution_value.text = "draft"
+	panel.individual_toggle.button_pressed = false
+	panel.individual_toggle.button_pressed = true
+	_expect(panel.individual_contents.visible and panel.contribution_value.text == "draft", "Individual editor collapse preserves its draft")
+	_expect(editor.document == before_view and editor.history.undo_stack.size() == history_view, "Individual editor visibility does not edit source or history")
 	var stat_index := -1
 	for i in range(panel.contribution_type.item_count):
 		var item: Dictionary = panel.contribution_type.get_item_metadata(i)

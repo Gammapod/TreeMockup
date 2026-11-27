@@ -56,6 +56,36 @@ Prerequisite arrays test allocation, not whether referenced rooms have been
 cleared. A cleared-room prerequisite is not currently supported; choosing its
 nodes and defining its semantics remain future work.
 
+### Optional node icon identifier
+
+A node in either bundle version may include `"icon_id": "sword_mark"`. A
+usable icon identifier is a nonempty string of ASCII letters, digits,
+underscores or hyphens (`[A-Za-z0-9_-]+`), the same grammar as stable IDs.
+It is opaque and case-sensitive: never an asset path, scene path, executable
+reference, or gameplay ability. Unknown well-formed identifiers are accepted
+and copied unchanged into `data.nodes[node_id]`; omission remains omission.
+
+Before this field was introduced it could contain arbitrary unknown JSON
+values. Whole-document validation and the structural schema therefore accept
+and preserve **any** value, including malformed strings, null, arrays, and
+objects. Loading, saving and explicit V1-to-V2 door migration retain those
+values and unrelated unknown fields without silent source migration. For
+runtime safety only, compilation omits an invalid `icon_id` from its detached
+node definition without modifying the source; it never stringifies or executes
+the value. Thus runtime consumers see either a valid string or no `icon_id`.
+No icon is inferred from abilities, contributions, labels or other content.
+
+`content_store.is_valid_node_icon_id(value)` tests the strict grammar. A typed
+Studio control must use this predicate for newly submitted IDs, or explicitly
+remove the field, then commit through the usual validated whole-document
+transaction; merely displaying an old opaque value must not rewrite it.
+Whole-document validation intentionally does not enforce the typed-input
+predicate, because that would reject existing documents. Frontend owns
+identifier-to-art resolution and must use a neutral fallback for missing and
+unknown IDs; any source-facing preview must also type-check and apply the
+predicate before consuming raw values. This contract does not implement the
+picker or renderer.
+
 # Validation and lifecycle
 
 The store rejects malformed JSON, unsupported versions, duplicate IDs/ports,
@@ -216,6 +246,75 @@ the selected node's previews. It has the same shape as the current progression
 capability snapshot (legacy for legacy runs, unified for unified definitions).
 The normal Playtest path compiles unified source through the same validation.
 
+### Action presentation boundary
+
+The coordinator exposes `strike_emitted(strike)`, `action_room_changed(generation)` and
+`action_presentation_state()`. Player also exposes the state method; Room
+forwards the strike signal. A strike is `{origin, facing, reach, arc}`: origin
+is the Player's room-local position at the actual emitted strike, facing is the
+captured direction, reach is in room units and arc is in radians. It is the
+sector **candidate**, not confirmation of damage or an occlusion-clipped
+footprint. Room's existing target-overlap and wall-ray checks remain decisive.
+Each legacy multi-strike emission is separate; a unified hit suppressed during
+Phase absence emits nothing. The coordinator drops events from stale room
+generations and during pending transitions.
+
+The state method returns a fresh `{sword, dash}` dictionary; each entry is
+`{available: bool, ready: bool, remaining: float, total: float}`. Times are
+seconds on the action's actual simulation clock, not movement-restriction
+durations. `available` reflects current ability/quality (legacy sprint replaces
+dash); `ready` additionally means its action clock permits a start. A unified
+dash still needs a nonzero direction to start. Remaining is the longer relevant
+legacy action/cooldown timer or the unified ready deadline; total is captured
+on the most recent accepted action and is zero before one. Legacy totals start
+with the action; unified totals include the fixed action plus post-action
+cooldown/recharge. Build changes do not retime captured actions. An unavailable
+action can still have a running clock, and a completed action retains its last
+total; consumers should guard division by zero. Sword readiness follows the
+legacy start check's small epsilon. Movement locks are independent and remain
+available through the existing restriction signal.
+
+Clocks advance only when the Player simulation advances, so pausing freezes
+them. Room replacement creates a new Player and resets clocks; a canceled
+pending Phase keeps the outgoing Player's captured recharge until replacement.
+The coordinator returns unavailable zero records when no Player exists.
+The room-change signal is emitted after each replacement is configured,
+including fresh runs and defeats; listeners should reset transient strike
+visuals there. A listener attached after initialization can query the current
+state immediately rather than waiting for this signal.
+
+The coordinator mounts `res://presentation/action_feedback.gd` as a sibling of
+the room under the fixed 800×600 room viewport. Its identity transform and
+absolute z-index 100 align its coordinates with the room and draw above it; it
+survives room replacement. `mount_action_presentation(view: Node2D) -> bool`
+also accepts an unparented view after shell initialization, applies the same
+transform and layer, and transfers its lifetime to the viewport. It does not
+replace or free other mounts; callers must manage any additional views.
+
+`action_presentation_frame()` returns a fresh dictionary `{position, present,
+phase_absent, paused, actions}`. Position is a room-local Vector2, or null if
+there is no Player. `present` is false without a Player or during unified Phase;
+`phase_absent` distinguishes Phase from a missing Player. `paused` means the
+room cannot process (including editor pause), or no room exists. `actions` is
+the detached `action_presentation_state()` above, not telegraph geometry.
+Consumers must not infer Phase from clocks. Positions and strike sectors use
+the same room-local 800×600 coordinates.
+
+For the shipped presenter the coordinator calls `present_frame(position or
+Vector2.ZERO, present, actions)` each process frame, forwards guarded
+`strike_emitted` to `present_strike`, and calls `reset_room` on
+`action_room_changed` after replacement. It calls `advance(delta)` only on
+physics ticks while the room can process, so transient strike lifetime freezes
+with room simulation. `advance` is visual time, never an action clock. The
+presenter is independent of room and Player internals. Strike geometry remains
+the emitted sector described above; this API does not provide pre-strike
+telegraph geometry.
+
+Player still draws its avatar but does not draw a legacy avatar-relative
+sword sector. The room-aligned presenter owns the emitted-sector cue for both
+capability models; removing the old drawing does not change attack scheduling,
+combat geometry or damage.
+
 `player.gd` is configured with the current unified build in unified runs. It
 captures action values through the unified action clock, executes an ordinary
 dash at captured distance over the fixed duration, and forwards copied
@@ -252,6 +351,56 @@ retains a blocked-return defeat explanation in the post-transition status.
 | Clear conditions | All enemies defeated, named switch hit, all tokens collected |
 | Clear effects | Reveal pickup, prevent enemy respawn, become root |
 | Interaction | Switch `toggled` → wall `set_open` |
+
+### Room presentation boundary
+
+`main.room_presentation_state()` returns a fresh, detached snapshot for the
+currently occupied room, or `{}` if there is no room. It adds `node_id` and
+`generation` to `room.presentation_state()`. All positions and rectangles are
+room-local Godot `Vector2` and `Rect2` values, not viewport coordinates.
+Frontend owns rendering and coordinate transforms; the existing room and
+Guardian drawing remains in place.
+
+The coordinator mounts one `presentation/room_feedback.gd` Node2D as an
+identity-transform sibling of the room in the fixed room viewport and calls
+`bind_coordinator(self)` after mounting. The view polls this snapshot and
+survives room replacement; it does not own the room or simulation.
+
+Each call samples current in-memory facts synchronously; poll when a view needs
+an update. No change signal is implied. `action_room_changed(generation)` marks
+room replacement; discard cached snapshots from older generations. During a
+pending transition the snapshot still describes the outgoing room until
+replacement. Paused rooms retain their last simulation state.
+
+* `room_bounds` is the room rectangle. `boundary_walls` contains the current
+  physical wall rectangles; `obstacles` contains obstacle rectangles. Obstacle
+  authored IDs do not survive current compilation and are not invented here.
+* `objects` contains switches `{id, kind:"switch", position, on}` and barriers
+  `{id, kind:"wall"|"water", bounds, passable}`. Passability reflects the
+  actual barrier collision layer, including water traversal capability.
+* `doors` contains `{destination, port, entry, side, bounds, passable, armed}`.
+  Bounds are the resolved room-edge door rectangle. `passable` says the link
+  opening is enabled, not that the player can immediately trigger travel:
+  `armed` is the separate anti-retrigger state. Other geometry and player size
+  may still obstruct movement.
+* `pickups` contains only currently visible, uncollected rewards:
+  `{id, position, kind, value, chest}`. `kind` is the actual reward kind
+  (`gold`, `capacity`, or `health`), `value` defaults to 1 for old runtime
+  fixtures, and `chest` distinguishes interaction from loose pickup. Hidden
+  reveal-gated or collected rewards are absent. `tokens` is a separate array of
+  `{id, position}` for currently present visit-local objective tokens.
+* `enemies` contains living records `{id, position, radius, behavior, hp,
+  contact_dangerous, summoner}`. `summoner` is null for authored enemies and
+  the owning Guardian's ID for transient summons. Behavior is actual runtime
+  behavior, not an inferred visual species. Contact danger is independent of
+  player invulnerability and Guardian wave damage; Guardian recovery is
+  contact-safe. Wave/telegraph geometry is not part of this contract.
+
+Snapshots contain no scene-node references or mutable room arrays. Enemy
+positions, health, doors, switches and visibility may change on subsequent
+simulation or coordinator updates. Per-node collection and clear rules,
+encounter departure/reentry, transient-summon teardown and fresh-run reset
+continue to be owned by the existing runtime and progression boundaries.
 
 ### Health pickups
 

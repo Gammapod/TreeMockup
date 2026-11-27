@@ -74,6 +74,19 @@ func _run() -> void:
 	panel.refresh(before)
 	panel.select_node("sword")
 	_expect("Current build (Before)" not in panel.selection.text, "Legacy snapshots retain their existing presentation")
+	# UI-BOUNDARY: occupied-room wording only refines the supplied not_local
+	# rejection; unrelated and future reasons remain authoritative.
+	var occupied: Dictionary = before.duplicate(true)
+	occupied.previews.start.reason = "not_local"
+	panel.refresh(occupied)
+	panel.select_node("start")
+	_expect("You cannot deactivate the room you occupy." in panel.selection.text, "Occupied not_local rejection has specific wording")
+	occupied.previews.start.reason = "capacity"
+	panel.refresh(occupied)
+	_expect("Not enough available points." in panel.selection.text and "You cannot deactivate the room you occupy." not in panel.selection.text, "Occupied node retains a distinct supplied rejection")
+	occupied.previews.start.reason = "future_rejection"
+	panel.refresh(occupied)
+	_expect("Future Rejection" in panel.selection.text and "You cannot deactivate the room you occupy." not in panel.selection.text, "Occupied node retains an unknown supplied rejection")
 	var legacy: Dictionary = before.duplicate(true)
 	legacy.current_build = {"sword_damage": 10}
 	panel.refresh(legacy)

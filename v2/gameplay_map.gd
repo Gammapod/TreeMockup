@@ -1,5 +1,7 @@
 extends Control
 
+const Icons = preload("res://presentation/icons.gd")
+
 signal node_selected(id: String)
 
 var definition: Dictionary = {}
@@ -17,8 +19,12 @@ var roots: Dictionary = {}
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	focus_mode = Control.FOCUS_ALL
+	tooltip_text = "Map: use arrow keys to inspect nodes. Selection does not activate or travel."
 	clip_contents = true
 	resized.connect(_on_resized)
+	focus_entered.connect(queue_redraw)
+	focus_exited.connect(queue_redraw)
 
 func set_definition(data: Dictionary) -> void:
 	definition = data
@@ -102,7 +108,26 @@ func _position(id: String) -> Vector2:
 func _screen(id: String) -> Vector2:
 	return _position(id) * zoom + offset
 
+func _icon_for_node(node: Dictionary) -> String:
+	return Icons.resolve_id(node.get("icon_id"))
+
+func _shows_label(id: String) -> bool:
+	if occupied.is_empty() or id == occupied or id == selected:
+		return true
+	for link in definition.get("links", []):
+		if (link.a == occupied and link.b == id) or (link.b == occupied and link.a == id):
+			return true
+	return false
+
 func _gui_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_up"):
+		_cycle_selection(-1)
+		accept_event()
+		return
+	if event.is_action_pressed("ui_right") or event.is_action_pressed("ui_down"):
+		_cycle_selection(1)
+		accept_event()
+		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 			framing_node = ""
@@ -115,6 +140,7 @@ func _gui_input(event: InputEvent) -> void:
 			accept_event()
 			queue_redraw()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
+			grab_focus()
 			var closest := ""
 			var distance := 24.0
 			for id in definition.get("nodes", {}):
@@ -132,8 +158,23 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 		queue_redraw()
 
+func _cycle_selection(direction: int) -> void:
+	var ids: Array = definition.get("nodes", {}).keys()
+	if ids.is_empty():
+		return
+	var index := ids.find(selected)
+	if index < 0:
+		index = 0 if direction > 0 else ids.size() - 1
+	else:
+		index = posmod(index + direction, ids.size())
+	selected = str(ids[index])
+	node_selected.emit(selected)
+	queue_redraw()
+
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color("192638"))
+	if has_focus():
+		draw_rect(Rect2(Vector2(2, 2), (size - Vector2(4, 4)).max(Vector2.ZERO)), Color.WHITE, false, 2)
 	if definition.is_empty():
 		return
 	if needs_fit:
@@ -158,19 +199,24 @@ func _draw() -> void:
 		if id in removal_preview:
 			var warning := Color("f18181") if removal_blocked else Color("ffb45c")
 			draw_rect(Rect2(point - Vector2(29, 29), Vector2(58, 58)), warning, false, 2)
-			_text(point + Vector2(-27, 7), "−", warning)
+			_text(point + Vector2(27, 31), "−", warning)
 		if id == selected:
 			draw_arc(point, 25, 0, TAU, 40, Color.WHITE, 2, true)
 		var state: String = node_states.get(id, "blocked")
 		var color: Color = {"active": Color("287d75"), "available": Color("477d39"), "blocked": Color("465366")}[state]
 		draw_circle(point, 18, color)
-		_text(point + Vector2(0, 5), "0" if roots.has(id) else str(definition.nodes[id].cost), Color.WHITE)
+		# Icon IDs are explicit presentation data, never derived from benefits.
+		Icons.draw_icon(self, _icon_for_node(definition.nodes[id]), Rect2(point - Vector2(9, 10), Vector2(18, 18)), Color.WHITE)
+		var cost_badge := point + Vector2(-17, 15)
+		draw_circle(cost_badge, 9, Color("121b28"))
+		_text(cost_badge + Vector2(0, 5), "0" if roots.has(id) else str(definition.nodes[id].cost), Color.WHITE)
 		if cleared.has(id):
 			_text(point + Vector2(-18, -15), "R" if roots.has(id) else "C", Color("a7f0cd"))
 		var badge := point + Vector2(17, -15)
 		draw_circle(badge, 9, Color("121b28"))
 		_text(badge + Vector2(0, 5), {"active": "✓", "available": "+", "blocked": "×"}[state], Color.WHITE)
-		_text(point + Vector2(0, -30), definition.nodes[id].name, Color("edf2fa"))
+		if _shows_label(id):
+			_text(point + Vector2(0, -30), definition.nodes[id].name, Color("edf2fa"))
 		if id == occupied:
 			draw_colored_polygon(PackedVector2Array([point + Vector2(-6, 23), point + Vector2(6, 23), point + Vector2(0, 16)]), Color("ffd569"))
 			_text(point + Vector2(0, 40), "YOU", Color("ffd569"))

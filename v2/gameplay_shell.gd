@@ -78,6 +78,16 @@ func toggle_fullscreen() -> void:
 	var window := get_window()
 	window.mode = Window.MODE_WINDOWED if window.mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN] else Window.MODE_FULLSCREEN
 
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not event is InputEventKey:
+		return
+	if event.keycode != KEY_SPACE and event.physical_keycode != KEY_SPACE:
+		return
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused is Button and map_region.is_ancestor_of(focused):
+		forward_gameplay_key(event)
+		get_viewport().set_input_as_handled()
+
 func forward_gameplay_key(event: InputEvent) -> void:
 	# TextureRect deliberately handles presentation only. Forward unhandled keys,
 	# including when the pointer is over the map; GUI/editor input stays upstream.

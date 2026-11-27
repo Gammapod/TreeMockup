@@ -53,6 +53,12 @@ var return_button: Button
 var inline_door_before: Dictionary = {}
 var room_panel
 var binding_button: Button
+var mode_buttons: Dictionary = {}
+var room_tools: HFlowContainer
+var tree_tools: HFlowContainer
+var shared_tools: HFlowContainer
+var viewport_tools: HFlowContainer
+var selection_tools: HFlowContainer
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -78,64 +84,87 @@ func _ready() -> void:
 	_button(toolbar, "Validate", _validate)
 	_button(toolbar, "Playtest", _play)
 	_button(toolbar, "Resume run", func(): close_requested.emit())
+	undo_button = _button(toolbar, "Undo", _undo)
+	redo_button = _button(toolbar, "Redo", _redo)
 	var tools := HFlowContainer.new()
 	layout.add_child(tools)
-	_button(tools, "Room editor", func(): _set_mode("room"))
-	_button(tools, "Tree editor", func(): _set_mode("tree"))
-	_button(tools, "Bundle JSON", func(): _set_mode("bundle"))
+	for entry in [["room", "Room editor"], ["tree", "Tree editor"], ["bundle", "Bundle JSON"]]:
+		var target: String = entry[0]
+		var mode_button := _button(tools, entry[1], func():
+			_set_mode(target)
+			_sync_mode_buttons())
+		mode_button.toggle_mode = true
+		mode_buttons[target] = mode_button
+	room_tools = HFlowContainer.new()
+	layout.add_child(room_tools)
 	picker = OptionButton.new()
 	picker.custom_minimum_size.x = 160
 	picker.item_selected.connect(_select_room)
-	tools.add_child(picker)
-	_button(tools, "+ Room", _add_room)
-	_button(tools, "+ Node", _add_node)
-	_button(tools, "+ Link", _add_link)
-	door_button = _button(tools, "Instance doors…", _edit_doors)
+	room_tools.add_child(picker)
+	_button(room_tools, "+ Room", _add_room)
 	brush = OptionButton.new()
 	for kind in ["select", "enemy", "pickup", "chest", "token", "obstacle", "water", "switch", "wall"]:
 		brush.add_item(kind)
 	brush.item_selected.connect(func(index): preview.brush = brush.get_item_text(index))
-	tools.add_child(brush)
-	_button(tools, "Clear rules…", _edit_clear)
-	binding_button = _button(tools, "Bindings…", _edit_bindings)
-	return_button = _button(tools, "Back to node", _return_to_node)
+	brush.tooltip_text = "Room placement brush"
+	room_tools.add_child(brush)
+	_button(room_tools, "Clear rules…", _edit_clear)
+	return_button = _button(room_tools, "Back to node", _return_to_node)
 	return_button.hide()
-	var actions := HFlowContainer.new()
-	layout.add_child(actions)
-	undo_button = _button(actions, "Undo", _undo)
-	redo_button = _button(actions, "Redo", _redo)
-	duplicate_button = _button(actions, "Duplicate", _duplicate_selection)
-	delete_button = _button(actions, "Delete", _delete_selection)
-	_button(actions, "Deselect", _deselect)
-	_button(actions, "Fit view", func(): preview.fit_content())
-	var snap := CheckBox.new()
-	snap.text = "Snap 10"
-	snap.button_pressed = true
-	snap.toggled.connect(func(enabled): preview.snap_enabled = enabled)
-	actions.add_child(snap)
+	tree_tools = HFlowContainer.new()
+	layout.add_child(tree_tools)
+	_button(tree_tools, "+ Node", _add_node)
+	_button(tree_tools, "+ Link", _add_link)
+	door_button = _button(tree_tools, "Instance doors…", _edit_doors)
+	shared_tools = HFlowContainer.new()
+	layout.add_child(shared_tools)
+	binding_button = _button(shared_tools, "Bindings…", _edit_bindings)
 	title = Label.new()
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	layout.add_child(title)
 	selection_label = Label.new()
 	selection_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	layout.add_child(selection_label)
 	split = HSplitContainer.new()
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(split)
+	var viewport_column := VBoxContainer.new()
+	viewport_column.custom_minimum_size = Vector2(300, 200)
+	viewport_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	split.add_child(viewport_column)
+	viewport_tools = HFlowContainer.new()
+	viewport_column.add_child(viewport_tools)
+	_button(viewport_tools, "Fit view", func(): preview.fit_content())
+	var snap := CheckBox.new()
+	snap.text = "Snap 10"
+	snap.button_pressed = true
+	snap.toggled.connect(func(enabled): preview.snap_enabled = enabled)
+	viewport_tools.add_child(snap)
 	preview = PREVIEW.new()
 	preview.custom_minimum_size = Vector2(300, 200)
 	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	preview.placed.connect(_place)
 	preview.moved.connect(_move)
 	preview.selected.connect(_select_element)
 	preview.gesture_started.connect(_begin_gesture)
 	preview.gesture_finished.connect(_end_gesture)
 	preview.object_resized.connect(_resize_object)
-	split.add_child(preview)
+	viewport_column.add_child(preview)
+	var inspector_column := VBoxContainer.new()
+	inspector_column.custom_minimum_size.x = 320
+	inspector_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	split.add_child(inspector_column)
+	inspector_column.add_child(selection_label)
+	selection_tools = HFlowContainer.new()
+	inspector_column.add_child(selection_tools)
+	duplicate_button = _button(selection_tools, "Duplicate", _duplicate_selection)
+	delete_button = _button(selection_tools, "Delete", _delete_selection)
+	_button(selection_tools, "Deselect", _deselect)
 	inspector_tabs = TabContainer.new()
 	inspector_tabs.custom_minimum_size.x = 320
 	inspector_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	split.add_child(inspector_tabs)
+	inspector_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inspector_column.add_child(inspector_tabs)
 	node_panel = NODE_PANEL.new()
 	node_panel.name = "NodeProperties"
 	inspector_tabs.add_child(node_panel)
@@ -264,6 +293,13 @@ func _refresh() -> void:
 	_update_context()
 
 func _update_context() -> void:
+	_sync_mode_buttons()
+	room_tools.visible = mode == "room"
+	tree_tools.visible = mode == "tree"
+	shared_tools.visible = mode != "bundle"
+	viewport_tools.visible = mode != "bundle"
+	selection_tools.visible = mode != "bundle"
+	selection_label.visible = mode != "bundle"
 	changing_tabs = true
 	inspector_tabs.set_tab_hidden(0, mode != "tree")
 	inspector_tabs.set_tab_hidden(1, mode != "room")
@@ -277,6 +313,10 @@ func _update_context() -> void:
 	room_panel.configure(document, room_id, room_selections.get(room_id, ""))
 	return_button.visible = mode == "room" and not return_node.is_empty()
 	binding_button.disabled = not _has_binding_endpoints()
+
+func _sync_mode_buttons() -> void:
+	for id in mode_buttons:
+		mode_buttons[id].set_pressed_no_signal(id == mode)
 
 func _has_binding_endpoints() -> bool:
 	var switches := false
@@ -384,15 +424,26 @@ func _edit_node_field(id: String, field: String, value: Variant) -> void:
 	if not _apply():
 		_update_context()
 		return
-	if mode != "tree" or selected_node != id or field not in ["name", "cost", "abilities", "modifiers", "template"]:
+	if mode != "tree" or selected_node != id or field not in ["name", "cost", "abilities", "modifiers", "template", "icon_id"]:
+		return
+	if field == "icon_id" and value != null and not store.is_valid_node_icon_id(value):
+		_message("Icon edit rejected: choose a valid icon identifier or clear the field.")
+		_update_context()
 		return
 	var candidate := document.duplicate(true)
 	for node in candidate.dungeon.nodes:
 		if node.id != id:
 			continue
-		if node.get(field) == value:
-			return
-		node[field] = value
+		if field == "icon_id" and value == null:
+			if not node.has(field):
+				return
+			node.erase(field)
+		else:
+			if field == "icon_id" and typeof(node.get(field)) == typeof(value) and node.get(field) == value:
+				return
+			if field != "icon_id" and node.get(field) == value:
+				return
+			node[field] = value
 		var errors: Array[String] = store.validate(candidate)
 		if errors.is_empty() and field == "template":
 			# Reject new runtime conflicts (including wrong-kind binding targets)

@@ -8,6 +8,7 @@ signal objective_event(event: String, object_id: String)
 signal phase_outcome(outcome: Dictionary)
 signal restriction_changed(state: Dictionary)
 signal phase_started(attempt: Dictionary)
+signal strike_emitted(strike: Dictionary)
 
 const PLAYER = preload("res://player.gd")
 const GUARDIAN = preload("res://roost_guardian.gd")
@@ -49,6 +50,8 @@ func configure(data: Dictionary, links: Array, collected: Dictionary, dead: Dict
 	player.set_capabilities(caps)
 	player.hp = mini(hp, player.max_hp)
 	player.attack.connect(_attack)
+	player.attack.connect(func(origin, facing, reach, _damage, arc):
+		strike_emitted.emit({"origin": origin, "facing": facing, "reach": reach, "arc": arc}))
 	player.phase_arrival_requested.connect(_phase_arrival)
 	player.unified_restriction_changed.connect(func(state): restriction_changed.emit(state.duplicate(true)))
 	player.unified_dash_started.connect(func(attempt):
@@ -168,6 +171,51 @@ func _portal_axis(point: Vector2, side: String) -> float:
 
 func _portal_key(portal: Dictionary) -> String:
 	return portal.destination + "/" + portal.port + "/" + portal.entry
+
+func _portal_bounds(portal: Dictionary) -> Rect2:
+	var point: Vector2 = ports[portal.port]
+	var side := _portal_side(point)
+	var boundary := point
+	match side:
+		"north": boundary.y = ROOM_BOUNDS.position.y + WALL_THICKNESS * 0.5
+		"south": boundary.y = ROOM_BOUNDS.end.y - WALL_THICKNESS * 0.5
+		"west": boundary.x = ROOM_BOUNDS.position.x + WALL_THICKNESS * 0.5
+		"east": boundary.x = ROOM_BOUNDS.end.x - WALL_THICKNESS * 0.5
+	var size := Vector2(DOOR_HALF_WIDTH * 2, WALL_THICKNESS) if side in ["north", "south"] else Vector2(WALL_THICKNESS, DOOR_HALF_WIDTH * 2)
+	return Rect2(boundary - size * 0.5, size)
+
+# Detached facts for room-local drawing; never expose mutable scene objects.
+func presentation_state() -> Dictionary:
+	var result := {
+		"room_bounds": ROOM_BOUNDS, "boundary_walls": [], "obstacles": obstacles.duplicate(),
+		"objects": [], "doors": [], "pickups": [], "tokens": [], "enemies": []
+	}
+	for wall in boundary_walls:
+		var shape: CollisionShape2D = wall.get_child(0)
+		var size: Vector2 = shape.shape.size
+		result.boundary_walls.append(Rect2(wall.position - size * 0.5, size))
+	for object in objects:
+		match object.kind:
+			"wall", "water":
+				result.objects.append({"id": object.id, "kind": object.kind, "bounds": object.bounds, "passable": barriers[object.id].collision_layer == 0})
+			"switch":
+				result.objects.append({"id": object.id, "kind": "switch", "position": object.position, "on": bool(object_states.get(object.id, false))})
+	for portal in portals:
+		var point: Vector2 = ports[portal.port]
+		var side := _portal_side(point)
+		result.doors.append({"destination": portal.destination, "port": portal.port, "entry": portal.entry, "side": side, "bounds": _portal_bounds(portal), "passable": bool(portal.enabled), "armed": bool(portal_armed.get(_portal_key(portal), false))})
+	for pickup in pickups:
+		result.pickups.append({"id": pickup.id, "position": pickup.position, "kind": pickup.kind, "value": pickup.get("value", 1), "chest": bool(pickup.get("chest", false))})
+	for token in tokens:
+		result.tokens.append({"id": token.id, "position": token.position})
+	for enemy in enemies:
+		result.enemies.append({
+			"id": enemy.id, "position": enemy.body.position, "radius": enemy.radius,
+			"behavior": enemy.behavior, "hp": enemy.hp,
+			"contact_dangerous": bosses[enemy.id].contact_dangerous() if bosses.has(enemy.id) else true,
+			"summoner": null if enemy.summoner.is_empty() else enemy.summoner
+		})
+	return result
 
 func _crossed_portal(portal: Dictionary) -> bool:
 	var point: Vector2 = ports[portal.port]
@@ -394,6 +442,11 @@ func _in_attack(origin: Vector2, facing: Vector2, target: Vector2, reach: float,
 static func pickup_visual_style(pickup: Dictionary) -> Dictionary:
 	return {"symbol": "cross" if pickup.kind == "health" else "", "value": pickup.get("value", 1)}
 
+# The room-aligned presenter owns only loose gold and capacity. Chests retain
+# their interaction-identifying body here, as do health pickups and chests.
+static func pickup_drawn_by_room(pickup: Dictionary) -> bool:
+	return bool(pickup.get("chest", false)) or pickup.kind not in ["gold", "capacity"]
+
 func _draw() -> void:
 	draw_rect(Rect2(35, 55, 730, 530), Color("283646"))
 	for rect in obstacles:
@@ -406,18 +459,13 @@ func _draw() -> void:
 					draw_rect(object.bounds, Color("ae9b7e"))
 			"switch": draw_circle(object.position, 16, Color("7ef1a6") if object_states.get(object.id, false) else Color("e5935d"))
 	for portal in portals:
-		var point: Vector2 = ports[portal.port]
-		var side := _portal_side(point)
-		var boundary := point
-		match side:
-			"north": boundary.y = ROOM_BOUNDS.position.y + WALL_THICKNESS * 0.5
-			"south": boundary.y = ROOM_BOUNDS.end.y - WALL_THICKNESS * 0.5
-			"west": boundary.x = ROOM_BOUNDS.position.x + WALL_THICKNESS * 0.5
-			"east": boundary.x = ROOM_BOUNDS.end.x - WALL_THICKNESS * 0.5
-		var size := Vector2(DOOR_HALF_WIDTH * 2, WALL_THICKNESS) if side in ["north", "south"] else Vector2(WALL_THICKNESS, DOOR_HALF_WIDTH * 2)
-		draw_rect(Rect2(boundary - size * 0.5, size), Color("65cbb1") if portal.enabled else Color("77505c"))
+		var bounds := _portal_bounds(portal)
+		var boundary := bounds.get_center()
+		draw_rect(bounds, Color("65cbb1") if portal.enabled else Color("77505c"))
 		draw_string(ThemeDB.fallback_font, boundary + Vector2(-25, -20), portal.destination, HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
 	for pickup in pickups:
+		if not pickup_drawn_by_room(pickup):
+			continue
 		if pickup.get("chest", false):
 			draw_rect(Rect2(pickup.position - Vector2(15, 12), Vector2(30, 24)), Color("ffd569"))
 		else:

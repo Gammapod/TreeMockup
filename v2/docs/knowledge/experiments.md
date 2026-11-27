@@ -51,6 +51,30 @@ in the README, future ideas in the backlog, and review/red-green history in
 archived closeouts. Do not retain implementation diaries or duplicate tuning
 tables here.
 
+## Presentation icon set (2026-11-26)
+* **Status**: evaluated; standalone asset set kept.
+* **Question**: Are simple standard symbols a useful visual vocabulary for future gameplay presentation?
+* **Slice**: Sword, boots, health, gold, capacity, token and neutral icons, reviewed at multiple sizes on light and dark backgrounds.
+* **Observation**: The user reviewed the set and said it was good.
+* **Decision**: keep the standalone set; this does not imply acceptance of any later map or room integration.
+* **Next**: use explicit supported semantics and evaluate each integration separately.
+
+## Gameplay presentation and editor layout (2026-11-26)
+* **Status**: evaluated; revisions in progress.
+* **Question**: Do the new gameplay cues and contextual editor layout communicate clearly without unnecessary text?
+* **Slice**: Avatar cooldowns and sword sector, room labels and collectible cues, icon-led map, and contextual editor.
+* **Observation**: The user liked cooldowns, water/wall labels, the default map icon and the cleaner editor layout. They requested same-radius cooldown hemispheres, no unavailable indicators, graphic enemy danger without behavior labels, no sword-sector text, and collectible icons in place of the old circles. Space after selecting a tree node caused unintended allocation changes. They want a later focused Node Properties pass.
+* **Decision**: keep the successful directions and revise the identified cues and input conflict; visual acceptance of the revisions remains pending.
+* **Next**: verify the revisions and collect user feedback; defer the deeper Node Properties exploration.
+
+## Movement restriction anchor (2026-11-26)
+* **Status**: evaluated; kept.
+* **Question**: Can an avatar-local cue communicate an ordinary movement restriction without a text countdown?
+* **Slice**: A shared tether appears during supplied sword or dash movement restrictions; routine Phase text is removed while blocked-destination feedback remains.
+* **Observation**: The user playtested the result and said they were happy with it.
+* **Decision**: keep the anchor direction. It indicates ordinary movement restriction, not a general action lock.
+* **Next**: architectural review and checkpoint.
+
 ## Unified abilities — Phase Dash lab (2026-11-23)
 * **Status**: evaluated; further dungeon testing remains open.
 * **Question**: Does a teleport-like dash, with optional rooted recharge, match the intended movement tradeoff?

@@ -33,8 +33,9 @@ func _run() -> void:
 	else:
 		var feedback = game.phase_feedback
 		_expect(feedback.get_parent() == game.shell.room_viewport and feedback.position == Vector2.ZERO, "feedback shares room world coordinates")
+		feedback.attempted = Vector2(10, 20)
 		game.phase_started.emit({"phase":true})
-		_expect("Phase transit" in feedback.message.text, "feedback listens after attachment")
+		_expect(feedback.attempted == null, "feedback listens after attachment and clears the previous marker")
 		game._enter_room(game.current, "", game.room.player.hp)
 		_expect(feedback.message.text.is_empty(), "ordinary room replacement resets feedback")
 		if compiled.ok:
@@ -45,8 +46,9 @@ func _run() -> void:
 			game.studio._play()
 			_expect(not game.studio.visible and game.data.get("capability_model") == "unified_1", "normal editor Playtest launches compiled unified source")
 			game.room.player.set_physics_process(false)
+			feedback.attempted = Vector2(10, 20)
 			game.room.player.start_dash()
-			_expect("Phase transit" in feedback.message.text, "actual Phase start reaches feedback")
+			_expect(feedback.attempted == null, "actual Phase start reaches feedback")
 			game.room.obstacles.append(Rect2(390,290,20,20))
 			game.room.obstacles.append(Rect2(490,290,28,20))
 			var old_room = game.room

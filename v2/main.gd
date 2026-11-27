@@ -3,6 +3,8 @@ extends Control
 signal phase_outcome(outcome: Dictionary)
 signal restriction_changed(state: Dictionary)
 signal phase_started(attempt: Dictionary)
+signal strike_emitted(strike: Dictionary)
+signal action_room_changed(generation: int)
 
 const CONTENT = preload("res://content.gd")
 const PROGRESSION = preload("res://progression.gd")
@@ -23,6 +25,8 @@ var studio
 var shell
 var tree_ui
 var phase_feedback
+var action_feedback
+var room_feedback
 var _blocked_return_defeat := false
 
 func _ready() -> void:
@@ -45,11 +49,24 @@ func _ready() -> void:
 	phase_feedback = preload("res://presentation/phase_feedback.gd").new()
 	shell.room_viewport.add_child(phase_feedback)
 	phase_feedback.bind_coordinator(self)
+	action_feedback = preload("res://presentation/action_feedback.gd").new()
+	mount_action_presentation(action_feedback)
+	strike_emitted.connect(action_feedback.present_strike)
+	action_room_changed.connect(func(_generation): action_feedback.reset_room())
+	room_feedback = preload("res://presentation/room_feedback.gd").new()
+	shell.room_viewport.add_child(room_feedback)
+	room_feedback.bind_coordinator(self)
 	_enter_room(data.root, "", _build_max_hp(progression.capabilities()))
 
 func _process(_delta: float) -> void:
 	if room != null:
 		hud.text = "%s   |   HP %d/%d   |   Points %d/%d   |   Gold %d" % [data.nodes[current].name, room.player.hp, room.player.max_hp, progression.available_points(), progression.capacity, progression.gold]
+	var frame := action_presentation_frame()
+	action_feedback.present_frame(frame.position if frame.position != null else Vector2.ZERO, frame.present, frame.actions)
+
+func _physics_process(delta: float) -> void:
+	if room != null and room.can_process():
+		action_feedback.advance(delta)
 
 func _enter_room(destination: String, entry: String, hp: int) -> void:
 	# Every replacement invalidates deferred commands from the previous scene/run.
@@ -85,12 +102,14 @@ func _enter_room(destination: String, entry: String, hp: int) -> void:
 	room.phase_outcome.connect(func(outcome): _forward_phase_outcome(generation, outcome))
 	room.restriction_changed.connect(func(state): _forward_restriction(generation, state))
 	room.phase_started.connect(func(attempt): _forward_phase_started(generation, attempt))
+	room.strike_emitted.connect(func(strike): _forward_strike(generation, strike))
 	transition_pending = false
 	_refresh()
 	tree_ui.frame_current_room()
 	if studio != null and studio.visible:
 		room.process_mode = Node.PROCESS_MODE_DISABLED
 		room.hide()
+	action_room_changed.emit(room_generation)
 
 func _portals() -> Array:
 	var result: Array = []
@@ -123,6 +142,43 @@ func _forward_restriction(generation: int, state: Dictionary) -> void:
 func _forward_phase_started(generation: int, attempt: Dictionary) -> void:
 	if generation == room_generation and not transition_pending:
 		phase_started.emit(attempt.duplicate(true))
+
+func _forward_strike(generation: int, strike: Dictionary) -> void:
+	if generation == room_generation and not transition_pending:
+		strike_emitted.emit(strike.duplicate(true))
+
+func action_presentation_state() -> Dictionary:
+	if room == null or room.player == null:
+		return {"sword": {"available": false, "ready": false, "remaining": 0.0, "total": 0.0}, "dash": {"available": false, "ready": false, "remaining": 0.0, "total": 0.0}}
+	return room.player.action_presentation_state()
+
+func room_presentation_state() -> Dictionary:
+	if room == null:
+		return {}
+	var state: Dictionary = room.presentation_state()
+	state["node_id"] = current
+	state["generation"] = room_generation
+	return state
+
+func mount_action_presentation(view: Node2D) -> bool:
+	if shell == null or view == null or view.get_parent() != null:
+		return false
+	view.transform = Transform2D.IDENTITY
+	view.z_as_relative = false
+	view.z_index = 100
+	shell.room_viewport.add_child(view)
+	return true
+
+func action_presentation_frame() -> Dictionary:
+	var player = room.player if room != null else null
+	var absent: bool = player != null and player.capabilities.get("model") == "unified_1" and player.unified_actions.phase_absent()
+	return {
+		"present": player != null and not absent,
+		"phase_absent": absent,
+		"paused": room == null or not room.can_process(),
+		"position": player.position if player != null else null,
+		"actions": action_presentation_state()
+	}
 
 func _request_root_travel(destination: String) -> void:
 	if transition_pending:

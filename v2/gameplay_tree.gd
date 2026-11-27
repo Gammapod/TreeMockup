@@ -19,10 +19,9 @@ func _ready() -> void:
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var fit_button := Button.new()
 	fit_button.text = "Fit graph"
-	fit_button.focus_mode = Control.FOCUS_NONE
 	add_child(fit_button)
 	var help := Label.new()
-	help.text = "Click: select • Wheel: zoom • Right/middle drag: pan\nSolid: travel • Dashed arrow: prerequisite\n✓ Active • + Available • × Blocked • C Cleared • R Root"
+	help.text = "Click / arrows: inspect • Wheel: zoom • Right/middle drag: pan\nNames: current, neighbors, selection • Solid: travel • Dashed: prerequisite\n✓ Active • + Available • × Blocked • C Cleared • R Root"
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.add_theme_font_size_override("font_size", 13)
 	add_child(help)
@@ -54,7 +53,6 @@ func _ready() -> void:
 	resized.connect(func():
 		selection_scroll.custom_minimum_size.y = 120 if size.y >= 560 else 80)
 	node_action = Button.new()
-	node_action.focus_mode = Control.FOCUS_NONE
 	node_action.pressed.connect(request_selected_action)
 	var actions := HBoxContainer.new()
 	add_child(actions)
@@ -62,13 +60,13 @@ func _ready() -> void:
 	actions.add_child(node_action)
 	root_travel = Button.new()
 	root_travel.text = "Travel to root"
-	root_travel.focus_mode = Control.FOCUS_NONE
 	root_travel.pressed.connect(func():
 		if not gameplay_map.selected.is_empty():
 			root_travel_requested.emit(gameplay_map.selected))
 	actions.add_child(root_travel)
 	var controls := Label.new()
-	controls.text = "WASD: move • E: chest • Space: sword\nShift: dash / run • F2: editors"
+	controls.text = "WASD move • E chest • Space sword • Enter: tree button\nShift dash/run • F2 editors • Arcs: ↑ sword ↓ dash"
+	controls.tooltip_text = "Enter activates a focused tree button. The upper arc is sword readiness; the lower arc is dash readiness. Unavailable abilities have no arc."
 	controls.add_theme_font_size_override("font_size", 13)
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(controls)
@@ -133,7 +131,7 @@ func select_node(id: String) -> void:
 	var preview: Dictionary = snapshot.previews[id]
 	var state_text := "Active" if is_active else ("Available to activate" if preview.ok else "Inactive — blocked")
 	var reason_text := _action_reason(preview.reason)
-	if id == snapshot.current and preview.reason not in ["root", "tree_editing_locked"] and not preview.ok:
+	if id == snapshot.current and preview.reason == "not_local" and not preview.ok:
 		reason_text = "You cannot deactivate the room you occupy."
 	selection.text = "%s • Cost: %d\n%s%s" % [node.name, node.cost, state_text, " • You are here" if id == snapshot.current else ""]
 	for ability in node.get("abilities", []):

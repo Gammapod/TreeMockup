@@ -30,10 +30,32 @@ func _run() -> void:
 	# Real root input must reach the room even with the map tab selected.
 	game._toggle("sword")
 	var key := InputEventKey.new()
+	key.keycode = KEY_SPACE
 	key.physical_keycode = KEY_SPACE
 	key.pressed = true
 	root.push_input(key)
 	_expect(game.room.player.attack_time > 0, "Unhandled attack input reaches room viewport")
+	game.room.player.attack_time = 0
+	game.room.player.attack_cooldown = 0
+	game.tree_ui.select_node("sword")
+	game.tree_ui.node_action.grab_focus()
+	_expect(not game.tree_ui.node_action.disabled and game.tree_ui.node_action.has_focus(), "Enabled tree action has keyboard focus for the Space regression")
+	var was_active: bool = game.tree_ui.snapshot.active.has("sword")
+	root.push_input(key)
+	var key_up := key.duplicate()
+	key_up.pressed = false
+	root.push_input(key_up)
+	_expect(game.tree_ui.snapshot.active.has("sword") == was_active and game.room.player.attack_time > 0, "Space attacks rather than activating a focused tree action")
+	_expect(game.tree_ui.node_action.focus_mode == Control.FOCUS_ALL, "Tree action remains keyboard focusable for deliberate activation")
+	var enter := InputEventKey.new()
+	enter.keycode = KEY_ENTER
+	enter.physical_keycode = KEY_ENTER
+	enter.pressed = true
+	root.push_input(enter)
+	enter.pressed = false
+	root.push_input(enter)
+	_expect(not game.tree_ui.snapshot.active.has("sword"), "Enter deliberately activates the focused tree button")
+	game._toggle("sword")
 	game.room.player.attack_time = 0
 	game.room.player.attack_cooldown = 0
 	game._open_studio()

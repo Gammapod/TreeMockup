@@ -13,6 +13,7 @@ signal door_gesture_finished
 
 const PREVIEW = preload("res://authoring/preview.gd")
 const DOORS = preload("res://authoring/door_layout.gd")
+const ICONS = preload("res://presentation/icons.gd")
 const ABILITIES := ["sword", "dash", "flippers"]
 const NUMERIC := {
 	"max_hp_bonus": "Max HP +", "sword_damage_bonus": "Sword damage +",
@@ -29,6 +30,7 @@ var heading: Label
 var form: VBoxContainer
 var name_input: LineEdit
 var cost: SpinBox
+var icon_choice: OptionButton
 var abilities: MenuButton
 var ability_ids: Array = []
 var templates: OptionButton
@@ -58,6 +60,8 @@ var contribution_remove: Button
 var contribution_save: Button
 var contribution_entries: Array = []
 var contribution_table: VBoxContainer
+var individual_toggle: Button
+var individual_contents: VBoxContainer
 var table_controls: Dictionary = {}
 var table_feedback: Label
 var table_drafts: Dictionary = {}
@@ -80,7 +84,7 @@ func _ready() -> void:
 	model_choice.item_selected.connect(func(index):
 		if not updating: model_requested.emit("legacy" if index == 0 else "unified_1"))
 	column.add_child(model_choice)
-	_label(column, "Changing model validates the whole dungeon; incompatible source is never converted or removed. Legacy cannot contain a contributions field, even if empty (edit in JSON).")
+	_label(column, "Switching validates the dungeon; source is not converted. Legacy requires removing contributions in JSON, even if empty.")
 	form = VBoxContainer.new()
 	column.add_child(form)
 	_label(form, "Name")
@@ -95,6 +99,15 @@ func _ready() -> void:
 	cost.allow_greater = true
 	cost.value_changed.connect(func(value): _field("cost", int(value)))
 	form.add_child(cost)
+	_label(form, "Map icon")
+	icon_choice = OptionButton.new()
+	icon_choice.fit_to_longest_item = false
+	icon_choice.tooltip_text = "Explicit map symbol only; it does not grant an ability. Unknown values are preserved until changed."
+	icon_choice.item_selected.connect(func(index):
+		var value: Variant = icon_choice.get_item_metadata(index)
+		if value == null or value is String:
+			_field("icon_id", value))
+	form.add_child(icon_choice)
 	ability_label = _label(form, "Abilities")
 	abilities = MenuButton.new()
 	abilities.clip_text = true
@@ -170,29 +183,40 @@ func _ready() -> void:
 	form.move_child(unified_box, form.get_children().find(modifiers_box) + 1)
 	contribution_table = VBoxContainer.new()
 	unified_box.add_child(contribution_table)
-	_label(unified_box, "Individual contributions / JSON escape — requirements do not grant the action")
+	individual_toggle = Button.new()
+	individual_toggle.toggle_mode = true
+	individual_toggle.text = "Individual contributions — collapsed"
+	individual_toggle.tooltip_text = "Open the individual editor for repeated or unsupported table entries. Requirements do not grant the action."
+	unified_box.add_child(individual_toggle)
+	individual_contents = VBoxContainer.new()
+	unified_box.add_child(individual_contents)
+	individual_contents.hide()
+	individual_toggle.toggled.connect(func(expanded):
+		individual_contents.visible = expanded
+		individual_toggle.text = "Individual contributions — expanded" if expanded else "Individual contributions — collapsed")
+	_label(individual_contents, "Individual contributions / JSON escape — requirements do not grant the action")
 	contribution_choice = OptionButton.new()
 	contribution_choice.item_selected.connect(_select_contribution)
-	unified_box.add_child(contribution_choice)
-	_label(unified_box, "Stable ID (node-local)")
+	individual_contents.add_child(contribution_choice)
+	_label(individual_contents, "Stable ID (node-local)")
 	contribution_id = LineEdit.new()
-	unified_box.add_child(contribution_id)
-	_label(unified_box, "Contribution")
+	individual_contents.add_child(contribution_id)
+	_label(individual_contents, "Contribution")
 	contribution_type = OptionButton.new()
 	contribution_type.item_selected.connect(func(_index): _update_contribution_help())
-	unified_box.add_child(contribution_type)
+	individual_contents.add_child(contribution_type)
 	contribution_operation = OptionButton.new()
 	contribution_operation.add_item("Add")
 	contribution_operation.set_item_metadata(0, "add")
 	contribution_operation.add_item("Multiply")
 	contribution_operation.set_item_metadata(1, "multiply")
-	unified_box.add_child(contribution_operation)
+	individual_contents.add_child(contribution_operation)
 	contribution_value = LineEdit.new()
 	contribution_value.placeholder_text = "Operand (not a final stat)"
-	unified_box.add_child(contribution_value)
-	contribution_help = _label(unified_box, "")
-	contribution_save = _button(unified_box, "Save contribution", _save_contribution)
-	contribution_remove = _button(unified_box, "Remove contribution", _remove_contribution)
+	individual_contents.add_child(contribution_value)
+	contribution_help = _label(individual_contents, "")
+	contribution_save = _button(individual_contents, "Save contribution", _save_contribution)
+	contribution_remove = _button(individual_contents, "Remove contribution", _remove_contribution)
 	_label(form, "Template information (read-only)")
 	summary = _label(form, "")
 	bindings = _label(form, "")
@@ -488,6 +512,31 @@ func _remove_contribution() -> void:
 	if contribution_choice.selected > 0:
 		contribution_requested.emit(node_id, str(contribution_choice.get_item_metadata(contribution_choice.selected)), null, true, contribution_entries[contribution_choice.selected - 1].duplicate(true), null)
 
+func _configure_icon() -> void:
+	icon_choice.clear()
+	icon_choice.tooltip_text = "Explicit map symbol only; it does not grant an ability. Unknown values are preserved until changed."
+	icon_choice.add_item("None — neutral fallback")
+	icon_choice.set_item_metadata(0, null)
+	for icon_id in ICONS.IDS:
+		icon_choice.add_item(str(icon_id).capitalize())
+		icon_choice.set_item_metadata(icon_choice.item_count - 1, icon_id)
+	if not node.has("icon_id"):
+		icon_choice.select(0)
+		return
+	var value: Variant = node["icon_id"]
+	if value is String and value in ICONS.IDS:
+		icon_choice.select(ICONS.IDS.find(value) + 1)
+		return
+	var display := JSON.stringify(value)
+	icon_choice.tooltip_text += "\nPreserved value: " + display
+	if display.length() > 80:
+		display = display.substr(0, 77) + "..."
+	icon_choice.add_item("%s — preserved (neutral fallback)" % display)
+	var index := icon_choice.item_count - 1
+	icon_choice.set_item_metadata(index, {"preserved": true})
+	icon_choice.set_item_disabled(index, true)
+	icon_choice.select(index)
+
 func configure(document: Dictionary, id: String) -> void:
 	updating = true
 	var unified: bool = document.dungeon.get("capability_model", "legacy") == "unified_1"
@@ -523,6 +572,7 @@ func configure(document: Dictionary, id: String) -> void:
 		name_input.text = node.name
 	if cost.value != float(node.cost):
 		cost.set_value_no_signal(node.cost)
+	_configure_icon()
 	var available: Array = ABILITIES.duplicate()
 	for ability in node.abilities:
 		if ability not in available:

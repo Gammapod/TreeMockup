@@ -16,11 +16,13 @@ var _sword_ready := 0.0
 var _sword_hit_at := -1.0
 var _sword_root := false
 var _sword: Dictionary = {}
+var _sword_total := 0.0
 var _dash_end := 0.0
 var _dash_ready := 0.0
 var _dash_root := false
 var _dash_pending := false
 var _dash: Dictionary = {}
+var _dash_total := 0.0
 
 func start_sword(build: Dictionary, facing: Vector2) -> bool:
 	if not build.qualities.sword.effective or _time < _sword_ready:
@@ -33,6 +35,7 @@ func start_sword(build: Dictionary, facing: Vector2) -> bool:
 	}
 	_sword_end = _time + ACTION_DURATION
 	_sword_ready = _sword_end + float(_sword.cooldown)
+	_sword_total = _sword_ready - _time
 	_sword_hit_at = _time + SWORD_HIT_TIME
 	_sword_root = build.qualities.sword_root.effective
 	_notify()
@@ -51,6 +54,7 @@ func start_dash(build: Dictionary, direction: Vector2, origin: Vector2) -> bool:
 	}
 	_dash_end = _time + ACTION_DURATION
 	_dash_ready = _dash_end + float(_dash.recharge)
+	_dash_total = _dash_ready - _time
 	_dash_root = build.qualities.dash_root.effective
 	_dash_pending = true
 	dash_started.emit(_dash.duplicate(true))
@@ -98,6 +102,12 @@ func restrictions() -> Dictionary:
 	var sword := maxf(0.0, _sword_ready - _time) if _sword_root else 0.0
 	var dash := maxf(0.0, _dash_ready - _time) if _dash_root else 0.0
 	return {"sword": sword, "dash": dash, "blocked": sword > 0.0 or dash > 0.0}
+
+func presentation_clocks() -> Dictionary:
+	return {
+		"sword": {"remaining": maxf(0.0, _sword_ready - _time), "total": _sword_total},
+		"dash": {"remaining": maxf(0.0, _dash_ready - _time), "total": _dash_total}
+	}
 
 func _notify() -> void:
 	restriction_changed.emit(restrictions())

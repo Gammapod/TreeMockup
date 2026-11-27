@@ -5,6 +5,11 @@ const UNIFIED_BUILD = preload("res://runtime/unified_build.gd")
 const UNIFIED_STATS := ["move_speed", "sword_range", "sword_arc", "sword_damage", "sword_cooldown", "dash_distance", "dash_recharge", "max_hp"]
 const UNIFIED_QUALITIES := ["sword", "dash", "water_pass", "sword_root", "dash_root", "phase_teleport"]
 
+# Typed authoring must use this in addition to whole-document validation;
+# legacy source may contain arbitrary opaque values in the same field.
+func is_valid_node_icon_id(value: Variant) -> bool:
+	return _id(value)
+
 # Read-only authoring vocabulary. Bounds describe effective values, not valid
 # source operands; the full document validator remains authoritative.
 func capability_metadata() -> Dictionary:

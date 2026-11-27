@@ -36,11 +36,13 @@ the slice. Items not listed remain in their priority bands below.
 | **4 · Capstone integration** | Connect the evaluated sections to the accepted Guardian in a shareable, approximately 14–18-node candidate, with at most two roots. Revisit **LOOT-01** placement and **STAT-01/02** as build and recovery comparisons; address **UI-03** before external sharing if needed. Tune the boss against dungeon builds rather than the workshop in isolation. | Trace at least representative navigation- and combat-leaning routes and final budgets, then playtest the end-to-end tradeoff, recovery and pacing. Decide keep/revise/discard; do not infer enjoyment or general solvability from validation. |
 | **5 · Evidence-driven follow-ups** | Pull **LOOT-04**, other abilities/hazards, or broader layout and clear-state ideas only in response to a specific observation and hypothesis. Group related resource work (STAT-05 + LOOT-02, or STAT-06 + AB-01) as separate experiments rather than adding both pools at once. Presentation and editor priorities are sequenced separately below. | State the comparison, rule choices and evidence sought before implementation; retain accepted baselines and record user observations separately from automated checks. |
 
-**Priority adjustments:** Sword Branch development and the midpoint prerequisite
-and encounter are the next P1 work. The user requested cleared-room
-prerequisites; specify the smallest supported semantics and presentation before
-implementation. The presentation/editor sequence below is an ordered workstream,
-not a replacement for these gameplay priorities. EDIT-06/09/10/11 remain P2
+**Priority adjustments:** The presentation/editor sequence below takes priority
+over the dungeon sprint sequence for the current work. Within it, do
+frontend-independent work first, then expose existing engine capabilities through
+clean presentation contracts, then consider new engine/content capabilities.
+Afterward, resume Sword Branch development and the midpoint prerequisite and
+encounter. The user requested cleared-room prerequisites; specify their smallest
+semantics and presentation before implementation. EDIT-06/09/10/11 remain P2
 pull-as-needed. Random drops and new enemy locomotion remain P2 candidates, not
 prerequisites to opening work.
 
@@ -58,7 +60,7 @@ general clipping prevention.
 4. **UI-02 — Completed, baseline accepted.** Walk-through border doors are the traversal baseline. CLEAR-03 through CLEAR-06 remain potential future experiments.
 5. **BUILD-01 — Completed, baseline accepted.** Stackable sword/dash modifiers, max-HP-only upgrades, and the expanded eight-point workshop are retained. See the [architectural closeout](archive/build-01-closeout.md).
 6. **BOSS-01 — Completed, capstone accepted (2026-11-16):** free Roost Guardian trial retained as the encounter to design the dungeon around. Tweaking/polish is deferred. See the [architectural closeout](archive/boss-01-closeout.md).
-7. **Current focus:** develop the interconnected 14–18-node dungeon. The user confirmed the new Sword Branch abilities and connections; distinctive rooms and encounters remain to be developed. Finalize midpoint prerequisites, implement cleared-room prerequisites, and add the mini-boss and arena. See the [experiment record](knowledge/experiments.md).
+7. **Current focus:** presentation and editor legibility in the dependency order below. The interconnected 14–18-node dungeon remains the next design target: Sword Branch abilities and connections are confirmed, while rooms and encounters remain provisional. See the [experiment record](knowledge/experiments.md).
 
 See the current [clear-state contract](knowledge/clear-state.md).
 The earlier CLEAR-03/04/05/06 proposals are retained below for future consideration.
@@ -149,8 +151,9 @@ requirement for this opening.
 
 ### Presentation and editor UX sequence — proposed
 
-Execute these dependency bands in order, selecting small reviewable slices; they
-do not reorder unrelated dungeon experiments or authorize gameplay rule changes.
+Execute these dependency bands in order, selecting small reviewable slices. They
+precede the dungeon sprint sequence for the current work, but do not authorize
+gameplay rule changes.
 
 1. **Frontend-independent of engine changes:** create a coherent standard icon
    asset set; improve room-object labels/symbols, map visual hierarchy and editor

@@ -40,6 +40,7 @@ paths are in the owner manifests `tests/engine/suites.json` and
 | A4 | Switch/wall bindings remain stable node-instance/object addresses using only `toggled → set_open`; filtered authoring and template indicators do not create template-global switch state. | `tests/binding_editor_tests.gd`, `tests/content_tests.gd` |
 | A5 | Capability authoring metadata is copied, matches runtime vocabulary and result bounds, and does not replace whole-document validation or perform model conversion. | `tests/capability_metadata_tests.gd` |
 | A6 | Unified Player, Sword and Dash sections collapse independently as session-only view state, without changing source/history or losing pending drafts and JSON. | `tests/node_panel_tests.gd` |
+| A7 | Optional node icon metadata round-trips across supported bundle versions, valid explicit IDs compile unchanged, and malformed legacy values remain source-preserved but cannot become runtime icon IDs; icons are not inferred from abilities or contributions. | `tests/engine/node_icon_contract_tests.gd` |
 
 ## Presentation
 
@@ -48,6 +49,8 @@ paths are in the owner manifests `tests/engine/suites.json` and
 | U1 | Presentation only consumes snapshots/intents. Inspection does not mutate the run; selection, player location, and camera are separate state. | `tests/tree_panel_tests.gd`, `tests/map_tests.gd`, `tests/map_camera_tests.gd` |
 | U2 | The tree panel presents copied current and before/after unified build snapshots, including dormancy, without applying allocation rules or presenting a rejected after-state. | `tests/tree_panel_tests.gd` |
 | U3 | Phase feedback presents authoritative transit, restriction, outcome, damage and reset events without deriving gameplay rules. | `tests/phase_feedback_tests.gd`, `tests/phase_integration_tests.gd` |
+| RP1 | Room presentation exposes detached live room geometry, visible rewards and objectives, and current enemy contact danger to a room-aligned view surviving replacement, without leaking hidden or collected rewards or treating transient summons as authored objectives. | `tests/engine/room_presentation_tests.gd` |
+| AP1 | Action presentation exposes detached, actual action-clock readiness and room-local emitted strike sectors, without treating movement restrictions or occluded sector candidates as confirmed hits; a room-aligned mounted view receives presence and pause-aware frames, and replacement and stale-event guards apply. | `tests/engine/action_clock_presentation_tests.gd` |
 
 ## Runtime lifecycle, combat and health
 
@@ -84,6 +87,8 @@ paths are in the owner manifests `tests/engine/suites.json` and
 | ID | Requirement | Primary trace |
 | --- | --- | --- |
 | UAB5 | The coordinator publishes a copied current-build snapshot independently of selected-node previews. | `tests/phase_geometry_tests.gd` |
+| AP2 | Player retains avatar drawing but does not draw a second avatar-relative legacy sword sector; the room-aligned strike presenter owns the emitted-sector cue. | `tests/engine/action_clock_presentation_tests.gd` |
+| RP2 | The room-aligned presenter owns loose gold and capacity pickup drawing; Room retains health and chest drawing so a pickup has no duplicate base and chests remain identifiable. | `tests/engine/room_presentation_tests.gd`, `tests/frontend/room_visuals_tests.gd` |
 
 # Running the contract suites
 
