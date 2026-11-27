@@ -4,7 +4,7 @@
 * **Sword Branch checkpoint:** The user confirmed the candidate's abilities and
   connections; encounter and room design remain open. The [experiment
   record](experiments.md#unified-sword-branch-extension-2026-11-25) and
-  [backlog](../backlog.md#proposed-sprint-sequence) record the next Sword,
+  [backlog](../backlog.md#dungeon-sword-branch-and-midpoint) record the next Sword,
   cleared-prerequisite and mini-boss work.
 
 ## 2026-11-23

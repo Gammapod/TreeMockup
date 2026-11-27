@@ -60,12 +60,12 @@ tables here.
 * **Next**: use explicit supported semantics and evaluate each integration separately.
 
 ## Gameplay presentation and editor layout (2026-11-26)
-* **Status**: evaluated; revisions in progress.
+* **Status**: completed; current UX accepted as a baseline.
 * **Question**: Do the new gameplay cues and contextual editor layout communicate clearly without unnecessary text?
 * **Slice**: Avatar cooldowns and sword sector, room labels and collectible cues, icon-led map, and contextual editor.
 * **Observation**: The user liked cooldowns, water/wall labels, the default map icon and the cleaner editor layout. They requested same-radius cooldown hemispheres, no unavailable indicators, graphic enemy danger without behavior labels, no sword-sector text, and collectible icons in place of the old circles. Space after selecting a tree node caused unintended allocation changes. They want a later focused Node Properties pass.
-* **Decision**: keep the successful directions and revise the identified cues and input conflict; visual acceptance of the revisions remains pending.
-* **Next**: verify the revisions and collect user feedback; defer the deeper Node Properties exploration.
+* **Decision**: the user accepted the revisions and said the current UX is a good baseline; all important feedback exists, though individual elements may be tweaked later.
+* **Next**: defer the deeper Node Properties exploration and return to the dungeon.
 
 ## Movement restriction anchor (2026-11-26)
 * **Status**: evaluated; kept.

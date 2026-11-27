@@ -132,9 +132,10 @@ sources:
 * The individual-contribution editor is a separately collapsible view, initially
   collapsed. Toggling it does not commit source or discard its current draft.
 
-These are implementation checkpoint observations, not a new acceptance or
-rendered-usability claim. The earlier accepted editor exploration remains
-historical; its legacy panel description is not the complete unified workflow.
+The user accepted the current gameplay/editor UX as a functional baseline;
+individual elements may still be tweaked. The earlier accepted editor
+exploration remains historical; its legacy panel description is not the
+complete unified workflow.
 
 # Boundary
 
